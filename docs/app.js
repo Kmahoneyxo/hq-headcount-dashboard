@@ -223,8 +223,33 @@ function renderLookup() {
   const gap = m.headcount_gap;
   const gapStr = gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
   const recClass = m.headcount_recommendation.replace(/ /g, "\\ ");
+  const status = m.summary_status || "—";
+  const statusClass =
+    status === "Over HC"
+      ? "summary-over"
+      : status === "Under HC"
+        ? "summary-under"
+        : "summary-target";
+  const primary = m.summary_primary || "";
+  const bullets = m.summary_bullets || [];
+  const summaryHtml =
+    primary || bullets.length
+      ? `<div class="market-summary ${statusClass}">
+          <div class="market-summary-header">
+            <span class="market-summary-badge">${status}</span>
+            <span class="market-summary-label">Why we think this</span>
+          </div>
+          ${primary ? `<p class="market-summary-primary">${primary}</p>` : ""}
+          ${
+            bullets.length
+              ? `<ul class="market-summary-bullets">${bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
+              : ""
+          }
+        </div>`
+      : "";
   el.innerHTML = `
     <div class="lookup-market">${m.country}-${m.segment}</div>
+    ${summaryHtml}
     <div class="lookup-grid lookup-grid-primary">
       <div class="lookup-stat primary">
         <div class="lookup-stat-value">${fmtNum(m.optimal_headcount)}</div>

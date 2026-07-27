@@ -19,8 +19,8 @@
           <input type="checkbox" id="hide-jp" checked />
           Hide Japan (out of scope)
         </label>
-        <a href="./data/headcount-dashboard.xlsx" class="btn btn-secondary" download>Download Excel</a>
-        <a href="./data/headcount-dashboard.csv" class="btn btn-secondary" download>Download CSV</a>
+        <a href="./data/headcount-dashboard.xlsx" class="btn btn-secondary" download>Download Excel (full data)</a>
+        <a href="./data/headcount-dashboard.csv" class="btn btn-secondary" download>Download CSV (markets)</a>
         <button type="button" id="refresh-btn" class="btn">
           <span id="refresh-label">Refresh data</span>
         </button>
@@ -166,6 +166,7 @@
           <li><strong>Optimize</strong> — over-staffed; consolidate/redistribute books before net-new hires</li>
           <li><strong>Hold</strong> — within ±10% of ideal HC</li>
           <li><strong>Do Not Hire</strong> — market growth ≤ 0 in ideal book range</li>
+          <li><strong>Segment</strong> — company size (S/M/L/XL), not sales segment (M/UMM/L/NAM); summaries use query 16 fields as-is</li>
         </ul>
         <p class="caption refresh-note" id="refresh-note"></p>
       </div>

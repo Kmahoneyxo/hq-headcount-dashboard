@@ -55,7 +55,19 @@
       "book_action": "Split-hire 114 new heads (8322 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 552,
-      "sbs_whitespace": 103686
+      "sbs_whitespace": 103686,
+      "summary_status": "Over HC",
+      "summary_primary": "Over headcount by 191 reps (743 current vs 552 ideal). Avg book 54 vs ideal 73 \u2014 books are underweight even though we carry more reps than the capacity model needs.",
+      "summary_bullets": [
+        "Book health: 421 reps flagged too big, 369 too little (uneven books across the team).",
+        "PQR trend: Revenue is 16.9% above prior-quarter PQR (Optimize signal from capacity model).",
+        "SBS whitespace: 103,686 unassigned accounts in this country \u00d7 segment (~1,420 buildable books at ideal size).",
+        "Split-hire: Model suggests 114 new heads from 8,322 pooled PCIDs \u2014 Split-hire 114 new heads (8322 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage declining.",
+        "FY26 book build: 46.9% of policy flags positive \u2014 room to improve book quality.",
+        "Recommended next step: Optimize HC."
+      ],
+      "summary_narrative": "Over headcount by 191 reps (743 current vs 552 ideal). Avg book 54 vs ideal 73 \u2014 books are underweight even though we carry more reps than the capacity model needs. Book health: 421 reps flagged too big, 369 too little (uneven books across the team). PQR trend: Revenue is 16.9% above prior-quarter PQR (Optimize signal from capacity model). SBS whitespace: 103,686 unassigned accounts in this country \u00d7 segment (~1,420 buildable books at ideal size). Split-hire: Model suggests 114 new heads from 8,322 pooled PCIDs \u2014 Split-hire 114 new heads (8322 PCIDs pooled) Market signals: opp pipeline growing, coverage declining. FY26 book build: 46.9% of policy flags positive \u2014 room to improve book quality. Recommended next step: Optimize HC."
     },
     {
       "segment": "XL",
@@ -102,7 +114,18 @@
       "book_action": "Split-hire 473 new heads (2367 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 1306,
-      "sbs_whitespace": 23586
+      "sbs_whitespace": 23586,
+      "summary_status": "Under HC",
+      "summary_primary": "Under headcount by 397 reps (909 current vs 1,306 ideal). Avg book 7 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
+      "summary_bullets": [
+        "Book health: 346 reps flagged too big, 216 too little (uneven books across the team).",
+        "PQR trend: Revenue is 25.2% above prior-quarter PQR (Hire signal from capacity model).",
+        "SBS whitespace: 23,586 unassigned accounts in this country \u00d7 segment (~4,717 buildable books at ideal size).",
+        "Split-hire: Model suggests 473 new heads from 2,367 pooled PCIDs \u2014 Split-hire 473 new heads (2367 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage ok.",
+        "Recommended next step: Hire + build books from SBS."
+      ],
+      "summary_narrative": "Under headcount by 397 reps (909 current vs 1,306 ideal). Avg book 7 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 346 reps flagged too big, 216 too little (uneven books across the team). PQR trend: Revenue is 25.2% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 23,586 unassigned accounts in this country \u00d7 segment (~4,717 buildable books at ideal size). Split-hire: Model suggests 473 new heads from 2,367 pooled PCIDs \u2014 Split-hire 473 new heads (2367 PCIDs pooled) Market signals: opp pipeline growing, coverage ok. Recommended next step: Hire + build books from SBS."
     },
     {
       "segment": "L",
@@ -149,7 +172,19 @@
       "book_action": "Split-hire 28 new heads (701 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 482,
-      "sbs_whitespace": 14873
+      "sbs_whitespace": 14873,
+      "summary_status": "Over HC",
+      "summary_primary": "Over headcount by 308 reps (790 current vs 482 ideal). Avg book 15 vs ideal 25 \u2014 books are underweight even though we carry more reps than the capacity model needs.",
+      "summary_bullets": [
+        "Book health: 328 reps flagged too big, 600 too little (uneven books across the team).",
+        "PQR trend: Revenue is 19.9% above prior-quarter PQR (Optimize signal from capacity model).",
+        "SBS whitespace: 14,873 unassigned accounts in this country \u00d7 segment (~594 buildable books at ideal size).",
+        "Split-hire: Model suggests 28 new heads from 701 pooled PCIDs \u2014 Split-hire 28 new heads (701 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage declining.",
+        "FY26 book build: 48.3% of policy flags positive \u2014 room to improve book quality.",
+        "Recommended next step: Optimize HC."
+      ],
+      "summary_narrative": "Over headcount by 308 reps (790 current vs 482 ideal). Avg book 15 vs ideal 25 \u2014 books are underweight even though we carry more reps than the capacity model needs. Book health: 328 reps flagged too big, 600 too little (uneven books across the team). PQR trend: Revenue is 19.9% above prior-quarter PQR (Optimize signal from capacity model). SBS whitespace: 14,873 unassigned accounts in this country \u00d7 segment (~594 buildable books at ideal size). Split-hire: Model suggests 28 new heads from 701 pooled PCIDs \u2014 Split-hire 28 new heads (701 PCIDs pooled) Market signals: opp pipeline growing, coverage declining. FY26 book build: 48.3% of policy flags positive \u2014 room to improve book quality. Recommended next step: Optimize HC."
     },
     {
       "segment": "M",
@@ -196,7 +231,19 @@
       "book_action": "Split-hire 1055 new heads (5276 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 1325,
-      "sbs_whitespace": 17408
+      "sbs_whitespace": 17408,
+      "summary_status": "Under HC",
+      "summary_primary": "Under headcount by 1164 reps (161 current vs 1,325 ideal). Avg book 41 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
+      "summary_bullets": [
+        "Book health: 68 reps flagged too big, 11 too little (uneven books across the team).",
+        "PQR trend: Revenue is 17.8% above prior-quarter PQR (Hire signal from capacity model).",
+        "SBS whitespace: 17,408 unassigned accounts in this country \u00d7 segment (~3,481 buildable books at ideal size).",
+        "Split-hire: Model suggests 1,055 new heads from 5,276 pooled PCIDs \u2014 Split-hire 1055 new heads (5276 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage declining.",
+        "FY26 book build: 47.9% of policy flags positive \u2014 room to improve book quality.",
+        "Recommended next step: Hire + build books from SBS."
+      ],
+      "summary_narrative": "Under headcount by 1164 reps (161 current vs 1,325 ideal). Avg book 41 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 68 reps flagged too big, 11 too little (uneven books across the team). PQR trend: Revenue is 17.8% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 17,408 unassigned accounts in this country \u00d7 segment (~3,481 buildable books at ideal size). Split-hire: Model suggests 1,055 new heads from 5,276 pooled PCIDs \u2014 Split-hire 1055 new heads (5276 PCIDs pooled) Market signals: opp pipeline growing, coverage declining. FY26 book build: 47.9% of policy flags positive \u2014 room to improve book quality. Recommended next step: Hire + build books from SBS."
     },
     {
       "segment": "S",
@@ -243,7 +290,19 @@
       "book_action": "Split-hire 1 new head (61 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 122,
-      "sbs_whitespace": 1765314
+      "sbs_whitespace": 1765314,
+      "summary_status": "Over HC",
+      "summary_primary": "Over headcount by 394 reps (516 current vs 122 ideal). Avg book 11 vs ideal 45 \u2014 books are underweight even though we carry more reps than the capacity model needs.",
+      "summary_bullets": [
+        "Book health: 100 reps flagged too big, 278 too little (uneven books across the team).",
+        "PQR trend: Revenue is 23.5% above prior-quarter PQR (Optimize signal from capacity model).",
+        "SBS whitespace: 1,765,314 unassigned accounts in this country \u00d7 segment (~39,229 buildable books at ideal size).",
+        "Split-hire: Model suggests 1 new head from 61 pooled PCIDs \u2014 Split-hire 1 new head (61 PCIDs pooled)",
+        "Market signals: opp pipeline plateaued, coverage declining.",
+        "FY26 book build: 46.7% of policy flags positive \u2014 room to improve book quality.",
+        "Recommended next step: Optimize HC."
+      ],
+      "summary_narrative": "Over headcount by 394 reps (516 current vs 122 ideal). Avg book 11 vs ideal 45 \u2014 books are underweight even though we carry more reps than the capacity model needs. Book health: 100 reps flagged too big, 278 too little (uneven books across the team). PQR trend: Revenue is 23.5% above prior-quarter PQR (Optimize signal from capacity model). SBS whitespace: 1,765,314 unassigned accounts in this country \u00d7 segment (~39,229 buildable books at ideal size). Split-hire: Model suggests 1 new head from 61 pooled PCIDs \u2014 Split-hire 1 new head (61 PCIDs pooled) Market signals: opp pipeline plateaued, coverage declining. FY26 book build: 46.7% of policy flags positive \u2014 room to improve book quality. Recommended next step: Optimize HC."
     },
     {
       "segment": "M",
@@ -290,7 +349,18 @@
       "book_action": "Split-hire 7 new heads (539 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 80,
-      "sbs_whitespace": 10887
+      "sbs_whitespace": 10887,
+      "summary_status": "Over HC",
+      "summary_primary": "Over headcount by 52 reps (132 current vs 80 ideal). Avg book 44 vs ideal 73 \u2014 books are underweight even though we carry more reps than the capacity model needs.",
+      "summary_bullets": [
+        "Book health: 54 reps flagged too big, 57 too little (uneven books across the team).",
+        "PQR trend: Revenue is 21.3% above prior-quarter PQR (Optimize signal from capacity model).",
+        "SBS whitespace: 10,887 unassigned accounts in this country \u00d7 segment (~149 buildable books at ideal size).",
+        "Split-hire: Model suggests 7 new heads from 539 pooled PCIDs \u2014 Split-hire 7 new heads (539 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage declining.",
+        "Recommended next step: Optimize HC."
+      ],
+      "summary_narrative": "Over headcount by 52 reps (132 current vs 80 ideal). Avg book 44 vs ideal 73 \u2014 books are underweight even though we carry more reps than the capacity model needs. Book health: 54 reps flagged too big, 57 too little (uneven books across the team). PQR trend: Revenue is 21.3% above prior-quarter PQR (Optimize signal from capacity model). SBS whitespace: 10,887 unassigned accounts in this country \u00d7 segment (~149 buildable books at ideal size). Split-hire: Model suggests 7 new heads from 539 pooled PCIDs \u2014 Split-hire 7 new heads (539 PCIDs pooled) Market signals: opp pipeline growing, coverage declining. Recommended next step: Optimize HC."
     },
     {
       "segment": "L",
@@ -337,7 +407,19 @@
       "book_action": "Split-hire 24 new heads (368 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 142,
-      "sbs_whitespace": 1880
+      "sbs_whitespace": 1880,
+      "summary_status": "Over HC",
+      "summary_primary": "Over headcount by 30 reps (172 current vs 142 ideal). Avg book 12 vs ideal 15 \u2014 books are underweight even though we carry more reps than the capacity model needs.",
+      "summary_bullets": [
+        "Book health: 57 reps flagged too big, 81 too little (uneven books across the team).",
+        "PQR trend: Revenue is 25.1% above prior-quarter PQR (Optimize signal from capacity model).",
+        "SBS whitespace: 1,880 unassigned accounts in this country \u00d7 segment (~125 buildable books at ideal size).",
+        "Split-hire: Model suggests 24 new heads from 368 pooled PCIDs \u2014 Split-hire 24 new heads (368 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage declining.",
+        "FY26 book build: 49.9% of policy flags positive \u2014 room to improve book quality.",
+        "Recommended next step: Optimize HC."
+      ],
+      "summary_narrative": "Over headcount by 30 reps (172 current vs 142 ideal). Avg book 12 vs ideal 15 \u2014 books are underweight even though we carry more reps than the capacity model needs. Book health: 57 reps flagged too big, 81 too little (uneven books across the team). PQR trend: Revenue is 25.1% above prior-quarter PQR (Optimize signal from capacity model). SBS whitespace: 1,880 unassigned accounts in this country \u00d7 segment (~125 buildable books at ideal size). Split-hire: Model suggests 24 new heads from 368 pooled PCIDs \u2014 Split-hire 24 new heads (368 PCIDs pooled) Market signals: opp pipeline growing, coverage declining. FY26 book build: 49.9% of policy flags positive \u2014 room to improve book quality. Recommended next step: Optimize HC."
     },
     {
       "segment": "XL",
@@ -384,7 +466,18 @@
       "book_action": "Split-hire 33 new heads (169 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 114,
-      "sbs_whitespace": 2306
+      "sbs_whitespace": 2306,
+      "summary_status": "Under HC",
+      "summary_primary": "Under headcount by 22 reps (92 current vs 114 ideal). Avg book 6 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
+      "summary_bullets": [
+        "Book health: 26 reps flagged too big, 12 too little (uneven books across the team).",
+        "PQR trend: Revenue is 29.0% above prior-quarter PQR (Hire signal from capacity model).",
+        "SBS whitespace: 2,306 unassigned accounts in this country \u00d7 segment (~461 buildable books at ideal size).",
+        "Split-hire: Model suggests 33 new heads from 169 pooled PCIDs \u2014 Split-hire 33 new heads (169 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage ok.",
+        "Recommended next step: Hire + build books from SBS."
+      ],
+      "summary_narrative": "Under headcount by 22 reps (92 current vs 114 ideal). Avg book 6 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 26 reps flagged too big, 12 too little (uneven books across the team). PQR trend: Revenue is 29.0% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 2,306 unassigned accounts in this country \u00d7 segment (~461 buildable books at ideal size). Split-hire: Model suggests 33 new heads from 169 pooled PCIDs \u2014 Split-hire 33 new heads (169 PCIDs pooled) Market signals: opp pipeline growing, coverage ok. Recommended next step: Hire + build books from SBS."
     },
     {
       "segment": "L",
@@ -431,7 +524,18 @@
       "book_action": "Split-hire 130 new heads (652 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 408,
-      "sbs_whitespace": 1298
+      "sbs_whitespace": 1298,
+      "summary_status": "Under HC",
+      "summary_primary": "Under headcount by 253 reps (155 current vs 408 ideal). Avg book 13 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
+      "summary_bullets": [
+        "Book health: 36 reps flagged too big, 21 too little (uneven books across the team).",
+        "PQR trend: Revenue is 18.8% above prior-quarter PQR (Hire signal from capacity model).",
+        "SBS whitespace: 1,298 unassigned accounts in this country \u00d7 segment (~259 buildable books at ideal size).",
+        "Split-hire: Model suggests 130 new heads from 652 pooled PCIDs \u2014 Split-hire 130 new heads (652 PCIDs pooled)",
+        "Market signals: opp pipeline plateaued, coverage ok.",
+        "Recommended next step: Hire + build books from SBS."
+      ],
+      "summary_narrative": "Under headcount by 253 reps (155 current vs 408 ideal). Avg book 13 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 36 reps flagged too big, 21 too little (uneven books across the team). PQR trend: Revenue is 18.8% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 1,298 unassigned accounts in this country \u00d7 segment (~259 buildable books at ideal size). Split-hire: Model suggests 130 new heads from 652 pooled PCIDs \u2014 Split-hire 130 new heads (652 PCIDs pooled) Market signals: opp pipeline plateaued, coverage ok. Recommended next step: Hire + build books from SBS."
     },
     {
       "segment": "L",
@@ -478,7 +582,18 @@
       "book_action": "Split-hire 83 new heads (417 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 193,
-      "sbs_whitespace": 1610
+      "sbs_whitespace": 1610,
+      "summary_status": "Under HC",
+      "summary_primary": "Under headcount by 101 reps (92 current vs 193 ideal). Avg book 11 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
+      "summary_bullets": [
+        "Book health: 31 reps flagged too big, 14 too little (uneven books across the team).",
+        "PQR trend: Revenue is 24.7% above prior-quarter PQR (Hire signal from capacity model).",
+        "SBS whitespace: 1,610 unassigned accounts in this country \u00d7 segment (~322 buildable books at ideal size).",
+        "Split-hire: Model suggests 83 new heads from 417 pooled PCIDs \u2014 Split-hire 83 new heads (417 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage declining.",
+        "Recommended next step: Hire + build books from SBS."
+      ],
+      "summary_narrative": "Under headcount by 101 reps (92 current vs 193 ideal). Avg book 11 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 31 reps flagged too big, 14 too little (uneven books across the team). PQR trend: Revenue is 24.7% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 1,610 unassigned accounts in this country \u00d7 segment (~322 buildable books at ideal size). Split-hire: Model suggests 83 new heads from 417 pooled PCIDs \u2014 Split-hire 83 new heads (417 PCIDs pooled) Market signals: opp pipeline growing, coverage declining. Recommended next step: Hire + build books from SBS."
     },
     {
       "segment": "XL",
@@ -525,7 +640,18 @@
       "book_action": "Split-hire 23 new heads (115 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 102,
-      "sbs_whitespace": 296
+      "sbs_whitespace": 296,
+      "summary_status": "Under HC",
+      "summary_primary": "Under headcount by 14 reps (88 current vs 102 ideal). Avg book 6 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
+      "summary_bullets": [
+        "Book health: 28 reps flagged too big, 11 too little (uneven books across the team).",
+        "PQR trend: Revenue is 78.2% above prior-quarter PQR (Hire signal from capacity model).",
+        "SBS whitespace: 296 unassigned accounts in this country \u00d7 segment (~59 buildable books at ideal size).",
+        "Split-hire: Model suggests 23 new heads from 115 pooled PCIDs \u2014 Split-hire 23 new heads (115 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage ok.",
+        "Recommended next step: Hire + build books from SBS."
+      ],
+      "summary_narrative": "Under headcount by 14 reps (88 current vs 102 ideal). Avg book 6 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 28 reps flagged too big, 11 too little (uneven books across the team). PQR trend: Revenue is 78.2% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 296 unassigned accounts in this country \u00d7 segment (~59 buildable books at ideal size). Split-hire: Model suggests 23 new heads from 115 pooled PCIDs \u2014 Split-hire 23 new heads (115 PCIDs pooled) Market signals: opp pipeline growing, coverage ok. Recommended next step: Hire + build books from SBS."
     },
     {
       "segment": "L",
@@ -572,7 +698,19 @@
       "book_action": "Split-hire 9 new heads (137 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 67,
-      "sbs_whitespace": 599
+      "sbs_whitespace": 599,
+      "summary_status": "Over HC",
+      "summary_primary": "Over headcount by 21 reps (88 current vs 67 ideal). Avg book 12 vs ideal 15 \u2014 books are underweight even though we carry more reps than the capacity model needs.",
+      "summary_bullets": [
+        "Book health: 24 reps flagged too big, 36 too little (uneven books across the team).",
+        "PQR trend: Revenue is 26.4% above prior-quarter PQR (Optimize signal from capacity model).",
+        "SBS whitespace: 599 unassigned accounts in this country \u00d7 segment (~39 buildable books at ideal size).",
+        "Split-hire: Model suggests 9 new heads from 137 pooled PCIDs \u2014 Split-hire 9 new heads (137 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage ok.",
+        "FY26 book build: 49.8% of policy flags positive \u2014 room to improve book quality.",
+        "Recommended next step: Optimize HC."
+      ],
+      "summary_narrative": "Over headcount by 21 reps (88 current vs 67 ideal). Avg book 12 vs ideal 15 \u2014 books are underweight even though we carry more reps than the capacity model needs. Book health: 24 reps flagged too big, 36 too little (uneven books across the team). PQR trend: Revenue is 26.4% above prior-quarter PQR (Optimize signal from capacity model). SBS whitespace: 599 unassigned accounts in this country \u00d7 segment (~39 buildable books at ideal size). Split-hire: Model suggests 9 new heads from 137 pooled PCIDs \u2014 Split-hire 9 new heads (137 PCIDs pooled) Market signals: opp pipeline growing, coverage ok. FY26 book build: 49.8% of policy flags positive \u2014 room to improve book quality. Recommended next step: Optimize HC."
     },
     {
       "segment": "XL",
@@ -619,7 +757,18 @@
       "book_action": "Split-hire 25 new heads (127 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 117,
-      "sbs_whitespace": 638
+      "sbs_whitespace": 638,
+      "summary_status": "Under HC",
+      "summary_primary": "Under headcount by 40 reps (77 current vs 117 ideal). Avg book 8 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
+      "summary_bullets": [
+        "Book health: 23 reps flagged too big, 8 too little (uneven books across the team).",
+        "PQR trend: Revenue is 22.6% above prior-quarter PQR (Hire signal from capacity model).",
+        "SBS whitespace: 638 unassigned accounts in this country \u00d7 segment (~127 buildable books at ideal size).",
+        "Split-hire: Model suggests 25 new heads from 127 pooled PCIDs \u2014 Split-hire 25 new heads (127 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage ok.",
+        "Recommended next step: Hire + build books from SBS."
+      ],
+      "summary_narrative": "Under headcount by 40 reps (77 current vs 117 ideal). Avg book 8 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 23 reps flagged too big, 8 too little (uneven books across the team). PQR trend: Revenue is 22.6% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 638 unassigned accounts in this country \u00d7 segment (~127 buildable books at ideal size). Split-hire: Model suggests 25 new heads from 127 pooled PCIDs \u2014 Split-hire 25 new heads (127 PCIDs pooled) Market signals: opp pipeline growing, coverage ok. Recommended next step: Hire + build books from SBS."
     },
     {
       "segment": "S",
@@ -666,7 +815,19 @@
       "book_action": "Split-hire 108 new heads (540 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 459,
-      "sbs_whitespace": 144336
+      "sbs_whitespace": 144336,
+      "summary_status": "Under HC",
+      "summary_primary": "Under headcount by 336 reps (123 current vs 459 ideal). Avg book 19 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
+      "summary_bullets": [
+        "Book health: 20 reps flagged too big, 6 too little (uneven books across the team).",
+        "PQR trend: Revenue is 82.7% above prior-quarter PQR (Hire signal from capacity model).",
+        "SBS whitespace: 144,336 unassigned accounts in this country \u00d7 segment (~28,867 buildable books at ideal size).",
+        "Split-hire: Model suggests 108 new heads from 540 pooled PCIDs \u2014 Split-hire 108 new heads (540 PCIDs pooled)",
+        "Market signals: opp pipeline plateaued, coverage declining.",
+        "FY26 book build: 49.5% of policy flags positive \u2014 room to improve book quality.",
+        "Recommended next step: Hire + build books from SBS."
+      ],
+      "summary_narrative": "Under headcount by 336 reps (123 current vs 459 ideal). Avg book 19 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 20 reps flagged too big, 6 too little (uneven books across the team). PQR trend: Revenue is 82.7% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 144,336 unassigned accounts in this country \u00d7 segment (~28,867 buildable books at ideal size). Split-hire: Model suggests 108 new heads from 540 pooled PCIDs \u2014 Split-hire 108 new heads (540 PCIDs pooled) Market signals: opp pipeline plateaued, coverage declining. FY26 book build: 49.5% of policy flags positive \u2014 room to improve book quality. Recommended next step: Hire + build books from SBS."
     },
     {
       "segment": "S",
@@ -713,7 +874,19 @@
       "book_action": "Split-hire 109 new heads (547 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 461,
-      "sbs_whitespace": 364311
+      "sbs_whitespace": 364311,
+      "summary_status": "Under HC",
+      "summary_primary": "Under headcount by 316 reps (145 current vs 461 ideal). Avg book 16 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
+      "summary_bullets": [
+        "Book health: 16 reps flagged too big, 15 too little (uneven books across the team).",
+        "PQR trend: Revenue is 49.9% above prior-quarter PQR (Hire signal from capacity model).",
+        "SBS whitespace: 364,311 unassigned accounts in this country \u00d7 segment (~72,862 buildable books at ideal size).",
+        "Split-hire: Model suggests 109 new heads from 547 pooled PCIDs \u2014 Split-hire 109 new heads (547 PCIDs pooled)",
+        "Market signals: opp pipeline plateaued, coverage declining.",
+        "FY26 book build: 48.2% of policy flags positive \u2014 room to improve book quality.",
+        "Recommended next step: Hire + build books from SBS."
+      ],
+      "summary_narrative": "Under headcount by 316 reps (145 current vs 461 ideal). Avg book 16 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 16 reps flagged too big, 15 too little (uneven books across the team). PQR trend: Revenue is 49.9% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 364,311 unassigned accounts in this country \u00d7 segment (~72,862 buildable books at ideal size). Split-hire: Model suggests 109 new heads from 547 pooled PCIDs \u2014 Split-hire 109 new heads (547 PCIDs pooled) Market signals: opp pipeline plateaued, coverage declining. FY26 book build: 48.2% of policy flags positive \u2014 room to improve book quality. Recommended next step: Hire + build books from SBS."
     },
     {
       "segment": "S",
@@ -760,7 +933,18 @@
       "book_action": "Split-hire 9 new heads (47 PCIDs pooled)",
       "split_hire_recommended": true,
       "optimal_headcount": 113,
-      "sbs_whitespace": 276081
+      "sbs_whitespace": 276081,
+      "summary_status": "Under HC",
+      "summary_primary": "Under headcount by 47 reps (66 current vs 113 ideal). Avg book 9 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
+      "summary_bullets": [
+        "Book health: 10 reps flagged too big, 5 too little (uneven books across the team).",
+        "PQR trend: Revenue is 29.9% above prior-quarter PQR (Hire signal from capacity model).",
+        "SBS whitespace: 276,081 unassigned accounts in this country \u00d7 segment (~55,216 buildable books at ideal size).",
+        "Split-hire: Model suggests 9 new heads from 47 pooled PCIDs \u2014 Split-hire 9 new heads (47 PCIDs pooled)",
+        "Market signals: opp pipeline growing, coverage ok.",
+        "Recommended next step: Hire + build books from SBS."
+      ],
+      "summary_narrative": "Under headcount by 47 reps (66 current vs 113 ideal). Avg book 9 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 10 reps flagged too big, 5 too little (uneven books across the team). PQR trend: Revenue is 29.9% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 276,081 unassigned accounts in this country \u00d7 segment (~55,216 buildable books at ideal size). Split-hire: Model suggests 9 new heads from 47 pooled PCIDs \u2014 Split-hire 9 new heads (47 PCIDs pooled) Market signals: opp pipeline growing, coverage ok. Recommended next step: Hire + build books from SBS."
     }
   ],
   "sbs_whitespace": [

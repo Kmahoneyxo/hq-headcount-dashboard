@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Export docs/data/headcount.json to CSV and Excel for stakeholders.
+"""Export dashboard JSON sources to CSV and Excel for stakeholders.
 
 Usage:
   python3 scripts/export-dashboard-data.py
   python3 scripts/export-dashboard-data.py path/to/headcount.json
 
 Outputs (by default):
-  docs/data/headcount-dashboard.csv
-  docs/data/headcount-dashboard.xlsx  (requires openpyxl)
+  docs/data/headcount-dashboard.csv           — all market fields (headcount.json)
+  docs/data/headcount-dashboard-book-health.csv — flagged reps (book_health.json)
+  docs/data/headcount-dashboard.xlsx          — full workbook (requires openpyxl)
 """
 
 from __future__ import annotations
@@ -19,76 +20,121 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_IN = ROOT / "docs" / "data" / "headcount.json"
+DEFAULT_HC_IN = ROOT / "docs" / "data" / "headcount.json"
+DEFAULT_BH_IN = ROOT / "docs" / "data" / "book_health.json"
 OUT_DIR = ROOT / "docs" / "data"
-CSV_OUT = OUT_DIR / "headcount-dashboard.csv"
+MARKETS_CSV_OUT = OUT_DIR / "headcount-dashboard.csv"
+BOOK_HEALTH_CSV_OUT = OUT_DIR / "headcount-dashboard-book-health.csv"
 XLSX_OUT = OUT_DIR / "headcount-dashboard.xlsx"
 
-# Dashboard table order — stakeholder-friendly (ideal HC first).
-MARKET_COLUMNS = [
-    ("market", "Market"),
-    ("country", "Country"),
-    ("segment", "Segment"),
-    ("optimal_headcount", "Ideal headcount"),
-    ("ideal_pcid", "Ideal PCID (accounts/rep)"),
-    ("avg_pqr_per_rep", "Avg PQR per rep ($)"),
-    ("market_pqr_90d", "Market PQR 90d ($)"),
-    ("rev_vs_pqr_pct", "Rev vs PQR %"),
-    ("current_reps", "Current reps"),
-    ("current_avg_book", "Avg PCID per rep"),
-    ("headcount_gap", "Headcount gap"),
-    ("headcount_recommendation", "HC recommendation"),
-    ("reps_too_big", "Reps too big"),
-    ("reps_too_little", "Reps too little"),
-    ("splittable_pool", "Splittable PCID pool"),
-    ("new_heads_from_split", "New heads from split"),
-    ("book_action", "Book action (Layer 2)"),
-    ("split_hire_recommended", "Split hire recommended"),
-    ("perfect_book_target", "Ideal book size (accounts/rep)"),
-    ("perfect_book_bucket", "Perfect book bucket"),
-    ("perfect_book_ceiling", "Perfect book ceiling"),
-    ("perfect_book_growth_pct", "Perfect book growth %"),
-    ("current_avg_book", "Current avg book"),
-    ("assigned_accounts", "Assigned accounts"),
-    ("revenue_90d", "Revenue 90d ($)"),
-    ("recommended_action", "Recommended action"),
-    ("avg_pct_book_built", "FY26 % book built"),
-    ("avg_fy26_book_score", "FY26 book score"),
-    ("fy26_target_pct_book_built", "FY26 target % (TBD)"),
-    ("headroom_accounts", "Headroom accounts"),
-    ("sbs_whitespace_country", "SBS whitespace (country)"),
-    ("sbs_revenue_90d", "SBS revenue 90d ($)"),
-    ("books_buildable_from_sbs", "Books buildable from SBS"),
-    ("opp_plateau_book_max", "Opp plateau book max"),
-    ("opp_plateau_rev_per_job", "Opp plateau $/job"),
-    ("opp_pipeline_status", "Opp pipeline status"),
-    ("coverage_inflection_book_max", "Coverage inflection book max"),
-    ("coverage_at_inflection", "Coverage at inflection"),
-    ("median_impact_calls_per_account", "Median impact calls/account"),
-    ("coverage_status", "Coverage status"),
-]
+sys.path.insert(0, str(ROOT / "scripts"))
+from build_market_summary import enrich_market  # noqa: E402
 
-SBS_COLUMNS = [
-    ("country", "Country"),
-    ("segment", "Segment"),
-    ("accounts", "SBS accounts"),
-    ("revenue_90d", "SBS revenue 90d ($)"),
-]
+# Preferred column order for markets — all dashboard fields, stakeholder-friendly labels.
+MARKET_FIELD_LABELS: dict[str, str] = {
+    "market": "Market",
+    "country": "Country",
+    "segment": "Segment",
+    "optimal_headcount": "Ideal headcount",
+    "optimal_headcount_assigned": "Ideal headcount (assigned accounts)",
+    "ideal_pcid": "Ideal PCID (accounts/rep)",
+    "avg_pcid_per_rep": "Avg PCID per rep",
+    "segment_avg_pcid": "Segment avg PCID",
+    "avg_pqr_per_rep": "Avg PQR per rep ($)",
+    "segment_avg_pqr": "Segment avg PQR ($)",
+    "market_pqr_90d": "Market PQR 90d ($)",
+    "rev_vs_pqr_pct": "Rev vs PQR %",
+    "current_reps": "Current reps",
+    "current_avg_book": "Avg PCID per rep",
+    "headcount_gap": "Headcount gap",
+    "headcount_recommendation": "HC recommendation",
+    "reps_too_big": "Reps too big",
+    "reps_too_little": "Reps too little",
+    "splittable_pool": "Splittable PCID pool",
+    "total_grow_slots": "Total grow slots",
+    "pcid_stddev": "PCID std dev",
+    "new_heads_from_split": "New heads from split",
+    "book_action": "Book action (Layer 2)",
+    "split_hire_recommended": "Split hire recommended",
+    "perfect_book_target": "Ideal book size (accounts/rep)",
+    "perfect_book_bucket": "Perfect book bucket",
+    "perfect_book_ceiling": "Perfect book ceiling",
+    "perfect_book_growth_pct": "Perfect book growth %",
+    "assigned_accounts": "Assigned accounts",
+    "revenue_90d": "Revenue 90d ($)",
+    "recommended_action": "Recommended action",
+    "avg_pct_book_built": "FY26 % book built",
+    "avg_fy26_book_score": "FY26 book score",
+    "fy26_target_pct_book_built": "FY26 target % (TBD)",
+    "headroom_accounts": "Headroom accounts",
+    "sbs_whitespace_country": "SBS whitespace (country)",
+    "sbs_whitespace": "SBS whitespace",
+    "sbs_revenue_90d": "SBS revenue 90d ($)",
+    "books_buildable_from_sbs": "Books buildable from SBS",
+    "opp_plateau_book_max": "Opp plateau book max",
+    "opp_plateau_rev_per_job": "Opp plateau $/job",
+    "opp_pipeline_status": "Opp pipeline status",
+    "coverage_inflection_book_max": "Coverage inflection book max",
+    "coverage_at_inflection": "Coverage at inflection",
+    "median_impact_calls_per_account": "Median impact calls/account",
+    "coverage_status": "Coverage status",
+    "summary_status": "Summary status",
+    "summary_primary": "Summary — why (plain English)",
+    "summary_bullets": "Summary — supporting detail",
+    "summary_narrative": "Summary — full narrative",
+}
 
-META_ROWS = [
-    ("updated_at", "Data as of"),
-    ("window", "Revenue window"),
-    ("query", "Source query"),
-    ("exported_at", "Export generated"),
-]
+SUMMARY_FIELD_LABELS: dict[str, str] = {
+    "market": "Market",
+    "country": "Country",
+    "segment": "Segment",
+    "summary_status": "Status",
+    "summary_primary": "Why (plain English)",
+    "summary_bullets": "Supporting detail",
+    "headcount_gap": "Headcount gap",
+    "headcount_recommendation": "HC recommendation",
+    "recommended_action": "Recommended action",
+}
+
+SUMMARY_KEY_ORDER = list(SUMMARY_FIELD_LABELS.keys())
+
+MARKET_KEY_ORDER = list(MARKET_FIELD_LABELS.keys())
+
+BOOK_HEALTH_FIELD_LABELS: dict[str, str] = {
+    "market": "Market",
+    "sales_rep_id": "Sales rep ID",
+    "pcid_count": "PCID count",
+    "pqr_90d": "PQR 90d ($)",
+    "revenue_90d": "Revenue 90d ($)",
+    "ideal_pcid": "Ideal PCID",
+    "vs_ideal_pcid": "Vs ideal PCID",
+    "too_big": "Too big",
+    "too_little": "Too little",
+    "peel_to_ideal": "Peel to ideal",
+    "grow_slots": "Grow slots",
+}
+
+BOOK_HEALTH_KEY_ORDER = list(BOOK_HEALTH_FIELD_LABELS.keys())
+
+SBS_FIELD_LABELS: dict[str, str] = {
+    "country": "Country",
+    "segment": "Segment",
+    "accounts": "SBS accounts",
+    "revenue_90d": "SBS revenue 90d ($)",
+}
+
+SBS_KEY_ORDER = list(SBS_FIELD_LABELS.keys())
 
 
 def market_row(market: dict) -> dict:
     row = dict(market)
     row["market"] = f"{market.get('country', '')}-{market.get('segment', '')}"
-    # Normalize legacy alias
     if row.get("sbs_whitespace_country") is None and row.get("sbs_whitespace") is not None:
         row["sbs_whitespace_country"] = row["sbs_whitespace"]
+    if not row.get("summary_status"):
+        enrich_market(row)
+    if isinstance(row.get("summary_bullets"), list):
+        row["summary_bullets"] = " · ".join(row["summary_bullets"])
     return row
 
 
@@ -96,25 +142,105 @@ def flatten_markets(payload: dict) -> list[dict]:
     return [market_row(m) for m in payload.get("markets", [])]
 
 
-def write_csv(payload: dict, path: Path) -> None:
-    markets = flatten_markets(payload)
-    fieldnames = [key for key, _ in MARKET_COLUMNS]
-    headers = {key: label for key, label in MARKET_COLUMNS}
+def market_column_keys(markets: list[dict]) -> list[str]:
+    seen: set[str] = set()
+    keys: list[str] = []
+    for key in MARKET_KEY_ORDER:
+        if key not in seen:
+            keys.append(key)
+            seen.add(key)
+    for market in markets:
+        for key in sorted(market.keys()):
+            if key not in seen:
+                keys.append(key)
+                seen.add(key)
+    return keys
 
+
+def flatten_book_health(payload: dict) -> list[dict]:
+    rows: list[dict] = []
+    for market_key, market_data in sorted(payload.get("markets", {}).items()):
+        for rep in market_data.get("reps", []):
+            row = {"market": market_key}
+            row.update(rep)
+            rows.append(row)
+    return rows
+
+
+def book_health_column_keys(rows: list[dict]) -> list[str]:
+    seen: set[str] = set()
+    keys: list[str] = []
+    for key in BOOK_HEALTH_KEY_ORDER:
+        if key not in seen:
+            keys.append(key)
+            seen.add(key)
+    for row in rows:
+        for key in sorted(row.keys()):
+            if key not in seen:
+                keys.append(key)
+                seen.add(key)
+    return keys
+
+
+def label_for(key: str, labels: dict[str, str]) -> str:
+    return labels.get(key, key.replace("_", " ").title())
+
+
+def write_csv_rows(
+    rows: list[dict],
+    keys: list[str],
+    labels: dict[str, str],
+    path: Path,
+    entity_name: str,
+) -> None:
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
-        writer.writerow(headers)
-        for row in markets:
-            writer.writerow({k: row.get(k, "") for k in fieldnames})
+        writer = csv.DictWriter(f, fieldnames=keys, extrasaction="ignore")
+        writer.writerow({k: label_for(k, labels) for k in keys})
+        for row in rows:
+            writer.writerow({k: row.get(k, "") for k in keys})
+    print(f"Wrote {len(rows)} {entity_name} to {path}")
 
-    print(f"Wrote {len(markets)} markets to {path}")
+
+def write_markets_csv(payload: dict, path: Path) -> None:
+    markets = flatten_markets(payload)
+    keys = market_column_keys(markets)
+    write_csv_rows(markets, keys, MARKET_FIELD_LABELS, path, "markets")
 
 
-def write_xlsx(payload: dict, path: Path) -> bool:
+def write_book_health_csv(book_health: dict, path: Path) -> None:
+    rows = flatten_book_health(book_health)
+    keys = book_health_column_keys(rows)
+    write_csv_rows(rows, keys, BOOK_HEALTH_FIELD_LABELS, path, "flagged reps")
+
+
+def style_header_row(ws, bold) -> None:
+    for cell in ws[1]:
+        cell.font = bold
+
+
+def append_sheet(wb, title: str, keys: list[str], labels: dict[str, str], rows: list[dict], bold):
+    from openpyxl.utils import get_column_letter
+
+    ws = wb.create_sheet(title)
+    header = [label_for(k, labels) for k in keys]
+    ws.append(header)
+    style_header_row(ws, bold)
+    for row in rows:
+        ws.append([row.get(k) for k in keys])
+    for col_idx, key in enumerate(keys, start=1):
+        label = label_for(key, labels)
+        width = min(max(len(str(label)) + 2, 12), 36)
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+    ws.freeze_panes = "A2"
+    if rows:
+        ws.auto_filter.ref = ws.dimensions
+    return ws
+
+
+def write_xlsx(payload: dict, book_health: dict, path: Path) -> bool:
     try:
         from openpyxl import Workbook
         from openpyxl.styles import Font
-        from openpyxl.utils import get_column_letter
     except ImportError:
         print("openpyxl not installed — skipping .xlsx (pip install openpyxl)")
         return False
@@ -122,51 +248,60 @@ def write_xlsx(payload: dict, path: Path) -> bool:
     wb = Workbook()
     bold = Font(bold=True)
 
-    # --- Markets sheet ---
-    ws = wb.active
-    ws.title = "Markets"
-    keys = [k for k, _ in MARKET_COLUMNS]
-    labels = [label for _, label in MARKET_COLUMNS]
-    ws.append(labels)
-    for cell in ws[1]:
-        cell.font = bold
+    markets = flatten_markets(payload)
+    market_keys = market_column_keys(markets)
+    ws_markets = wb.active
+    ws_markets.title = "Markets"
+    ws_markets.append([label_for(k, MARKET_FIELD_LABELS) for k in market_keys])
+    style_header_row(ws_markets, bold)
+    for market in markets:
+        ws_markets.append([market.get(k) for k in market_keys])
+    from openpyxl.utils import get_column_letter
 
-    for market in flatten_markets(payload):
-        ws.append([market.get(k) for k in keys])
-
-    for col_idx, (_, label) in enumerate(MARKET_COLUMNS, start=1):
+    for col_idx, key in enumerate(market_keys, start=1):
+        label = label_for(key, MARKET_FIELD_LABELS)
         width = min(max(len(str(label)) + 2, 12), 36)
-        ws.column_dimensions[get_column_letter(col_idx)].width = width
-    ws.freeze_panes = "A2"
-    ws.auto_filter.ref = ws.dimensions
+        ws_markets.column_dimensions[get_column_letter(col_idx)].width = width
+    ws_markets.freeze_panes = "A2"
+    ws_markets.auto_filter.ref = ws_markets.dimensions
 
-    # --- SBS sheet ---
-    ws_sbs = wb.create_sheet("SBS whitespace")
-    sbs_keys = [k for k, _ in SBS_COLUMNS]
-    sbs_labels = [label for _, label in SBS_COLUMNS]
-    ws_sbs.append(sbs_labels)
-    for cell in ws_sbs[1]:
-        cell.font = bold
-    for row in payload.get("sbs_whitespace", []):
-        ws_sbs.append([row.get(k) for k in sbs_keys])
-    ws_sbs.freeze_panes = "A2"
+    book_rows = flatten_book_health(book_health)
+    book_keys = book_health_column_keys(book_rows)
+    append_sheet(wb, "Book health (flagged reps)", book_keys, BOOK_HEALTH_FIELD_LABELS, book_rows, bold)
 
-    # --- Metadata sheet ---
+    sbs_rows = payload.get("sbs_whitespace", [])
+    append_sheet(wb, "SBS whitespace", SBS_KEY_ORDER, SBS_FIELD_LABELS, sbs_rows, bold)
+
+    summary_rows = flatten_markets(payload)
+    ws_sum = append_sheet(
+        wb, "Market summaries", SUMMARY_KEY_ORDER, SUMMARY_FIELD_LABELS, summary_rows, bold
+    )
+    ws_sum.column_dimensions["D"].width = 14
+    ws_sum.column_dimensions["E"].width = 72
+    ws_sum.column_dimensions["F"].width = 88
+
     ws_meta = wb.create_sheet("About")
     ws_meta.append(["Field", "Value"])
-    for cell in ws_meta[1]:
-        cell.font = bold
+    style_header_row(ws_meta, bold)
     exported_at = date.today().isoformat()
-    meta = {
-        "updated_at": payload.get("updated_at", ""),
-        "window": payload.get("window", ""),
-        "query": payload.get("query", ""),
-        "exported_at": exported_at,
-    }
-    for key, label in META_ROWS:
-        ws_meta.append([label, meta.get(key, payload.get(key, ""))])
+    meta_rows = [
+        ("Headcount data as of", payload.get("updated_at", "")),
+        ("Revenue window", payload.get("window", "")),
+        ("Headcount source query", payload.get("query", "")),
+        ("Book health data as of", book_health.get("updated_at", "")),
+        ("Book health source query", book_health.get("query", "")),
+        ("Book health note", book_health.get("note", "")),
+        ("Export generated", exported_at),
+        ("Markets in export", len(markets)),
+        ("Flagged reps in export", len(book_rows)),
+        ("SBS whitespace rows", len(sbs_rows)),
+    ]
+    for label, value in meta_rows:
+        ws_meta.append([label, value])
     ws_meta.append([])
     ws_meta.append(["AMER focus markets", ", ".join(payload.get("amer_markets", []))])
+    ws_meta.append([])
+    ws_meta.append(["Segment note", "Segment = company_size_segment (S/M/L/XL), not sales segment (M/UMM/L/NAM). Summaries use existing query 16 fields."])
     ws_meta.column_dimensions["A"].width = 28
     ws_meta.column_dimensions["B"].width = 72
 
@@ -175,17 +310,26 @@ def write_xlsx(payload: dict, path: Path) -> bool:
     return True
 
 
-def main() -> None:
-    in_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_IN
-    if not in_path.is_file():
-        print(f"Missing input: {in_path}")
+def load_json(path: Path) -> dict:
+    if not path.is_file():
+        print(f"Missing input: {path}")
         sys.exit(1)
+    return json.loads(path.read_text(encoding="utf-8"))
 
-    payload = json.loads(in_path.read_text(encoding="utf-8"))
+
+def main() -> None:
+    hc_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_HC_IN
+    bh_path = DEFAULT_BH_IN
+    if len(sys.argv) > 2:
+        bh_path = Path(sys.argv[2])
+
+    payload = load_json(hc_path)
+    book_health = load_json(bh_path)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    write_csv(payload, CSV_OUT)
-    write_xlsx(payload, XLSX_OUT)
+    write_markets_csv(payload, MARKETS_CSV_OUT)
+    write_book_health_csv(book_health, BOOK_HEALTH_CSV_OUT)
+    write_xlsx(payload, book_health, XLSX_OUT)
 
 
 if __name__ == "__main__":

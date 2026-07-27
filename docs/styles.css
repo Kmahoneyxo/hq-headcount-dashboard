@@ -232,6 +232,89 @@ h2 {
   margin-bottom: 12px;
 }
 
+.market-summary {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.market-summary.summary-over {
+  border-color: var(--optimize);
+  background: linear-gradient(180deg, #2a2218 0%, var(--surface-2) 100%);
+}
+
+.market-summary.summary-under {
+  border-color: var(--hire);
+  background: linear-gradient(180deg, #152a22 0%, var(--surface-2) 100%);
+}
+
+.market-summary.summary-target {
+  border-color: var(--hold);
+}
+
+.market-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.market-summary-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--border);
+  color: var(--text);
+}
+
+.summary-over .market-summary-badge {
+  background: var(--optimize);
+  color: #1a1208;
+}
+
+.summary-under .market-summary-badge {
+  background: var(--hire);
+  color: #0a1a12;
+}
+
+.summary-target .market-summary-badge {
+  background: var(--hold);
+  color: #0a1420;
+}
+
+.market-summary-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.market-summary-primary {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.market-summary-bullets {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.market-summary-bullets li {
+  margin-bottom: 4px;
+}
+
+.market-summary-bullets li:last-child {
+  margin-bottom: 0;
+}
+
 .lookup-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

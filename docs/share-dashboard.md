@@ -59,12 +59,13 @@ This writes:
 
 | File | Use |
 |------|-----|
-| `docs/data/headcount-dashboard.xlsx` | Excel — 3 sheets: **Markets**, **SBS whitespace**, **About** |
-| `docs/data/headcount-dashboard.csv` | CSV — markets only (opens in Excel or Google Sheets) |
+| `docs/data/headcount-dashboard.xlsx` | **Full download** — 5 sheets: **Markets** (all fields + summary columns), **Book health (flagged reps)**, **SBS whitespace**, **Market summaries** (Over/Under HC + why), **About** |
+| `docs/data/headcount-dashboard.csv` | Markets only — all columns from `headcount.json` |
+| `docs/data/headcount-dashboard-book-health.csv` | Flagged reps only — flattened from `book_health.json` |
 
-The live dashboard also has **Download Excel** / **Download CSV** buttons in the header (same files).
+The live dashboard header links to the Excel workbook (full data) and the markets CSV. Use Excel for the complete export including rep-level book health.
 
-**Include in weekly refresh:** run export script after `json-from-mcp-results.py`, then commit both JSON + xlsx + csv.
+**Include in weekly refresh:** run export script after updating `headcount.json` and `book_health.json`, then commit JSON + xlsx + both CSVs.
 
 ### Google Sheet (manual import)
 

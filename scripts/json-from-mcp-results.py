@@ -14,6 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "data" / "headcount.json"
 AMER = ["US", "CA", "UK", "DACH", "BNL"]
 
+sys.path.insert(0, str(ROOT / "scripts"))
+from build_market_summary import enrich_market  # noqa: E402
+
 ENRICHMENT_KEYS = [
     "sbs_whitespace_country",
     "sbs_revenue_90d",
@@ -149,6 +152,7 @@ def main() -> None:
             m["books_buildable_from_sbs"] = int(sbs // target)
         if m.get("sbs_whitespace_country") is not None:
             m["sbs_whitespace"] = m["sbs_whitespace_country"]
+        enrich_market(m)
     sbs = [
         {
             "country": m["country"],
