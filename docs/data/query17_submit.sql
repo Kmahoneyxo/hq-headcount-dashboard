@@ -1,8 +1,3 @@
--- Rep-level book profile (Layer 1) — flagged reps only for book_health.json
--- PQR = prior 90d revenue (20260128–20260426) · Too big = segment avg PCID/PQR + outcome signal
--- Segment = GTM sales segment from current_sales_team_name (see sql/_sales_segment_v2.sql)
--- Run on Quest prod; merge via scripts/merge-book-health.py
-
 WITH rep_meta AS (
   SELECT sales_rep_id, MAX(sales_market) AS market
   FROM datalake.sales_data_strategy_dsa.current_parent_rep_assignment

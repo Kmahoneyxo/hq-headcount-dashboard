@@ -174,10 +174,14 @@ def main() -> None:
     }
 
     OUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    us_m = next((m for m in markets if m.get("country") == "US" and m.get("segment") == "M"), None)
+    us_segments = {
+        m["segment"]: m.get("current_reps")
+        for m in markets
+        if m.get("country") == "US" and m.get("segment") in ("M", "UMM", "ACC")
+    }
     print(f"Wrote {len(markets)} markets to {OUT}")
-    if us_m:
-        print(f"US-M perfect_book: {us_m.get('perfect_book_bucket')} target={us_m.get('perfect_book_target')}")
+    if us_segments:
+        print("US segments:", ", ".join(f"{k}={v} reps" for k, v in sorted(us_segments.items())))
 
     import subprocess
     export_script = ROOT / "scripts" / "export-dashboard-data.py"

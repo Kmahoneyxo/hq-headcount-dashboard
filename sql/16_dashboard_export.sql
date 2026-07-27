@@ -1,5 +1,6 @@
 -- Dashboard export: headcount + FY26 book score + opp pipeline + SBS + coverage
--- Combines sql/12–15 into one row per country × segment for headcount.json
+-- Combines sql/12–15 into one row per country × sales_segment for headcount.json
+-- Segment = GTM sales segment from current_sales_team_name (see sql/_sales_segment_v2.sql)
 -- Run this (or Quest schedule) to refresh docs/data/headcount.json
 -- See sql/16_dashboard_export.sql — supersedes sql/12 for full dashboard fields
 
@@ -23,8 +24,21 @@ rep_coverage AS (
 
 rep_level AS (
   SELECT
-    p.company_size_segment AS segment,
-    COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1)) AS country,
+    CASE
+      WHEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-([A-Za-z]+)-', 3) = 'ACCDE' THEN 'ACC'
+      WHEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-', 2) = 'MUpper' THEN 'UMM'
+      WHEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-', 2)
+        IN ('M', 'L', 'NAM', 'DCA', 'ISDCA', 'NAMDCA')
+        THEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-', 2)
+    END AS segment,
+    CASE
+      WHEN COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1))
+        IN ('DE', 'AT', 'CH') THEN 'DACH'
+      WHEN COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1))
+        IN ('BE', 'NL', 'LU') THEN 'BNL'
+      WHEN COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1)) = 'GB' THEN 'UK'
+      ELSE COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1))
+    END AS country,
     j.current_sales_rep_id AS sales_rep_id,
     COUNT(DISTINCT j.current_parent_company_id) AS accounts_per_rep,
     COUNT(DISTINCT CASE WHEN j.dl__yyyymmdd_cst BETWEEN '20260427' AND '20260725'
@@ -35,8 +49,6 @@ rep_level AS (
       THEN j.cpc_revenue_millicents + j.cpa_revenue_millicents ELSE 0 END) / 100000.0 AS revenue_prior,
     MAX(cov.impact_calls_90d) AS impact_calls_90d
   FROM datalake.imhotep_iceberg.jobactivitymetrics j
-  JOIN datalake.scss.client_attributes_dim_parent_attributes_current p
-    ON j.current_parent_company_id = p.parent_company_id
   LEFT JOIN rep_meta m ON j.current_sales_rep_id = m.sales_rep_id
   LEFT JOIN rep_coverage cov ON j.current_sales_rep_id = cov.sales_rep_id
   WHERE j.dl__yyyymmdd_cst BETWEEN '20260128' AND '20260725'
@@ -44,6 +56,13 @@ rep_level AS (
     AND j.current_sales_team_name <> 'None'
     AND j.current_sales_rep_id IS NOT NULL
     AND COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1), 'XX') <> 'JP'
+    AND CASE
+      WHEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-([A-Za-z]+)-', 3) = 'ACCDE' THEN 'ACC'
+      WHEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-', 2) = 'MUpper' THEN 'UMM'
+      WHEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-', 2)
+        IN ('M', 'L', 'NAM', 'DCA', 'ISDCA', 'NAMDCA')
+        THEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-', 2)
+    END IS NOT NULL
   GROUP BY 1, 2, 3
 ),
 
@@ -311,9 +330,9 @@ market_book_health AS (
   GROUP BY 1, 2
 ),
 
+-- SBS: country-level only (unassigned accounts have no sales segment)
 sbs_country AS (
   SELECT
-    p.company_size_segment AS segment,
     CASE
       WHEN COALESCE(p.hq_country, p.billing_country, 'XX') IN ('DE', 'AT', 'CH') THEN 'DACH'
       WHEN COALESCE(p.hq_country, p.billing_country, 'XX') IN ('BE', 'NL', 'LU') THEN 'BNL'
@@ -327,7 +346,7 @@ sbs_country AS (
     ON j.current_parent_company_id = p.parent_company_id
   WHERE j.dl__yyyymmdd_cst BETWEEN '20260427' AND '20260725'
     AND (j.current_sales_team_name IS NULL OR j.current_sales_team_name = 'None')
-  GROUP BY 1, 2
+  GROUP BY 1
 ),
 
 latest_book_period AS (
@@ -347,7 +366,7 @@ rep_book_score AS (
 
 book_score_market AS (
   SELECT rf.segment,
-    CASE WHEN rf.country IN ('DE', 'AT', 'CH') THEN 'DACH' ELSE rf.country END AS country,
+    rf.country,
     COUNT(DISTINCT rf.sales_rep_id) AS reps_scored,
     ROUND(AVG(bs.fy26_book_score), 3) AS avg_fy26_book_score,
     ROUND(AVG(bs.pct_book_built), 1) AS avg_pct_book_built
@@ -405,7 +424,7 @@ base AS (
   FROM perfect_book pb
   JOIN market_accounts ma ON pb.segment = ma.segment AND pb.country = ma.country
   LEFT JOIN market_book_health mbh ON pb.segment = mbh.segment AND pb.country = mbh.country
-  LEFT JOIN sbs_country sc ON pb.segment = sc.segment AND pb.country = sc.country
+  LEFT JOIN sbs_country sc ON pb.country = sc.country
   LEFT JOIN book_score_market bsm ON pb.segment = bsm.segment AND pb.country = bsm.country
   LEFT JOIN opp_plateau op ON pb.segment = op.segment AND pb.country = op.country
   LEFT JOIN coverage_inflection ci ON pb.segment = ci.segment AND pb.country = ci.country

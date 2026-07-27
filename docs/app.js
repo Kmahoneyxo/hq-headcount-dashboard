@@ -396,7 +396,7 @@ function renderKpis() {
 }
 
 function renderFilters() {
-  const segments = ["all", "S", "M", "L", "XL"];
+  const segments = ["all", "M", "UMM", "ACC", "L", "NAM", "DCA", "ISDCA", "NAMDCA"];
   const recs = ["all", "Hire", "Hold", "Optimize", "Do Not Hire"];
   const regions = [
     { id: "amer", label: "AMER focus" },

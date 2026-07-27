@@ -1,0 +1,30 @@
+-- SQL v2: sales segment + market country (shared by sql/16, sql/17)
+-- Grain: country × sales_segment — one row per rep from current_sales_team_name
+-- Excludes S/XL (company size) and Agency/unknown team prefixes
+--
+-- sales_segment:
+--   MUpper → UMM, ACCDE → ACC
+--   M, L, NAM, DCA, ISDCA, NAMDCA pass through
+--   Applies to all markets: ^CC-SEG- pattern (US, CA, UK, DE, NL, FR, IT, ES, …)
+--
+-- market_country (unified rollup):
+--   DE/AT/CH → DACH, BE/NL/LU → BNL, GB → UK
+--   else COALESCE(DSA sales_market, team prefix)
+
+-- Paste into rep_level SELECT list:
+--
+--   CASE
+--     WHEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-([A-Za-z]+)-', 3) = 'ACCDE' THEN 'ACC'
+--     WHEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-', 2) = 'MUpper' THEN 'UMM'
+--     WHEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-', 2)
+--       IN ('M', 'L', 'NAM', 'DCA', 'ISDCA', 'NAMDCA')
+--       THEN REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-([A-Za-z]+)-', 2)
+--   END AS segment,
+--   CASE
+--     WHEN COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1))
+--       IN ('DE', 'AT', 'CH') THEN 'DACH'
+--     WHEN COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1))
+--       IN ('BE', 'NL', 'LU') THEN 'BNL'
+--     WHEN COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1)) = 'GB' THEN 'UK'
+--     ELSE COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1))
+--   END AS country,

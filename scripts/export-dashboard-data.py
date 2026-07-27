@@ -301,7 +301,7 @@ def write_xlsx(payload: dict, book_health: dict, path: Path) -> bool:
     ws_meta.append([])
     ws_meta.append(["AMER focus markets", ", ".join(payload.get("amer_markets", []))])
     ws_meta.append([])
-    ws_meta.append(["Segment note", "Segment = company_size_segment (S/M/L/XL), not sales segment (M/UMM/L/NAM). Summaries use existing query 16 fields."])
+    ws_meta.append(["Segment note", "Segment = GTM sales segment from team name (M, UMM, ACC, L, NAM, DCA). Grain: country × sales_segment. SBS is country-level only."])
     ws_meta.column_dimensions["A"].width = 28
     ws_meta.column_dimensions["B"].width = 72
 

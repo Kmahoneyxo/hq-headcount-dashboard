@@ -31,7 +31,7 @@
 
   <main class="container">
     <div class="preview-banner" role="alert">
-      <strong>Preview data</strong> — segment = company size (S/M/L/XL), not sales segment (M/UMM/ACC/NAM). Do not sum reps across rows. SQL v2 in progress.
+      <strong>SQL v2</strong> — segment = GTM sales segment from team name (M, UMM, ACC, L, NAM, DCA). One rep per segment row; safe to sum within a market. SBS is country-level only.
     </div>
 
     <section class="lookup-panel" id="lookup-panel">
@@ -49,10 +49,14 @@
         <label class="lookup-field">
           <span>Segment</span>
           <select id="lookup-segment" class="select">
-            <option value="S">S</option>
             <option value="M" selected>M</option>
+            <option value="UMM">UMM</option>
+            <option value="ACC">ACC</option>
             <option value="L">L</option>
-            <option value="XL">XL</option>
+            <option value="NAM">NAM</option>
+            <option value="DCA">DCA</option>
+            <option value="ISDCA">ISDCA</option>
+            <option value="NAMDCA">NAMDCA</option>
           </select>
         </label>
       </div>
