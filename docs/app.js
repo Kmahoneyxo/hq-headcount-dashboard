@@ -2,6 +2,7 @@ let payload = null;
 let config = { refresh_api: null, live_refresh: false };
 let segmentFilter = "all";
 let recFilter = "all";
+let regionFilter = "amer";
 let hideJapan = true;
 let sortBy = "revenue";
 let gapChart = null;
@@ -10,6 +11,8 @@ let sbsChart = null;
 let bookScoreChart = null;
 let lastLoadedAt = null;
 let isRefreshing = false;
+
+const AMER_MARKETS = ["US", "CA", "UK", "DACH", "BNL"];
 
 const REC_COLORS = {
   Hire: "#3ecf8e",
@@ -60,7 +63,7 @@ async function refreshData() {
   const previousRefreshedAt = payload?.refreshed_at;
   try {
     if (config.refresh_api) {
-      showToast("Running query 10 against warehouse…", "warn");
+      showToast("Running query 16 against warehouse…", "warn");
       const res = await fetch(config.refresh_api, { method: "POST", cache: "no-store" });
       const body = await res.json();
       if (!res.ok || !body.ok) {
@@ -87,7 +90,7 @@ async function refreshData() {
       );
     } else {
       showToast(
-        `Already on latest snapshot (${payload.updated_at}). For warehouse refresh, run: python3 scripts/dashboard-server.py`,
+        `Already on latest snapshot (${payload.updated_at}). For warehouse refresh, run python3 scripts/dashboard-server.py`,
         "warn",
       );
     }
@@ -99,6 +102,7 @@ async function refreshData() {
 }
 
 function fmtMoney(n) {
+  if (n == null) return "—";
   if (n >= 1e9) return "$" + (n / 1e9).toFixed(1) + "B";
   if (n >= 1e6) return "$" + Math.round(n / 1e6) + "M";
   if (n >= 1e3) return "$" + Math.round(n / 1e3) + "K";
@@ -106,6 +110,7 @@ function fmtMoney(n) {
 }
 
 function fmtNum(n) {
+  if (n == null) return "—";
   return Number(n).toLocaleString("en-US");
 }
 
@@ -113,10 +118,15 @@ function isJapan(m) {
   return m.country === "JP";
 }
 
+function amerMarkets() {
+  return payload?.amer_markets || AMER_MARKETS;
+}
+
 function filteredMarkets() {
   return payload.markets
     .filter((m) => {
       if (hideJapan && isJapan(m)) return false;
+      if (regionFilter === "amer" && !amerMarkets().includes(m.country)) return false;
       if (segmentFilter !== "all" && m.segment !== segmentFilter) return false;
       if (recFilter !== "all" && m.headcount_recommendation !== recFilter) return false;
       return true;
@@ -132,22 +142,25 @@ function renderMeta() {
   const el = document.getElementById("meta-line");
   const loaded = lastLoadedAt ? ` · Browser loaded ${lastLoadedAt.toLocaleTimeString()}` : "";
   const live = config.live_refresh ? " · Live refresh on" : "";
+  const region = regionFilter === "amer" ? " · AMER focus" : " · Global";
   el.textContent =
-    `Perfect book + optimal headcount · ${payload.window} · Snapshot ${payload.updated_at}${loaded}${live} · ${payload.markets.length} markets`;
+    `Perfect book + optimal headcount · ${payload.window} · Snapshot ${payload.updated_at}${region}${loaded}${live} · ${filteredMarkets().length} markets shown`;
   document.getElementById("refresh-note").textContent = config.refresh_api
-    ? "Refresh pulls query 10 from the warehouse when dashboard-server.py is running with QUEST_AUTH_TOKEN."
-    : `On GitHub Pages, Refresh reloads the latest JSON file. For warehouse pull, run python3 scripts/dashboard-server.py locally.`;
+    ? "Refresh pulls query 16 from the warehouse when dashboard-server.py is running with QUEST_AUTH_TOKEN."
+    : "On GitHub Pages, Refresh reloads the latest JSON file. Weekly Quest export → csv-to-dashboard-json.py → push.";
 }
 
 function renderHeadline() {
   const markets = filteredMarkets();
   const hire = markets.filter((m) => m.headcount_recommendation === "Hire");
   const optimize = markets.filter((m) => m.headcount_recommendation === "Optimize");
-  const hireList = hire.slice(0, 6).map((m) => `${m.country}-${m.segment}`).join(", ");
+  const buildSbs = markets.filter((m) => (m.recommended_action || "").includes("Build"));
+  const hireList = hire.slice(0, 5).map((m) => `${m.country}-${m.segment}`).join(", ");
   document.getElementById("headline").innerHTML =
-    `<strong>Headline:</strong> ${optimize.length} markets show Optimize vs ${hire.length} Hire. ` +
-    `Most top revenue markets are over-staffed relative to optimal book size — consolidate before net-new hires.` +
-    (hire.length ? ` <strong>Hire:</strong> ${hireList}${hire.length > 6 ? "…" : ""}.` : "");
+    `<strong>Headline:</strong> ${optimize.length} markets Optimize vs ${hire.length} Hire` +
+    (buildSbs.length ? ` · ${buildSbs.length} can build new books from country SBS` : "") +
+    `. Compare data perfect book vs FY26 policy score per row.` +
+    (hire.length ? ` <strong>Hire:</strong> ${hireList}${hire.length > 5 ? "…" : ""}.` : "");
 }
 
 function renderKpis() {
@@ -155,17 +168,28 @@ function renderKpis() {
   const hire = markets.filter((m) => m.headcount_recommendation === "Hire");
   const over = markets.reduce((s, m) => s + Math.max(0, m.headcount_gap), 0);
   const under = markets.reduce((s, m) => s + Math.abs(Math.min(0, m.headcount_gap)), 0);
+  const headroom = markets.reduce((s, m) => s + (m.headroom_accounts || 0), 0);
   document.getElementById("kpis").innerHTML = `
     <div class="kpi"><div class="kpi-value">${markets.length}</div><div class="kpi-label">Markets shown</div></div>
     <div class="kpi hire"><div class="kpi-value">${hire.length}</div><div class="kpi-label">Hire markets</div></div>
-    <div class="kpi optimize"><div class="kpi-value">+${fmtNum(over)}</div><div class="kpi-label">Over-staffed reps (Optimize)</div></div>
-    <div class="kpi hire"><div class="kpi-value">−${fmtNum(under)}</div><div class="kpi-label">Under-staffed reps (Hire)</div></div>
+    <div class="kpi optimize"><div class="kpi-value">+${fmtNum(over)}</div><div class="kpi-label">Over-staffed reps</div></div>
+    <div class="kpi hire"><div class="kpi-value">${fmtNum(headroom)}</div><div class="kpi-label">Headroom accounts</div></div>
   `;
 }
 
 function renderFilters() {
   const segments = ["all", "S", "M", "L", "XL"];
   const recs = ["all", "Hire", "Hold", "Optimize", "Do Not Hire"];
+  const regions = [
+    { id: "amer", label: "AMER focus" },
+    { id: "global", label: "Global" },
+  ];
+  document.getElementById("region-filters").innerHTML = regions
+    .map(
+      (r) =>
+        `<button class="chip${regionFilter === r.id ? " active" : ""}" data-region="${r.id}">${r.label}</button>`,
+    )
+    .join("");
   document.getElementById("segment-filters").innerHTML = segments
     .map(
       (s) =>
@@ -182,6 +206,11 @@ function renderFilters() {
     .join("");
 }
 
+function bookGapPct(m) {
+  if (!m.perfect_book_target) return null;
+  return Math.round((m.current_avg_book / m.perfect_book_target) * 100);
+}
+
 function renderTable() {
   const tbody = document.getElementById("market-body");
   tbody.innerHTML = filteredMarkets()
@@ -189,16 +218,25 @@ function renderTable() {
       const gap = m.headcount_gap;
       const gapStr = gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
       const bucket = (m.perfect_book_bucket || "").replace(/^\d+:\s*/, "");
+      const gapPct = bookGapPct(m);
+      const fy26Target = m.fy26_target_pct_book_built;
+      const built = m.avg_pct_book_built;
+      const fy26Cell =
+        built != null
+          ? `${built.toFixed(1)}%${fy26Target != null ? " / " + fy26Target + "% tgt" : ""}`
+          : "—";
       return `<tr>
-        <td>${m.country}-${m.segment}</td>
-        <td class="num">${fmtMoney(m.revenue_90d)}</td>
-        <td class="num">${fmtNum(m.current_reps)}</td>
+        <td class="sticky-col">${m.country}-${m.segment}</td>
         <td class="num">${fmtNum(m.current_avg_book)}</td>
-        <td class="num">${bucket} (${fmtNum(m.perfect_book_target)})</td>
-        <td class="num">${m.avg_fy26_book_score != null ? m.avg_fy26_book_score.toFixed(2) : "—"}</td>
-        <td class="num">${m.avg_pct_book_built != null ? m.avg_pct_book_built + "%" : "—"}</td>
+        <td class="num">${bucket} (${fmtNum(m.perfect_book_target)})${gapPct != null ? `<br><span class="sub">${gapPct}% of perfect</span>` : ""}</td>
         <td class="num">${fmtNum(m.optimal_headcount)}</td>
         <td class="num">${gapStr}</td>
+        <td class="num">${fy26Cell}</td>
+        <td class="num">${fmtNum(m.headroom_accounts)}</td>
+        <td class="num">${fmtNum(m.sbs_whitespace_country ?? m.sbs_whitespace)}</td>
+        <td><span class="status status-${(m.opp_pipeline_status || "unknown").toLowerCase()}">${m.opp_pipeline_status || "—"}</span></td>
+        <td><span class="status status-${(m.coverage_status || "unknown").toLowerCase()}">${m.coverage_status || "—"}</span></td>
+        <td class="action-cell">${m.recommended_action || m.book_score_action || "—"}</td>
         <td><span class="rec rec-${m.headcount_recommendation.replace(/ /g, "\\ ")}">${m.headcount_recommendation}</span></td>
       </tr>`;
     })
@@ -228,6 +266,7 @@ function renderGapChart() {
     options: {
       indexAxis: "y",
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         x: {
@@ -235,7 +274,7 @@ function renderGapChart() {
           ticks: { color: "#9aa3b5" },
           grid: { color: "#2a3040" },
         },
-        y: { ticks: { color: "#9aa3b5" }, grid: { display: false } },
+        y: { ticks: { color: "#9aa3b5", font: { size: 11 } }, grid: { display: false } },
       },
     },
   });
@@ -243,11 +282,12 @@ function renderGapChart() {
 
 function renderRecChart() {
   const markets = filteredMarkets();
-  const counts = { Hire: 0, Optimize: 0, Hold: 0, "Do Not Hire": 0 };
+  const counts = {};
   markets.forEach((m) => {
-    counts[m.headcount_recommendation] = (counts[m.headcount_recommendation] || 0) + 1;
+    const key = m.recommended_action || m.headcount_recommendation;
+    counts[key] = (counts[key] || 0) + 1;
   });
-  const labels = Object.keys(counts).filter((k) => counts[k] > 0);
+  const labels = Object.keys(counts).slice(0, 6);
   const ctx = document.getElementById("rec-chart");
   if (recChart) recChart.destroy();
   recChart = new Chart(ctx, {
@@ -257,14 +297,15 @@ function renderRecChart() {
       datasets: [
         {
           data: labels.map((l) => counts[l]),
-          backgroundColor: labels.map((l) => REC_COLORS[l]),
+          backgroundColor: ["#4c8bf5", "#3ecf8e", "#f5a623", "#6eb5ff", "#f07178", "#9aa3b5"],
         },
       ],
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
-        legend: { position: "bottom", labels: { color: "#9aa3b5", boxWidth: 12 } },
+        legend: { position: "bottom", labels: { color: "#9aa3b5", boxWidth: 10, font: { size: 10 } } },
       },
     },
   });
@@ -272,30 +313,34 @@ function renderRecChart() {
 
 function renderSbsChart() {
   const ctx = document.getElementById("sbs-chart");
-  const rows = payload.sbs_whitespace || [];
+  const markets = filteredMarkets().filter((m) => (m.sbs_whitespace_country ?? m.sbs_whitespace) > 0);
+  const rows = markets.length
+    ? markets.slice(0, 10)
+    : (payload.sbs_whitespace || []).slice(0, 10);
   if (sbsChart) sbsChart.destroy();
   sbsChart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: rows.map((r) => r.segment),
+      labels: rows.map((r) => (r.country ? `${r.country}-${r.segment}` : r.segment)),
       datasets: [
         {
-          label: "Unassigned accounts",
-          data: rows.map((r) => r.accounts),
+          label: "SBS accounts (country × segment)",
+          data: rows.map((r) => r.sbs_whitespace_country ?? r.accounts ?? r.sbs_whitespace),
           backgroundColor: "#4c8bf5",
         },
       ],
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         y: {
-          title: { display: true, text: "Accounts", color: "#9aa3b5" },
+          title: { display: true, text: "Unassigned accounts", color: "#9aa3b5" },
           ticks: { color: "#9aa3b5" },
           grid: { color: "#2a3040" },
         },
-        x: { ticks: { color: "#9aa3b5" }, grid: { display: false } },
+        x: { ticks: { color: "#9aa3b5", font: { size: 10 } }, grid: { display: false } },
       },
     },
   });
@@ -316,23 +361,22 @@ function renderBookScoreChart() {
       labels: markets.map((m) => `${m.country}-${m.segment}`),
       datasets: [
         {
-          label: "FY26 % book built",
+          label: "FY26 % book built (policy)",
           data: markets.map((m) => m.avg_pct_book_built),
           backgroundColor: "#4c8bf5",
         },
         {
-          label: "Book size vs perfect (%)",
-          data: markets.map((m) =>
-            Math.round((m.current_avg_book / m.perfect_book_target) * 100),
-          ),
+          label: "Avg book vs data perfect (%)",
+          data: markets.map((m) => bookGapPct(m)),
           backgroundColor: "#f5a623",
         },
       ],
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
-        legend: { labels: { color: "#9aa3b5" } },
+        legend: { labels: { color: "#9aa3b5", font: { size: 11 } } },
       },
       scales: {
         y: {
@@ -340,7 +384,7 @@ function renderBookScoreChart() {
           ticks: { color: "#9aa3b5" },
           grid: { color: "#2a3040" },
         },
-        x: { ticks: { color: "#9aa3b5" }, grid: { display: false } },
+        x: { ticks: { color: "#9aa3b5", font: { size: 10 } }, grid: { display: false } },
       },
     },
   });
@@ -368,6 +412,12 @@ function bindEvents() {
     renderAll();
   });
   document.getElementById("refresh-btn").addEventListener("click", refreshData);
+  document.getElementById("region-filters").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-region]");
+    if (!btn) return;
+    regionFilter = btn.dataset.region;
+    renderAll();
+  });
   document.getElementById("segment-filters").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-segment]");
     if (!btn) return;

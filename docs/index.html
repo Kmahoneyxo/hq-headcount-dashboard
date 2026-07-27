@@ -33,6 +33,7 @@
     <section class="kpi-grid" id="kpis"></section>
 
     <section class="filters">
+      <div class="filter-group" id="region-filters"></div>
       <div class="filter-group" id="segment-filters"></div>
       <div class="filter-group" id="rec-filters"></div>
       <select id="sort-by" class="select">
@@ -46,17 +47,23 @@
       <div class="panel">
         <h2>Headcount gap by market</h2>
         <p class="caption">Current reps minus optimal headcount (reps). Positive = over-staffed.</p>
-        <canvas id="gap-chart" height="320"></canvas>
+        <div class="chart-panel">
+          <canvas id="gap-chart"></canvas>
+        </div>
       </div>
       <div class="panel">
         <h2>Book Building FY26 vs data perfect book</h2>
         <p class="caption">FY26 score from sales_book_summary_v2 (Book Building FY26 flags). Compare policy book build % to data-derived perfect book target.</p>
-        <canvas id="book-score-chart" height="220"></canvas>
+        <div class="chart-panel chart-panel-sm">
+          <canvas id="book-score-chart"></canvas>
+        </div>
       </div>
       <div class="panel panel-narrow">
         <h2>Recommendations</h2>
         <p class="caption">Filtered market count by action</p>
-        <canvas id="rec-chart" height="220"></canvas>
+        <div class="chart-panel chart-panel-sm">
+          <canvas id="rec-chart"></canvas>
+        </div>
       </div>
     </section>
 
@@ -67,16 +74,18 @@
         <table id="market-table">
           <thead>
             <tr>
-              <th>Market</th>
-              <th>Rev (90d)</th>
-              <th>Reps</th>
-              <th>Avg book</th>
-              <th>Perfect book</th>
-              <th>FY26 score</th>
-              <th>% built</th>
-              <th>Optimal HC</th>
-              <th>Gap</th>
-              <th>Rec</th>
+              <th class="sticky-col">Market</th>
+              <th class="num">Avg book</th>
+              <th class="num">Perfect book</th>
+              <th class="num">Optimal HC</th>
+              <th class="num">Gap</th>
+              <th class="num">FY26 % built</th>
+              <th class="num">Headroom</th>
+              <th class="num">SBS pool</th>
+              <th>$/job</th>
+              <th>Coverage</th>
+              <th>Action</th>
+              <th>HC rec</th>
             </tr>
           </thead>
           <tbody id="market-body"></tbody>
@@ -86,9 +95,11 @@
 
     <section class="charts-grid">
       <div class="panel">
-        <h2>SBS whitespace (unassigned, 90d)</h2>
-        <p class="caption">Segment-global pool — not country-specific</p>
-        <canvas id="sbs-chart" height="180"></canvas>
+        <h2>SBS whitespace by country × segment</h2>
+        <p class="caption">Unassigned accounts (team None) · hq_country mapped to market</p>
+        <div class="chart-panel chart-panel-sm">
+          <canvas id="sbs-chart"></canvas>
+        </div>
       </div>
       <div class="panel">
         <h2>How to read this</h2>
@@ -104,7 +115,7 @@
   </main>
 
   <footer class="footer">
-    <p>HQ Headcount Dashboard · Query 10 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a></p>
+    <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a></p>
   </footer>
 
   <script src="app.js"></script>

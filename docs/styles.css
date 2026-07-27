@@ -225,6 +225,62 @@ h2 {
   .charts-grid { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 640px) {
+  .header-inner { padding: 12px 14px; }
+  h1 { font-size: 1.15rem; }
+  .container { padding: 14px; gap: 14px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .table-wrap { max-height: none; }
+  th, td { padding: 8px 10px; font-size: 0.78rem; }
+  .action-cell { white-space: normal; min-width: 120px; max-width: 160px; }
+}
+
+.chart-panel {
+  position: relative;
+  height: 280px;
+}
+
+.chart-panel-sm {
+  height: 220px;
+}
+
+.sub {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+
+th.sticky-col {
+  background: var(--surface-2);
+  z-index: 2;
+}
+
+.status {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.status-growing { background: #1a3d2e; color: var(--hire); }
+.status-plateaued { background: #3d3018; color: var(--optimize); }
+.status-ok { background: #1a3d2e; color: var(--hire); }
+.status-declining { background: #3d1f22; color: var(--dnh); }
+.status-unknown { background: var(--surface-2); color: var(--muted); }
+
+.action-cell {
+  font-size: 0.78rem;
+  color: #c8d8f0;
+  max-width: 200px;
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);

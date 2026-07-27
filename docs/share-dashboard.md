@@ -27,24 +27,32 @@ Send that URL to Sales Ops / HQ. Anyone with the link can view it.
 
 ## How data stays live
 
-The dashboard reads `dashboard/data/headcount.json`. That file is produced by **query 10**:
+The dashboard reads `docs/data/headcount.json`. That file is produced by **query 16**:
 
-`sql/10_perfect_book_headcount_country_segment.sql`
+`sql/16_dashboard_export.sql`
+
+(Combines perfect book, FY26 score, opp pipeline, country SBS, and coverage.)
 
 ### Refresh weekly (recommended)
 
-In Cursor with **dp-mcp** connected, ask:
+In Cursor with **dp-mcp** connected:
 
-> Run sql/10_perfect_book_headcount_country_segment.sql, export JSON, and update dashboard/data/headcount.json
+> Run sql/16_dashboard_export.sql, export JSON, and update docs/data/headcount.json
 
-Then commit and push to `main`. GitHub Pages redeploys in ~1 minute.
+Or:
+
+```bash
+python3 scripts/json-from-mcp-results.py docs/data/query16_results.json
+```
+
+Then commit and push to `cursor/optimal-book-base-dataset-v1`. GitHub Pages redeploys in ~1 minute.
 
 ### Refresh from Quest / iDash
 
-1. Save query 10 as a Quest report in iDash.
+1. Save query 16 as a Quest report in iDash.
 2. Run on a schedule (weekly after JAM partition updates).
 3. Export results as JSON/CSV.
-4. Run `python3 scripts/csv-to-dashboard-json.py export.csv`
+4. Run `python3 scripts/csv-to-dashboard-json.py export.csv` (CSV) or `python3 scripts/json-from-mcp-results.py export.json` (JSON).
 5. Commit + push.
 
 ---

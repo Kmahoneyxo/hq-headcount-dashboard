@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""Convert query 10 CSV export to docs/data/headcount.json.
+"""Convert query 16 CSV export to docs/data/headcount.json.
 
 Usage:
   python3 scripts/csv-to-dashboard-json.py export.csv
 
-CSV columns (from query 10):
-  segment, country, perfect_book_bucket, perfect_book_target, perfect_book_growth_pct,
-  current_reps, current_avg_book, revenue_90d, optimal_headcount_assigned,
-  headcount_gap, headcount_recommendation, sbs_whitespace_segment
+CSV columns (from sql/16_dashboard_export.sql):
+  segment, country, perfect_book_bucket, perfect_book_target, ...
 """
 
 import csv
@@ -19,6 +17,56 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "data" / "headcount.json"
 
+INT_FIELDS = {
+    "perfect_book_target",
+    "perfect_book_ceiling",
+    "assigned_accounts",
+    "current_reps",
+    "current_avg_book",
+    "optimal_headcount_assigned",
+    "headcount_gap",
+    "sbs_whitespace_country",
+    "sbs_revenue_90d",
+    "headroom_accounts",
+    "books_buildable_from_sbs",
+    "opp_plateau_book_max",
+    "coverage_inflection_book_max",
+}
+
+FLOAT_FIELDS = {
+    "perfect_book_growth_pct",
+    "revenue_90d",
+    "avg_fy26_book_score",
+    "avg_pct_book_built",
+    "fy26_target_pct_book_built",
+    "opp_plateau_rev_per_job",
+    "coverage_at_inflection",
+    "median_impact_calls_per_account",
+}
+
+
+def parse_val(key: str, val: str | None):
+    if val is None or val == "":
+        return None
+    if key in INT_FIELDS:
+        return int(float(val))
+    if key in FLOAT_FIELDS:
+        return float(val)
+    return val
+
+
+def row_to_market(row: dict) -> dict:
+    market = {}
+    for key, val in row.items():
+        if key == "optimal_headcount_assigned":
+            market["optimal_headcount"] = parse_val(key, val)
+        elif key == "sbs_whitespace_country":
+            market["sbs_whitespace_country"] = parse_val(key, val)
+            market["sbs_whitespace"] = parse_val(key, val)  # legacy alias
+        else:
+            market[key] = parse_val(key, val)
+    return market
+
 
 def main() -> None:
     if len(sys.argv) < 2:
@@ -27,45 +75,33 @@ def main() -> None:
 
     path = Path(sys.argv[1])
     markets = []
-    sbs_by_segment: dict[str, int] = {}
+    sbs_by_market: dict[str, dict] = {}
 
     with path.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            seg = row["segment"]
-            ws = row.get("sbs_whitespace_segment") or row.get("sbs_whitespace")
+            market = row_to_market(row)
+            markets.append(market)
+            key = f"{market['country']}-{market['segment']}"
+            ws = market.get("sbs_whitespace_country")
             if ws:
-                sbs_by_segment[seg] = int(float(ws))
-            markets.append(
-                {
-                    "segment": seg,
-                    "country": row["country"],
-                    "perfect_book_bucket": row["perfect_book_bucket"],
-                    "perfect_book_target": int(float(row["perfect_book_target"])),
-                    "perfect_book_growth_pct": float(row["perfect_book_growth_pct"]),
-                    "current_reps": int(float(row["current_reps"])),
-                    "current_avg_book": int(float(row["current_avg_book"])),
-                    "revenue_90d": float(row["revenue_90d"]),
-                    "optimal_headcount": int(
-                        float(row.get("optimal_headcount_assigned") or row["optimal_headcount"])
-                    ),
-                    "headcount_gap": int(float(row["headcount_gap"])),
-                    "headcount_recommendation": row["headcount_recommendation"],
-                    "sbs_whitespace": int(float(ws)) if ws else None,
-                    "avg_fy26_book_score": float(row["avg_fy26_book_score"]) if row.get("avg_fy26_book_score") not in (None, "") else None,
-                    "avg_pct_book_built": float(row["avg_pct_book_built"]) if row.get("avg_pct_book_built") not in (None, "") else None,
-                    "book_score_action": row.get("book_score_action"),
+                sbs_by_market[key] = {
+                    "country": market["country"],
+                    "segment": market["segment"],
+                    "accounts": ws,
+                    "revenue_90d": market.get("sbs_revenue_90d"),
                 }
-            )
 
     payload = {
         "updated_at": date.today().isoformat(),
-        "window": "90d — see sql/10_perfect_book_headcount_country_segment.sql",
-        "query": "sql/12_headcount_with_book_score.sql",
+        "window": "90d ending 2026-07-25 (20260427–20260725 vs prior 20260128–20260426)",
+        "query": "sql/16_dashboard_export.sql",
+        "amer_markets": ["US", "CA", "UK", "DACH", "BNL"],
         "markets": sorted(markets, key=lambda m: -m["revenue_90d"]),
-        "sbs_whitespace": [
-            {"segment": s, "accounts": a} for s, a in sorted(sbs_by_segment.items())
-        ],
+        "sbs_whitespace": sorted(
+            sbs_by_market.values(),
+            key=lambda r: -(r.get("revenue_90d") or 0),
+        ),
     }
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

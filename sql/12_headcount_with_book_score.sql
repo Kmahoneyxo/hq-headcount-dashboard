@@ -119,6 +119,8 @@ bucket_growth AS (
 peak AS (
   SELECT segment, country, MAX(median_growth_pct) AS peak_growth_pct
   FROM bucket_growth
+  WHERE bucket_order <= 10
+    AND rep_count >= 20
   GROUP BY 1, 2
 ),
 
@@ -145,9 +147,11 @@ perfect_book AS (
     SELECT *,
       ROW_NUMBER() OVER (PARTITION BY segment, country ORDER BY bucket_order DESC) AS rn
     FROM with_next
-    WHERE median_growth_pct >= peak_growth_pct * 0.90
-      AND (next_bucket_growth IS NULL OR next_bucket_growth < median_growth_pct OR next_bucket_order IS NULL)
+    WHERE median_growth_pct >= peak_growth_pct * 0.85
+      AND (next_bucket_growth IS NULL OR next_bucket_growth <= median_growth_pct OR next_bucket_order IS NULL)
       AND median_growth_pct > 0
+      AND bucket_order <= 10       -- exclude 150+ outlier bucket (e.g. US-M → use ~66–80)
+      AND rep_count >= 20          -- min sample for perfect-book selection
   )
   WHERE rn = 1
 ),
