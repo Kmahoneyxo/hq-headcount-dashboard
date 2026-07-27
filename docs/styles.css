@@ -294,6 +294,28 @@ tr.lookup-row td.sticky-col {
   background: #1a2a44;
 }
 
+.lookup-grid-primary {
+  margin-bottom: 12px;
+}
+
+.lookup-grid-primary .lookup-stat.primary {
+  background: #1a2a44;
+}
+
+.book-action-line {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+  color: #c8d8f0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.table-wrap-sm {
+  max-height: 320px;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;

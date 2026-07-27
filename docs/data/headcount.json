@@ -39,7 +39,8 @@
       "coverage_status": "Declining",
       "recommended_action": "Optimize HC",
       "headcount_recommendation": "Optimize",
-      "sbs_whitespace": 103681
+      "sbs_whitespace": 103681,
+      "ideal_pcid": 73
     },
     {
       "segment": "XL",
@@ -58,7 +59,8 @@
       "headcount_recommendation": "Hire",
       "recommended_action": "Hire",
       "headroom_accounts": 0,
-      "books_buildable_from_sbs": 0
+      "books_buildable_from_sbs": 0,
+      "ideal_pcid": 5
     },
     {
       "segment": "L",
@@ -77,7 +79,8 @@
       "headcount_recommendation": "Optimize",
       "recommended_action": "Optimize HC",
       "headroom_accounts": 7850,
-      "books_buildable_from_sbs": 0
+      "books_buildable_from_sbs": 0,
+      "ideal_pcid": 25
     },
     {
       "segment": "M",
@@ -108,7 +111,8 @@
       "coverage_status": "Declining",
       "recommended_action": "Hire + build books from SBS",
       "headcount_recommendation": "Hire",
-      "sbs_whitespace": 17406
+      "sbs_whitespace": 17406,
+      "ideal_pcid": 5
     },
     {
       "segment": "S",
@@ -139,7 +143,8 @@
       "coverage_status": "OK",
       "recommended_action": "Optimize HC",
       "headcount_recommendation": "Optimize",
-      "sbs_whitespace": 1765233
+      "sbs_whitespace": 1765233,
+      "ideal_pcid": 45
     },
     {
       "segment": "M",
@@ -170,7 +175,8 @@
       "coverage_status": "Declining",
       "recommended_action": "Optimize HC",
       "headcount_recommendation": "Optimize",
-      "sbs_whitespace": 10886
+      "sbs_whitespace": 10886,
+      "ideal_pcid": 73
     },
     {
       "segment": "L",
@@ -201,7 +207,8 @@
       "coverage_status": "Declining",
       "recommended_action": "Optimize HC",
       "headcount_recommendation": "Optimize",
-      "sbs_whitespace": 1879
+      "sbs_whitespace": 1879,
+      "ideal_pcid": 15
     },
     {
       "segment": "XL",
@@ -220,7 +227,8 @@
       "headcount_recommendation": "Hire",
       "recommended_action": "Hire",
       "headroom_accounts": 0,
-      "books_buildable_from_sbs": 0
+      "books_buildable_from_sbs": 0,
+      "ideal_pcid": 5
     },
     {
       "segment": "L",
@@ -251,7 +259,8 @@
       "coverage_status": "OK",
       "recommended_action": "Hire + build books from SBS",
       "headcount_recommendation": "Hire",
-      "sbs_whitespace": 1298
+      "sbs_whitespace": 1298,
+      "ideal_pcid": 5
     },
     {
       "segment": "L",
@@ -270,7 +279,8 @@
       "headcount_recommendation": "Hire",
       "recommended_action": "Hire",
       "headroom_accounts": 0,
-      "books_buildable_from_sbs": 0
+      "books_buildable_from_sbs": 0,
+      "ideal_pcid": 5
     },
     {
       "segment": "XL",
@@ -289,7 +299,8 @@
       "headcount_recommendation": "Hire",
       "recommended_action": "Hire",
       "headroom_accounts": 0,
-      "books_buildable_from_sbs": 0
+      "books_buildable_from_sbs": 0,
+      "ideal_pcid": 5
     },
     {
       "segment": "L",
@@ -320,7 +331,8 @@
       "coverage_status": "OK",
       "recommended_action": "Optimize HC",
       "headcount_recommendation": "Optimize",
-      "sbs_whitespace": 599
+      "sbs_whitespace": 599,
+      "ideal_pcid": 15
     },
     {
       "segment": "XL",
@@ -351,7 +363,8 @@
       "coverage_status": "OK",
       "recommended_action": "Hire + build books from SBS",
       "headcount_recommendation": "Hire",
-      "sbs_whitespace": 637
+      "sbs_whitespace": 637,
+      "ideal_pcid": 5
     },
     {
       "segment": "S",
@@ -370,7 +383,8 @@
       "headcount_recommendation": "Hire",
       "recommended_action": "Hire",
       "headroom_accounts": 0,
-      "books_buildable_from_sbs": 0
+      "books_buildable_from_sbs": 0,
+      "ideal_pcid": 5
     },
     {
       "segment": "S",
@@ -401,7 +415,8 @@
       "coverage_status": "Declining",
       "recommended_action": "Hire + build books from SBS",
       "headcount_recommendation": "Hire",
-      "sbs_whitespace": 364298
+      "sbs_whitespace": 364298,
+      "ideal_pcid": 5
     },
     {
       "segment": "S",
@@ -432,7 +447,8 @@
       "coverage_status": "OK",
       "recommended_action": "Hire + build books from SBS",
       "headcount_recommendation": "Hire",
-      "sbs_whitespace": 276061
+      "sbs_whitespace": 276061,
+      "ideal_pcid": 5
     }
   ],
   "sbs_whitespace": [

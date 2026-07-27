@@ -32,7 +32,7 @@ This is **one project**, not separate tools. Headcount decisions only make sense
 
 **Deliverable:** Shareable **book health** view (GitHub Pages primary; align with Maryam on refresh/mobile patterns). Analysts use this to **lock ideal book size** before any staffing action.
 
-**Status today (~Phase A):** Market-level perfect book, FY26 score, country SBS, opp plateau, coverage flags in `sql/16` + live dash. **Missing:** rep-level health, outcome-based too-big/too-little, PQR, dedicated health UX tab.
+**Status today (~Phase B in progress):** Market-level ideal HC (16 markets), ideal PCID in lookup, Layer 1/2 UI panels. **sql/16** adds PQR + book health + split-hire fields; **sql/17** rep flags. **Pending warehouse refresh** for PQR/book-action numbers. **Missing:** FY26 policy target, all country×segment markets, automated Quest schedule.
 
 ---
 

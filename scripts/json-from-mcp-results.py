@@ -30,6 +30,19 @@ ENRICHMENT_KEYS = [
     "opp_pipeline_status",
     "coverage_status",
     "recommended_action",
+    "market_pqr_90d",
+    "avg_pqr_per_rep",
+    "rev_vs_pqr_pct",
+    "ideal_pcid",
+    "segment_avg_pcid",
+    "segment_avg_pqr",
+    "reps_too_big",
+    "reps_too_little",
+    "splittable_pool",
+    "total_grow_slots",
+    "new_heads_from_split",
+    "book_action",
+    "split_hire_recommended",
 ]
 
 
@@ -94,6 +107,8 @@ def normalize_market(row: dict) -> dict:
     m = dict(row)
     if "optimal_headcount_assigned" in m and "optimal_headcount" not in m:
         m["optimal_headcount"] = int(m["optimal_headcount_assigned"])
+    if m.get("ideal_pcid") is None and m.get("perfect_book_target") is not None:
+        m["ideal_pcid"] = int(m["perfect_book_target"])
     if "sbs_whitespace_country" in m:
         m["sbs_whitespace"] = m["sbs_whitespace_country"]
     if "avg_pct_book_built" in m and m["avg_pct_book_built"] is not None:

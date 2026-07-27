@@ -55,6 +55,8 @@ rep_filtered AS (
     accounts_per_rep,
     jobs_90d,
     impact_calls_90d,
+    revenue_current,
+    revenue_prior,
     revenue_current / NULLIF(jobs_90d, 0) AS rev_per_job,
     impact_calls_90d / NULLIF(accounts_per_rep, 0) AS impact_calls_per_account,
     LEAST(GREATEST(
@@ -237,8 +239,75 @@ market_accounts AS (
     country,
     SUM(accounts_per_rep) AS assigned_accounts,
     COUNT(DISTINCT sales_rep_id) AS current_reps,
-    SUM(revenue_current) AS revenue_90d
+    SUM(revenue_current) AS revenue_90d,
+    ROUND(SUM(revenue_prior), 0) AS market_pqr_90d,
+    ROUND(AVG(revenue_prior), 0) AS avg_pqr_per_rep,
+    ROUND(100.0 * (SUM(revenue_current) - SUM(revenue_prior)) / NULLIF(SUM(revenue_prior), 0), 1) AS rev_vs_pqr_pct
   FROM rep_level
+  GROUP BY 1, 2
+),
+
+segment_benchmarks AS (
+  SELECT
+    segment,
+    country,
+    AVG(accounts_per_rep) AS segment_avg_pcid,
+    AVG(revenue_prior) AS segment_avg_pqr,
+    AVG(impact_calls_per_account) AS segment_avg_coverage
+  FROM rep_filtered
+  GROUP BY 1, 2
+),
+
+rep_book_flags AS (
+  SELECT
+    rf.segment,
+    rf.country,
+    rf.sales_rep_id,
+    rf.accounts_per_rep AS pcid_count,
+    rf.revenue_prior AS pqr_90d,
+    rf.revenue_current,
+    rf.impact_calls_per_account,
+    sb.segment_avg_pcid,
+    sb.segment_avg_pqr,
+    sb.segment_avg_coverage,
+    pb.perfect_book_accounts AS perfect_book_target,
+    (
+      (rf.accounts_per_rep > sb.segment_avg_pcid OR rf.revenue_prior > sb.segment_avg_pqr)
+      AND (
+        rf.impact_calls_per_account < sb.segment_avg_coverage * 0.90
+        OR rf.revenue_current < rf.revenue_prior
+      )
+    ) AS too_big_flag,
+    (rf.accounts_per_rep < pb.perfect_book_accounts) AS too_little_flag,
+    CASE
+      WHEN (rf.accounts_per_rep > sb.segment_avg_pcid OR rf.revenue_prior > sb.segment_avg_pqr)
+        AND (
+          rf.impact_calls_per_account < sb.segment_avg_coverage * 0.90
+          OR rf.revenue_current < rf.revenue_prior
+        )
+      THEN GREATEST(0, rf.accounts_per_rep - pb.perfect_book_accounts)
+      ELSE 0
+    END AS peel_to_ideal,
+    GREATEST(0, pb.perfect_book_accounts - rf.accounts_per_rep) AS grow_slots
+  FROM rep_filtered rf
+  JOIN segment_benchmarks sb ON rf.segment = sb.segment AND rf.country = sb.country
+  JOIN perfect_book pb ON rf.segment = pb.segment AND rf.country = pb.country
+),
+
+market_book_health AS (
+  SELECT
+    segment,
+    country,
+    MAX(perfect_book_target) AS ideal_pcid,
+    ROUND(AVG(pcid_count), 1) AS avg_pcid_per_rep,
+    ROUND(AVG(segment_avg_pcid), 1) AS segment_avg_pcid,
+    ROUND(AVG(segment_avg_pqr), 0) AS segment_avg_pqr,
+    SUM(CASE WHEN too_big_flag THEN 1 ELSE 0 END) AS reps_too_big,
+    SUM(CASE WHEN too_little_flag THEN 1 ELSE 0 END) AS reps_too_little,
+    SUM(peel_to_ideal) AS splittable_pool,
+    SUM(grow_slots) AS total_grow_slots,
+    ROUND(STDDEV(pcid_count), 1) AS pcid_stddev
+  FROM rep_book_flags
   GROUP BY 1, 2
 ),
 
@@ -317,9 +386,25 @@ base AS (
     op.opp_plateau_rev_per_job,
     ci.coverage_inflection_book_max,
     ci.coverage_at_inflection,
-    mc.median_impact_calls_per_account
+    mc.median_impact_calls_per_account,
+    ma.market_pqr_90d,
+    ma.avg_pqr_per_rep,
+    ma.rev_vs_pqr_pct,
+    mbh.ideal_pcid,
+    mbh.avg_pcid_per_rep,
+    mbh.segment_avg_pcid,
+    mbh.segment_avg_pqr,
+    mbh.reps_too_big,
+    mbh.reps_too_little,
+    mbh.splittable_pool,
+    mbh.total_grow_slots,
+    mbh.pcid_stddev,
+    CASE WHEN pb.perfect_book_accounts > 0
+      THEN CAST(FLOOR(COALESCE(mbh.splittable_pool, 0) * 1.0 / pb.perfect_book_accounts) AS BIGINT)
+      ELSE 0 END AS new_heads_from_split
   FROM perfect_book pb
   JOIN market_accounts ma ON pb.segment = ma.segment AND pb.country = ma.country
+  LEFT JOIN market_book_health mbh ON pb.segment = mbh.segment AND pb.country = mbh.country
   LEFT JOIN sbs_country sc ON pb.segment = sc.segment AND pb.country = sc.country
   LEFT JOIN book_score_market bsm ON pb.segment = bsm.segment AND pb.country = bsm.country
   LEFT JOIN opp_plateau op ON pb.segment = op.segment AND pb.country = op.country
@@ -362,6 +447,21 @@ SELECT
     WHEN b.opp_plateau_book_max IS NOT NULL
       AND b.current_avg_book >= b.opp_plateau_book_max * 0.95 THEN 'Hold — opp pipeline plateaued'
     ELSE 'On track'
-  END AS recommended_action
+  END AS recommended_action,
+  CASE
+    WHEN b.new_heads_from_split >= 1
+      THEN CONCAT('Split-hire ', CAST(b.new_heads_from_split AS VARCHAR), ' new head',
+        CASE WHEN b.new_heads_from_split > 1 THEN 's' ELSE '' END,
+        ' (', CAST(b.splittable_pool AS VARCHAR), ' PCIDs pooled)')
+    WHEN COALESCE(b.splittable_pool, 0) > 0 AND COALESCE(b.reps_too_little, 0) > 0
+      THEN 'Redistribute internally (too big → too little)'
+    WHEN COALESCE(b.reps_too_little, 0) > 0
+      AND COALESCE(b.sbs_whitespace_country, 0) >= b.perfect_book_target
+      THEN 'Add from SBS to underweight books'
+    WHEN COALESCE(b.reps_too_big, 0) > 0
+      THEN 'Peel to ideal PCID — pool forming'
+    ELSE 'Books near ideal'
+  END AS book_action,
+  CASE WHEN b.new_heads_from_split >= 1 THEN TRUE ELSE FALSE END AS split_hire_recommended
 FROM base b
 ORDER BY b.revenue_90d DESC;

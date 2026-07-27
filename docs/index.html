@@ -33,8 +33,8 @@
     <section class="lookup-panel" id="lookup-panel">
       <div class="lookup-header">
         <div>
-          <h2>Ideal headcount lookup</h2>
-          <p class="caption">Country × segment → ideal HC, gap, and recommendation</p>
+          <h2>Market lookup — Ideal HC · Ideal PCID · PQR</h2>
+          <p class="caption">Country × segment → headcount, book size, and prior-quarter revenue benchmarks</p>
         </div>
       </div>
       <div class="lookup-controls">
@@ -53,6 +53,31 @@
         </label>
       </div>
       <div class="lookup-answer" id="lookup-answer"></div>
+    </section>
+
+    <section class="panel" id="book-health-panel"></section>
+
+    <section class="panel" id="book-action-panel"></section>
+
+    <section class="panel hidden" id="flagged-reps-wrap">
+      <h2>Flagged reps (too big / too little)</h2>
+      <p class="caption">From sql/17 · top 25 by peel/grow slots · full list in book_health.json</p>
+      <div class="table-wrap table-wrap-sm">
+        <table>
+          <thead>
+            <tr>
+              <th>Rep ID</th>
+              <th class="num">PCIDs</th>
+              <th class="num">PQR</th>
+              <th class="num">Ideal PCID</th>
+              <th>Flag</th>
+              <th class="num">Peel to ideal</th>
+              <th class="num">Grow slots</th>
+            </tr>
+          </thead>
+          <tbody id="flagged-reps-body"></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="callout" id="headline"></section>
@@ -97,25 +122,27 @@
 
     <section class="panel">
       <h2>Market detail</h2>
-      <p class="caption">Ideal HC = assigned accounts ÷ ideal book size · Ideal book = growth peak before diminishing returns</p>
+      <p class="caption">Layer 1 book health + Layer 2 book action · scroll → for FY26 &amp; SBS</p>
       <div class="table-wrap">
         <table id="market-table">
           <thead>
             <tr>
               <th class="sticky-col">Market</th>
               <th class="num highlight-col">Ideal HC</th>
-              <th class="num">Current reps</th>
+              <th class="num">Ideal PCID</th>
+              <th class="num">Avg PQR</th>
+              <th class="num">Reps</th>
+              <th class="num">Avg PCID</th>
               <th class="num">Gap</th>
               <th>HC rec</th>
-              <th class="num">Ideal book</th>
-              <th class="num">Avg book</th>
-              <th class="num">FY26 % built</th>
-              <th class="num">FY26 score</th>
-              <th class="num">Headroom</th>
-              <th class="num">SBS pool</th>
-              <th>$/job</th>
-              <th>Coverage</th>
-              <th>Action</th>
+              <th class="num">Too big</th>
+              <th class="num">Too little</th>
+              <th class="num">Split pool</th>
+              <th class="num">New heads</th>
+              <th>Book action</th>
+              <th class="num">FY26 %</th>
+              <th class="num">SBS</th>
+              <th>HC action</th>
             </tr>
           </thead>
           <tbody id="market-body"></tbody>

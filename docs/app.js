@@ -1,4 +1,5 @@
 let payload = null;
+let bookHealth = null;
 let config = { refresh_api: null, live_refresh: false };
 let segmentFilter = "all";
 let recFilter = "all";
@@ -37,6 +38,20 @@ async function loadData() {
   if (!res.ok) throw new Error("Could not load headcount.json");
   payload = await res.json();
   lastLoadedAt = new Date();
+  try {
+    const bh = await fetch("./data/book_health.json?" + Date.now(), { cache: "no-store" });
+    bookHealth = bh.ok ? await bh.json() : null;
+  } catch {
+    bookHealth = null;
+  }
+}
+
+function idealPcid(m) {
+  return m.ideal_pcid ?? m.perfect_book_target;
+}
+
+function marketKey(m) {
+  return `${m.country}-${m.segment}`;
 }
 
 function showToast(message, tone = "ok") {
@@ -210,34 +225,119 @@ function renderLookup() {
   const recClass = m.headcount_recommendation.replace(/ /g, "\\ ");
   el.innerHTML = `
     <div class="lookup-market">${m.country}-${m.segment}</div>
-    <div class="lookup-grid">
+    <div class="lookup-grid lookup-grid-primary">
       <div class="lookup-stat primary">
         <div class="lookup-stat-value">${fmtNum(m.optimal_headcount)}</div>
         <div class="lookup-stat-label">Ideal headcount</div>
       </div>
+      <div class="lookup-stat primary">
+        <div class="lookup-stat-value">${fmtNum(idealPcid(m))}</div>
+        <div class="lookup-stat-label">Ideal PCID (accounts/rep)</div>
+      </div>
+      <div class="lookup-stat primary">
+        <div class="lookup-stat-value">${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"}</div>
+        <div class="lookup-stat-label">Avg PQR / rep (prior Q)</div>
+      </div>
+    </div>
+    <div class="lookup-grid">
       <div class="lookup-stat">
         <div class="lookup-stat-value">${fmtNum(m.current_reps)}</div>
         <div class="lookup-stat-label">Current reps</div>
       </div>
       <div class="lookup-stat">
-        <div class="lookup-stat-value">${gapStr}</div>
-        <div class="lookup-stat-label">Gap (reps)</div>
+        <div class="lookup-stat-value">${fmtNum(m.current_avg_book)}</div>
+        <div class="lookup-stat-label">Avg PCID / rep</div>
       </div>
       <div class="lookup-stat">
-        <div class="lookup-stat-value">${fmtNum(m.perfect_book_target)}</div>
-        <div class="lookup-stat-label">Ideal book (accounts/rep)</div>
+        <div class="lookup-stat-value">${gapStr}</div>
+        <div class="lookup-stat-label">HC gap (reps)</div>
+      </div>
+      <div class="lookup-stat">
+        <div class="lookup-stat-value">${m.rev_vs_pqr_pct != null ? (m.rev_vs_pqr_pct > 0 ? "+" : "") + m.rev_vs_pqr_pct + "%" : "—"}</div>
+        <div class="lookup-stat-label">Rev vs PQR (market)</div>
       </div>
       <div class="lookup-stat">
         <div class="lookup-stat-value"><span class="rec rec-${recClass}">${m.headcount_recommendation}</span></div>
-        <div class="lookup-stat-label">Recommendation</div>
+        <div class="lookup-stat-label">HC recommendation</div>
       </div>
       <div class="lookup-stat">
         <div class="lookup-stat-value">${m.avg_pct_book_built != null ? m.avg_pct_book_built.toFixed(1) + "%" : "—"}</div>
         <div class="lookup-stat-label">FY26 % book built</div>
       </div>
     </div>
-    <p class="lookup-formula">Formula: ${fmtNum(m.assigned_accounts)} assigned accounts ÷ ${fmtNum(m.perfect_book_target)} ideal book = ${fmtNum(m.optimal_headcount)} ideal HC</p>
+    <p class="lookup-formula">Ideal HC: ${fmtNum(m.assigned_accounts)} assigned PCIDs ÷ ${fmtNum(idealPcid(m))} ideal PCID = ${fmtNum(m.optimal_headcount)} reps</p>
   `;
+  renderBookHealthPanel(m);
+  renderBookActionPanel(m);
+}
+
+function renderBookHealthPanel(m) {
+  const el = document.getElementById("book-health-panel");
+  if (!el) return;
+  const key = marketKey(m);
+  const bh = bookHealth?.markets?.[key];
+  const tooBig = m.reps_too_big ?? bh?.reps_too_big ?? "—";
+  const tooLittle = m.reps_too_little ?? bh?.reps_too_little ?? "—";
+  el.innerHTML = `
+    <h2>Layer 1 — Book health · ${key}</h2>
+    <p class="caption">Too big = PCID and/or PQR above segment avg + coverage ↓ or current rev ↓ vs PQR</p>
+    <div class="lookup-grid">
+      <div class="lookup-stat"><div class="lookup-stat-value">${fmtNum(idealPcid(m))}</div><div class="lookup-stat-label">Ideal PCID</div></div>
+      <div class="lookup-stat"><div class="lookup-stat-value">${fmtNum(m.current_avg_book)}</div><div class="lookup-stat-label">Avg PCID</div></div>
+      <div class="lookup-stat"><div class="lookup-stat-value">${m.segment_avg_pcid != null ? fmtNum(m.segment_avg_pcid) : "—"}</div><div class="lookup-stat-label">Segment avg PCID</div></div>
+      <div class="lookup-stat"><div class="lookup-stat-value">${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"}</div><div class="lookup-stat-label">Avg PQR / rep</div></div>
+      <div class="lookup-stat"><div class="lookup-stat-value">${m.segment_avg_pqr != null ? fmtMoney(m.segment_avg_pqr) : "—"}</div><div class="lookup-stat-label">Segment avg PQR</div></div>
+      <div class="lookup-stat"><div class="lookup-stat-value">${tooBig}</div><div class="lookup-stat-label">Reps too big</div></div>
+      <div class="lookup-stat"><div class="lookup-stat-value">${tooLittle}</div><div class="lookup-stat-label">Reps too little</div></div>
+    </div>
+  `;
+  renderFlaggedRepsTable(key, bh);
+}
+
+function renderBookActionPanel(m) {
+  const el = document.getElementById("book-action-panel");
+  if (!el) return;
+  const pool = m.splittable_pool ?? bookHealth?.markets?.[marketKey(m)]?.splittable_pool;
+  const newHeads = m.new_heads_from_split;
+  el.innerHTML = `
+    <h2>Layer 2 — Book action · ${marketKey(m)}</h2>
+    <p class="caption">Split-hire OK at segment level even when market HC says Optimize · peel only to ideal PCID</p>
+    <div class="lookup-grid">
+      <div class="lookup-stat"><div class="lookup-stat-value">${pool != null ? fmtNum(pool) : "—"}</div><div class="lookup-stat-label">Splittable PCID pool</div></div>
+      <div class="lookup-stat"><div class="lookup-stat-value">${newHeads != null ? fmtNum(newHeads) : "—"}</div><div class="lookup-stat-label">New heads from split</div></div>
+      <div class="lookup-stat"><div class="lookup-stat-value">${fmtNum(m.books_buildable_from_sbs ?? 0)}</div><div class="lookup-stat-label">Books from SBS</div></div>
+      <div class="lookup-stat"><div class="lookup-stat-value">${fmtNum(m.headroom_accounts ?? 0)}</div><div class="lookup-stat-label">Headroom PCIDs</div></div>
+    </div>
+    <p class="book-action-line"><strong>Book action:</strong> ${m.book_action || m.recommended_action || "—"}</p>
+    <p class="book-action-line"><strong>HC action:</strong> ${m.recommended_action || m.headcount_recommendation || "—"}</p>
+  `;
+}
+
+function renderFlaggedRepsTable(key, bh) {
+  const wrap = document.getElementById("flagged-reps-wrap");
+  const tbody = document.getElementById("flagged-reps-body");
+  if (!wrap || !tbody) return;
+  const reps = bh?.reps || [];
+  if (!reps.length) {
+    wrap.classList.add("hidden");
+    tbody.innerHTML = "";
+    return;
+  }
+  wrap.classList.remove("hidden");
+  tbody.innerHTML = reps
+    .slice(0, 25)
+    .map(
+      (r) => `<tr>
+        <td>${r.sales_rep_id}</td>
+        <td class="num">${fmtNum(r.pcid_count)}</td>
+        <td class="num">${r.pqr_90d != null ? fmtMoney(r.pqr_90d) : "—"}</td>
+        <td class="num">${fmtNum(r.ideal_pcid)}</td>
+        <td>${r.too_big ? '<span class="rec rec-Optimize">Too big</span>' : ""}${r.too_little ? '<span class="rec rec-Hire">Too little</span>' : ""}</td>
+        <td class="num">${r.peel_to_ideal ? fmtNum(r.peel_to_ideal) : "—"}</td>
+        <td class="num">${r.grow_slots ? fmtNum(r.grow_slots) : "—"}</td>
+      </tr>`,
+    )
+    .join("");
 }
 
 function renderKpis() {
@@ -296,33 +396,31 @@ function renderTable() {
     .map((m) => {
       const gap = m.headcount_gap;
       const gapStr = gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
-      const bucket = (m.perfect_book_bucket || "").replace(/^\d+:\s*/, "");
-      const gapPct = bookGapPct(m);
       const fy26Target = m.fy26_target_pct_book_built;
       const built = m.avg_pct_book_built;
       const fy26Cell =
         built != null
           ? `${built.toFixed(1)}%${fy26Target != null ? " / " + fy26Target + "% tgt" : ""}`
           : "—";
-      const fy26Score =
-        m.avg_fy26_book_score != null ? m.avg_fy26_book_score.toFixed(3) : "—";
       const isLookupRow =
         m.country === lookupCountry && m.segment === lookupSegment;
       return `<tr${isLookupRow ? ' class="lookup-row"' : ""}>
         <td class="sticky-col">${m.country}-${m.segment}</td>
         <td class="num highlight-col"><strong>${fmtNum(m.optimal_headcount)}</strong></td>
+        <td class="num">${fmtNum(idealPcid(m))}</td>
+        <td class="num">${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"}</td>
         <td class="num">${fmtNum(m.current_reps)}</td>
+        <td class="num">${fmtNum(m.current_avg_book)}</td>
         <td class="num">${gapStr}</td>
         <td><span class="rec rec-${m.headcount_recommendation.replace(/ /g, "\\ ")}">${m.headcount_recommendation}</span></td>
-        <td class="num">${bucket} (${fmtNum(m.perfect_book_target)})${gapPct != null ? `<br><span class="sub">${gapPct}% of ideal</span>` : ""}</td>
-        <td class="num">${fmtNum(m.current_avg_book)}</td>
+        <td class="num">${m.reps_too_big != null ? fmtNum(m.reps_too_big) : "—"}</td>
+        <td class="num">${m.reps_too_little != null ? fmtNum(m.reps_too_little) : "—"}</td>
+        <td class="num">${m.splittable_pool != null ? fmtNum(m.splittable_pool) : "—"}</td>
+        <td class="num">${m.new_heads_from_split != null ? fmtNum(m.new_heads_from_split) : "—"}</td>
+        <td class="action-cell">${m.book_action || "—"}</td>
         <td class="num">${fy26Cell}</td>
-        <td class="num">${fy26Score}</td>
-        <td class="num">${fmtNum(m.headroom_accounts)}</td>
         <td class="num">${fmtNum(m.sbs_whitespace_country ?? m.sbs_whitespace)}</td>
-        <td><span class="status status-${(m.opp_pipeline_status || "unknown").toLowerCase()}">${m.opp_pipeline_status || "—"}</span></td>
-        <td><span class="status status-${(m.coverage_status || "unknown").toLowerCase()}">${m.coverage_status || "—"}</span></td>
-        <td class="action-cell">${m.recommended_action || m.book_score_action || "—"}</td>
+        <td class="action-cell">${m.recommended_action || "—"}</td>
       </tr>`;
     })
     .join("");
