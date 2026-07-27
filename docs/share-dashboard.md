@@ -75,12 +75,80 @@ The live dashboard also has **Download Excel** / **Download CSV** buttons in the
 
 For a persistent Looker Studio report, connect it to the Google Sheet as the data source.
 
-### Refresh from Quest / iDash
+### Quest / iDash — saved report (sql/16 on prod)
 
-1. Save query 16 as a Quest report in iDash.
-2. Run on a schedule (weekly after JAM partition updates).
+Your query is saved in iDash:
+
+| | Link |
+|---|------|
+| **Workspace** | https://data.indeed.tech/idash/workspace/133772/queries/ |
+| **Shortlink (query)** | https://link.indeed.tech/RTPDA69FDDY |
+| **Query name** | `HQ Headcount Dashboard Export (sql/16)` |
+| **Engine** | Trino |
+| **Source file** | `sql/16_dashboard_export.sql` |
+
+> **Visibility:** Workspace may be Indeed-wide by default. Use iDash **Share** settings if you want to restrict access.
+
+#### First run (prod — ~5–10 min)
+
+1. Open the **workspace** or **shortlink** above (log in with @indeed.com).
+2. Click the query **`HQ Headcount Dashboard Export (sql/16)`**.
+3. Set environment to **`prod`** (not `interactive` — interactive times out at 10 min).
+   - Look for **Environment**, **Cluster**, or **Trino environment** in the query runner settings.
+4. Click **Run** and wait for completion (~5–10 min).
+5. When results appear, **Export → JSON** (or CSV).
+   - Save as `docs/data/query16_results.json` (JSON must be `{"data": [...]}` or a raw array — see below).
+
+#### Update the live dashboard
+
+```bash
+cd hq-headcount-dashboard
+
+# JSON export from iDash
+python3 scripts/json-from-mcp-results.py docs/data/query16_results.json
+
+# Regenerate Excel/CSV
+python3 scripts/export-dashboard-data.py
+
+# Optional: sql/17 rep flags (book health drill-down)
+# Save sql/17 in same workspace, run on prod, export → query17_results.json
+python3 scripts/merge-book-health.py docs/data/query17_results.json
+
+git add docs/data/headcount.json docs/data/book_health.json docs/data/headcount-dashboard.*
+git commit -m "Refresh dashboard from Quest prod"
+git push
+```
+
+GitHub Pages redeploys in ~1–2 min.
+
+#### Weekly refresh (recommended)
+
+1. **When:** After JAM partition updates (e.g. Monday or Tuesday).
+2. **Run** query 16 on **prod** in iDash.
+3. Export → run scripts above → commit + push.
+4. Optional: schedule via **Swift Jobs** or iDash scheduled run if your team uses that (ask Data Platform).
+
+#### Also save sql/17 (rep book health)
+
+1. In the same workspace, **Add query** → paste `sql/17_rep_book_profile.sql`.
+2. Name it `HQ Rep Book Profile (sql/17)` · Trino · prod.
+3. Run on prod → export → `merge-book-health.py`.
+
+#### Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| Query times out at 10 min | Use **`prod`**, not `interactive` |
+| Missing PQR / book action columns | Re-run **latest** sql/16 (Layer 1+2 fields added Jul 2026) |
+| JSON export wrong shape | Wrap rows: `{"data": [...]}` or use `json-from-mcp-results.py` which accepts both |
+| MCP refresh from Cursor | `execute_query` with `queryEnvironment: prod`, `maxWait: 0`, poll with `get_query_status` |
+
+### Refresh from Quest / iDash (legacy steps)
+
+1. Open workspace above (sql/16 already saved).
+2. Run on **prod** schedule (weekly after JAM partition updates).
 3. Export results as JSON/CSV.
-4. Run `python3 scripts/csv-to-dashboard-json.py export.csv` (CSV) or `python3 scripts/json-from-mcp-results.py export.json` (JSON).
+4. Run `python3 scripts/json-from-mcp-results.py export.json` (JSON) or `csv-to-dashboard-json.py` (CSV).
 5. Commit + push.
 
 ---
