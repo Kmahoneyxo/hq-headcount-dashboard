@@ -94,7 +94,11 @@ Your query is saved in iDash:
 1. Open the **workspace** or **shortlink** above (log in with @indeed.com).
 2. Click the query **`HQ Headcount Dashboard Export (sql/16)`**.
 3. Set environment to **`prod`** (not `interactive` — interactive times out at 10 min).
-   - Look for **Environment**, **Cluster**, or **Trino environment** in the query runner settings.
+   - In the Quest UI, look **directly below the blue Run button** — you'll see **`Trino | Auto`**.
+   - **Click `Auto`** (it's a dropdown, not just a label).
+   - Choose **`prod`** from the list. Options are typically: `Auto`, `interactive`, `prod`, `stage`.
+   - After selecting, it should read **`Trino | prod`** before you click Run.
+   - If you don't see `prod`, ask in **#data-platform** or **#quest** — some roles need Trino prod access.
 4. Click **Run** and wait for completion (~5–10 min).
 5. When results appear, **Export → JSON** (or CSV).
    - Save as `docs/data/query16_results.json` (JSON must be `{"data": [...]}` or a raw array — see below).
@@ -139,6 +143,7 @@ GitHub Pages redeploys in ~1–2 min.
 | Problem | Fix |
 |---------|-----|
 | Query times out at 10 min | Use **`prod`**, not `interactive` |
+| `mismatched input ';'` syntax error | **Remove trailing semicolon** on last line (`ORDER BY ... DESC` with no `;`) |
 | Missing PQR / book action columns | Re-run **latest** sql/16 (Layer 1+2 fields added Jul 2026) |
 | JSON export wrong shape | Wrap rows: `{"data": [...]}` or use `json-from-mcp-results.py` which accepts both |
 | MCP refresh from Cursor | `execute_query` with `queryEnvironment: prod`, `maxWait: 0`, poll with `get_query_status` |

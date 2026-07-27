@@ -1,8 +1,3 @@
--- Dashboard export: headcount + FY26 book score + opp pipeline + SBS + coverage
--- Combines sql/12–15 into one row per country × segment for headcount.json
--- Run this (or Quest schedule) to refresh docs/data/headcount.json
--- See sql/16_dashboard_export.sql — supersedes sql/12 for full dashboard fields
-
 WITH rep_meta AS (
   SELECT
     sales_rep_id,
@@ -157,7 +152,6 @@ perfect_book AS (
   ) WHERE rn = 1
 ),
 
--- Opp pipeline plateau (sql/13 logic)
 bucket_rev_job AS (
   SELECT segment, country, bucket_order, bucket_upper,
     ROUND(APPROX_PERCENTILE(rev_per_job, 0.5), 2) AS median_rev_per_job,
@@ -191,7 +185,6 @@ opp_plateau AS (
   ) WHERE rn = 1
 ),
 
--- Coverage inflection (sql/15 logic)
 bucket_coverage AS (
   SELECT segment, country, bucket_order, bucket_upper,
     ROUND(APPROX_PERCENTILE(impact_calls_per_account, 0.5), 2) AS median_impact_calls_per_account,

@@ -1,15 +1,5 @@
 {
-  "updated_at": "2026-07-27",
-  "window": "90d ending 2026-07-25 (20260427\u201320260725 vs prior 20260128\u201320260426)",
-  "query": "sql/16_dashboard_export.sql",
-  "amer_markets": [
-    "US",
-    "CA",
-    "UK",
-    "DACH",
-    "BNL"
-  ],
-  "markets": [
+  "data": [
     {
       "segment": "M",
       "country": "US",
@@ -53,9 +43,7 @@
       "coverage_status": "Declining",
       "recommended_action": "Optimize HC",
       "book_action": "Split-hire 114 new heads (8322 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 552,
-      "sbs_whitespace": 103686
+      "split_hire_recommended": true
     },
     {
       "segment": "XL",
@@ -100,9 +88,7 @@
       "coverage_status": "OK",
       "recommended_action": "Hire + build books from SBS",
       "book_action": "Split-hire 473 new heads (2367 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 1306,
-      "sbs_whitespace": 23586
+      "split_hire_recommended": true
     },
     {
       "segment": "L",
@@ -147,9 +133,7 @@
       "coverage_status": "Declining",
       "recommended_action": "Optimize HC",
       "book_action": "Split-hire 28 new heads (701 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 482,
-      "sbs_whitespace": 14873
+      "split_hire_recommended": true
     },
     {
       "segment": "M",
@@ -194,9 +178,7 @@
       "coverage_status": "Declining",
       "recommended_action": "Hire + build books from SBS",
       "book_action": "Split-hire 1055 new heads (5276 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 1325,
-      "sbs_whitespace": 17408
+      "split_hire_recommended": true
     },
     {
       "segment": "S",
@@ -241,9 +223,7 @@
       "coverage_status": "Declining",
       "recommended_action": "Optimize HC",
       "book_action": "Split-hire 1 new head (61 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 122,
-      "sbs_whitespace": 1765314
+      "split_hire_recommended": true
     },
     {
       "segment": "M",
@@ -288,9 +268,7 @@
       "coverage_status": "Declining",
       "recommended_action": "Optimize HC",
       "book_action": "Split-hire 7 new heads (539 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 80,
-      "sbs_whitespace": 10887
+      "split_hire_recommended": true
     },
     {
       "segment": "L",
@@ -335,9 +313,7 @@
       "coverage_status": "Declining",
       "recommended_action": "Optimize HC",
       "book_action": "Split-hire 24 new heads (368 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 142,
-      "sbs_whitespace": 1880
+      "split_hire_recommended": true
     },
     {
       "segment": "XL",
@@ -382,9 +358,7 @@
       "coverage_status": "OK",
       "recommended_action": "Hire + build books from SBS",
       "book_action": "Split-hire 33 new heads (169 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 114,
-      "sbs_whitespace": 2306
+      "split_hire_recommended": true
     },
     {
       "segment": "L",
@@ -429,9 +403,7 @@
       "coverage_status": "OK",
       "recommended_action": "Hire + build books from SBS",
       "book_action": "Split-hire 130 new heads (652 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 408,
-      "sbs_whitespace": 1298
+      "split_hire_recommended": true
     },
     {
       "segment": "L",
@@ -476,9 +448,7 @@
       "coverage_status": "Declining",
       "recommended_action": "Hire + build books from SBS",
       "book_action": "Split-hire 83 new heads (417 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 193,
-      "sbs_whitespace": 1610
+      "split_hire_recommended": true
     },
     {
       "segment": "XL",
@@ -523,9 +493,7 @@
       "coverage_status": "OK",
       "recommended_action": "Hire + build books from SBS",
       "book_action": "Split-hire 23 new heads (115 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 102,
-      "sbs_whitespace": 296
+      "split_hire_recommended": true
     },
     {
       "segment": "L",
@@ -570,9 +538,7 @@
       "coverage_status": "OK",
       "recommended_action": "Optimize HC",
       "book_action": "Split-hire 9 new heads (137 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 67,
-      "sbs_whitespace": 599
+      "split_hire_recommended": true
     },
     {
       "segment": "XL",
@@ -617,9 +583,7 @@
       "coverage_status": "OK",
       "recommended_action": "Hire + build books from SBS",
       "book_action": "Split-hire 25 new heads (127 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 117,
-      "sbs_whitespace": 638
+      "split_hire_recommended": true
     },
     {
       "segment": "S",
@@ -664,9 +628,7 @@
       "coverage_status": "Declining",
       "recommended_action": "Hire + build books from SBS",
       "book_action": "Split-hire 108 new heads (540 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 459,
-      "sbs_whitespace": 144336
+      "split_hire_recommended": true
     },
     {
       "segment": "S",
@@ -711,9 +673,7 @@
       "coverage_status": "Declining",
       "recommended_action": "Hire + build books from SBS",
       "book_action": "Split-hire 109 new heads (547 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 461,
-      "sbs_whitespace": 364311
+      "split_hire_recommended": true
     },
     {
       "segment": "S",
@@ -758,107 +718,7 @@
       "coverage_status": "OK",
       "recommended_action": "Hire + build books from SBS",
       "book_action": "Split-hire 9 new heads (47 PCIDs pooled)",
-      "split_hire_recommended": true,
-      "optimal_headcount": 113,
-      "sbs_whitespace": 276081
-    }
-  ],
-  "sbs_whitespace": [
-    {
-      "country": "US",
-      "segment": "S",
-      "accounts": 1765314,
-      "revenue_90d": 502172154.0
-    },
-    {
-      "country": "US",
-      "segment": "M",
-      "accounts": 103686,
-      "revenue_90d": 160675164.0
-    },
-    {
-      "country": "UK",
-      "segment": "S",
-      "accounts": 364311,
-      "revenue_90d": 53613609.0
-    },
-    {
-      "country": "CA",
-      "segment": "S",
-      "accounts": 276081,
-      "revenue_90d": 41706619.0
-    },
-    {
-      "country": "DACH",
-      "segment": "S",
-      "accounts": 144336,
-      "revenue_90d": 23144861.0
-    },
-    {
-      "country": "UK",
-      "segment": "M",
-      "accounts": 17408,
-      "revenue_90d": 17062163.0
-    },
-    {
-      "country": "US",
-      "segment": "L",
-      "accounts": 14873,
-      "revenue_90d": 11663037.0
-    },
-    {
-      "country": "US",
-      "segment": "XL",
-      "accounts": 23586,
-      "revenue_90d": 9633069.0
-    },
-    {
-      "country": "DACH",
-      "segment": "M",
-      "accounts": 10887,
-      "revenue_90d": 6745632.0
-    },
-    {
-      "country": "CA",
-      "segment": "L",
-      "accounts": 1610,
-      "revenue_90d": 719245.0
-    },
-    {
-      "country": "UK",
-      "segment": "L",
-      "accounts": 1880,
-      "revenue_90d": 428831.0
-    },
-    {
-      "country": "DACH",
-      "segment": "L",
-      "accounts": 1298,
-      "revenue_90d": 417037.0
-    },
-    {
-      "country": "CA",
-      "segment": "XL",
-      "accounts": 2306,
-      "revenue_90d": 357161.0
-    },
-    {
-      "country": "BNL",
-      "segment": "L",
-      "accounts": 599,
-      "revenue_90d": 351367.0
-    },
-    {
-      "country": "BNL",
-      "segment": "XL",
-      "accounts": 296,
-      "revenue_90d": 179218.0
-    },
-    {
-      "country": "FR",
-      "segment": "XL",
-      "accounts": 638,
-      "revenue_90d": 80994.0
+      "split_hire_recommended": true
     }
   ]
 }

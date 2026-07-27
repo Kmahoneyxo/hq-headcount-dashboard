@@ -140,4 +140,4 @@ flagged AS (
 SELECT *
 FROM flagged
 WHERE too_big OR too_little
-ORDER BY country, segment, peel_to_ideal DESC, grow_slots DESC;
+ORDER BY country, segment, peel_to_ideal DESC, grow_slots DESC
