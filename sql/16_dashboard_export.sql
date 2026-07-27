@@ -233,19 +233,12 @@ market_coverage AS (
 
 market_accounts AS (
   SELECT
-    p.company_size_segment AS segment,
-    COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1)) AS country,
-    COUNT(DISTINCT j.current_parent_company_id) AS assigned_accounts,
-    COUNT(DISTINCT j.current_sales_rep_id) AS current_reps,
-    SUM(j.cpc_revenue_millicents + j.cpa_revenue_millicents) / 100000.0 AS revenue_90d
-  FROM datalake.imhotep_iceberg.jobactivitymetrics j
-  JOIN datalake.scss.client_attributes_dim_parent_attributes_current p
-    ON j.current_parent_company_id = p.parent_company_id
-  LEFT JOIN rep_meta m ON j.current_sales_rep_id = m.sales_rep_id
-  WHERE j.dl__yyyymmdd_cst BETWEEN '20260427' AND '20260725'
-    AND j.current_sales_team_name IS NOT NULL AND j.current_sales_team_name <> 'None'
-    AND j.current_sales_rep_id IS NOT NULL
-    AND COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1), 'XX') <> 'JP'
+    segment,
+    country,
+    SUM(accounts_per_rep) AS assigned_accounts,
+    COUNT(DISTINCT sales_rep_id) AS current_reps,
+    SUM(revenue_current) AS revenue_90d
+  FROM rep_level
   GROUP BY 1, 2
 ),
 
