@@ -57,6 +57,17 @@ rep_level AS (
   GROUP BY 1, 2, 3, 4
 ),
 
+rep_with_growth AS (
+  SELECT
+    *,
+    LEAST(GREATEST(
+      (revenue_usd_90d - revenue_usd_prior_90d) / NULLIF(revenue_usd_prior_90d, 0),
+      -0.5
+    ), 1.0) AS revenue_growth_pct
+  FROM rep_level
+  WHERE revenue_usd_prior_90d >= 5000
+),
+
 bucket_growth AS (
   SELECT
     segment,
@@ -69,13 +80,9 @@ bucket_growth AS (
       WHEN accounts_per_rep <= 150 THEN '05: 101-150'
       ELSE '06: 150+'
     END AS book_size_bucket,
-    APPROX_PERCENTILE(
-      (revenue_usd_90d - revenue_usd_prior_90d) / NULLIF(revenue_usd_prior_90d, 0),
-      0.5
-    ) AS median_growth_pct,
+    APPROX_PERCENTILE(revenue_growth_pct, 0.5) AS median_growth_pct,
     COUNT(*) AS rep_count
-  FROM rep_level
-  WHERE revenue_usd_prior_90d > 0
+  FROM rep_with_growth
   GROUP BY 1, 2, 3
 ),
 
@@ -83,9 +90,9 @@ optimal_bucket AS (
   SELECT segment, country, book_size_bucket AS optimal_bucket, median_growth_pct
   FROM (
     SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY segment, country ORDER BY median_growth_pct DESC) AS rn
+      ROW_NUMBER() OVER (PARTITION BY segment, country ORDER BY median_growth_pct DESC, rep_count DESC) AS rn
     FROM bucket_growth
-    WHERE rep_count >= 5
+    WHERE rep_count >= 5 AND median_growth_pct > 0
   )
   WHERE rn = 1
 ),
@@ -99,14 +106,10 @@ team_summary AS (
     ROUND(AVG(accounts_per_rep), 0) AS avg_accounts_per_rep,
     ROUND(SUM(revenue_usd_90d), 0) AS revenue_90d,
     ROUND(
-      APPROX_PERCENTILE(
-        (revenue_usd_90d - revenue_usd_prior_90d) / NULLIF(revenue_usd_prior_90d, 0),
-        0.5
-      ),
+      APPROX_PERCENTILE(revenue_growth_pct, 0.5),
       3
     ) AS median_team_growth_pct
-  FROM rep_level
-  WHERE revenue_usd_prior_90d > 0
+  FROM rep_with_growth
   GROUP BY 1, 2, 3
   HAVING COUNT(DISTINCT sales_rep_id) >= 3
 )
@@ -122,11 +125,11 @@ SELECT
   o.optimal_bucket,
   o.median_growth_pct AS optimal_bucket_growth_pct,
   CASE
-    WHEN t.avg_accounts_per_rep > 100 THEN 'Consolidate'
-    WHEN t.avg_accounts_per_rep < 30 AND t.median_team_growth_pct > 0 THEN 'Add'
-    WHEN t.median_team_growth_pct < 0 THEN 'Consolidate'
+    WHEN t.avg_accounts_per_rep > 100 THEN 'Optimize'
+    WHEN t.avg_accounts_per_rep < 30 AND t.median_team_growth_pct > 0 THEN 'Hire'
+    WHEN t.median_team_growth_pct < 0 THEN 'Do Not Hire'
     ELSE 'Hold'
-  END AS headcount_signal  -- v0 rule; refine in Week 3
+  END AS headcount_signal
 FROM team_summary t
 LEFT JOIN optimal_bucket o
   ON t.segment = o.segment AND t.country = o.country

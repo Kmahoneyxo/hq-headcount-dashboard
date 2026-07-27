@@ -1,9 +1,14 @@
 # HQ Headcount Dashboard
 
-Looker Studio dashboard for HQ headcount planning: per **team × segment**, signal whether headcount should **Add / Hold / Consolidate**, backed by book size, coverage, revenue growth, and SBS whitespace.
+Looker Studio dashboard for HQ headcount planning: per **country × segment**, suggest **optimal headcount** and operationalize the **perfect book** — the account threshold where revenue growth peaks before diminishing returns.
 
 **Due:** October 1, 2026  
 **Gameplan:** [Google Doc](https://docs.google.com/document/d/1NtJ-bAiX3T2s5eMC7WiX0WV9lVVVsvCkgBOwZlryhHI/edit)
+
+## Goals
+
+1. **Optimal headcount model** — basic calculation of suggested headcount per country & segment
+2. **Perfect book** — identify the exact threshold where a rep's book yields maximum revenue growth before diminishing returns, then operationalize it
 
 ## Data sources
 

@@ -51,6 +51,10 @@ On assigned books (90d): clicks ↔ apply_starts correlation = 0.74; apply_start
 
 **Recommended join for v1:** `JAM.current_sales_rep_id = current_parent_rep_assignment.sales_rep_id` for rep metadata; add `rep_activity_sales` for true rep coverage metrics.
 
+### Regional cost data (gap)
+
+No comp/cost table found in `sales_data_strategy_dsa`. Query `09_headcount_capacity_model.sql` uses a **region cost tier proxy** (High / Medium-High / Medium / Standard) based on `sales_region` and country. Replace with Finance/HR comp data when available for ROI-weighted hire decisions.
+
 ## Join chain (v0)
 
 ```

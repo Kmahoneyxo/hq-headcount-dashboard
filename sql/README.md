@@ -11,7 +11,9 @@ Execute in order via **dp-mcp** → `execute_query` (queryType: `TRINO`, environ
 | 5 | `05_sbs_whitespace.sql` | Size SBS pool | Unassigned accounts + revenue by segment |
 | 6 | `06_base_dataset_v1.sql` | Rep-level base with growth + coverage + country | One row per team × segment × rep |
 | 7 | `07_optimal_book_segment_country.sql` | Growth-optimal book bucket by segment × country | Bucket table with median growth (min 5 reps) |
-| 8 | `08_team_vs_optimal_book.sql` | Team vs optimal + Add/Hold/Consolidate v0 | Team-level headcount signal |
+| 8 | `08_team_vs_optimal_book.sql` | Team vs optimal + Hire/Hold/Optimize v1 | Team-level headcount signal |
+| 9 | `09_headcount_capacity_model.sql` | Team-level capacity model | Hire / Hold / Optimize / Do Not Hire |
+| 10 | `10_perfect_book_headcount_country_segment.sql` | **Perfect book + optimal headcount** | Country × segment perfect book threshold + headcount gap |
 
 ## Before running
 

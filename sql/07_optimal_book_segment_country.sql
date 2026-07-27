@@ -1,6 +1,6 @@
--- Week 2 Step 2: Optimal book size analysis by segment × country
--- Buckets reps by accounts_per_rep; finds bucket with highest median revenue growth
--- Uses v1 base dataset logic inline for performance
+-- Week 2 Step 2: Optimal book size by segment × country (v2 — outlier-filtered)
+-- Growth capped at [-50%, +100%]; min $5k prior 90d revenue per rep
+-- Current 90d: 20260427–20260725 | Prior 90d: 20260128–20260426
 
 WITH rep_meta AS (
   SELECT
@@ -44,32 +44,41 @@ prior_period AS (
   GROUP BY 1, 2, 3
 ),
 
+rep_coverage AS (
+  SELECT
+    sales_rep_id,
+    SUM(impact_calls) AS impact_calls_90d
+  FROM datalake.sales_data_strategy_dsa.rep_activity_sales
+  WHERE SUBSTR(date, 1, 10) BETWEEN '2026-04-27' AND '2026-07-25'
+  GROUP BY 1
+),
+
 rep_level AS (
   SELECT
     c.team,
     c.segment,
     c.sales_rep_id,
     COALESCE(m.market, REGEXP_EXTRACT(c.team, '^([A-Z]{2})-', 1)) AS country,
+    m.region,
     COUNT(DISTINCT c.parent_company_id) AS accounts_per_rep,
     SUM(c.revenue_usd) AS revenue_usd_90d,
-    MAX(p.revenue_usd_prior) AS revenue_usd_prior_90d
+    MAX(p.revenue_usd_prior) AS revenue_usd_prior_90d,
+    MAX(cov.impact_calls_90d) AS impact_calls_90d
   FROM current_period c
   LEFT JOIN prior_period p
     ON c.team = p.team AND c.segment = p.segment AND c.sales_rep_id = p.sales_rep_id
   LEFT JOIN rep_meta m ON c.sales_rep_id = m.sales_rep_id
-  GROUP BY 1, 2, 3, 4
+  LEFT JOIN rep_coverage cov ON c.sales_rep_id = cov.sales_rep_id
+  GROUP BY 1, 2, 3, 4, 5
 ),
 
-bucketed AS (
+rep_filtered AS (
   SELECT
-    segment,
-    country,
-    sales_rep_id,
-    accounts_per_rep,
-    revenue_usd_90d,
-    revenue_usd_prior_90d,
-    (revenue_usd_90d - revenue_usd_prior_90d)
-      / NULLIF(revenue_usd_prior_90d, 0) AS revenue_growth_pct,
+    *,
+    LEAST(GREATEST(
+      (revenue_usd_90d - revenue_usd_prior_90d) / NULLIF(revenue_usd_prior_90d, 0),
+      -0.5
+    ), 1.0) AS revenue_growth_pct,
     CASE
       WHEN accounts_per_rep <= 25 THEN '01: 1-25'
       WHEN accounts_per_rep <= 50 THEN '02: 26-50'
@@ -79,18 +88,55 @@ bucketed AS (
       ELSE '06: 150+'
     END AS book_size_bucket
   FROM rep_level
-  WHERE revenue_usd_prior_90d > 0  -- need prior revenue for growth calc
+  WHERE revenue_usd_prior_90d >= 5000  -- filter small-denominator outliers
+),
+
+bucket_stats AS (
+  SELECT
+    segment,
+    country,
+    book_size_bucket,
+    COUNT(DISTINCT sales_rep_id) AS rep_count,
+    ROUND(AVG(accounts_per_rep), 1) AS avg_accounts_per_rep,
+    ROUND(APPROX_PERCENTILE(revenue_growth_pct, 0.5), 3) AS median_revenue_growth_pct,
+    ROUND(AVG(revenue_usd_90d / NULLIF(accounts_per_rep, 0)), 0) AS avg_rev_per_account,
+    ROUND(APPROX_PERCENTILE(impact_calls_90d / NULLIF(accounts_per_rep, 0), 0.5), 1) AS median_impact_calls_per_account
+  FROM rep_filtered
+  GROUP BY 1, 2, 3
+  HAVING COUNT(DISTINCT sales_rep_id) >= 5
+),
+
+optimal AS (
+  SELECT
+    segment,
+    country,
+    book_size_bucket AS optimal_bucket,
+    median_revenue_growth_pct AS optimal_median_growth,
+    median_impact_calls_per_account AS coverage_target
+  FROM (
+    SELECT *,
+      ROW_NUMBER() OVER (
+        PARTITION BY segment, country
+        ORDER BY median_revenue_growth_pct DESC, rep_count DESC
+      ) AS rn
+    FROM bucket_stats
+    WHERE median_revenue_growth_pct > 0  -- only buckets with positive growth
+  )
+  WHERE rn = 1
 )
 
 SELECT
-  segment,
-  country,
-  book_size_bucket,
-  COUNT(DISTINCT sales_rep_id) AS rep_count,
-  ROUND(AVG(accounts_per_rep), 1) AS avg_accounts_per_rep,
-  ROUND(APPROX_PERCENTILE(revenue_growth_pct, 0.5), 3) AS median_revenue_growth_pct,
-  ROUND(AVG(revenue_usd_90d / NULLIF(accounts_per_rep, 0)), 0) AS avg_rev_per_account
-FROM bucketed
-GROUP BY 1, 2, 3
-HAVING COUNT(DISTINCT sales_rep_id) >= 5  -- minimum sample for reliability
-ORDER BY segment, country, book_size_bucket;
+  b.segment,
+  b.country,
+  b.book_size_bucket,
+  b.rep_count,
+  b.avg_accounts_per_rep,
+  b.median_revenue_growth_pct,
+  b.avg_rev_per_account,
+  b.median_impact_calls_per_account,
+  o.optimal_bucket,
+  o.optimal_median_growth,
+  o.coverage_target
+FROM bucket_stats b
+LEFT JOIN optimal o ON b.segment = o.segment AND b.country = o.country
+ORDER BY b.segment, b.country, b.book_size_bucket;
