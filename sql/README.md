@@ -21,6 +21,8 @@ Execute in order via **dp-mcp** → `execute_query` (queryType: `TRINO`, environ
 
 Run query **12** and export to `docs/data/headcount.json` (or use `scripts/csv-to-dashboard-json.py`).
 
+## Before running
+
 1. Update partition dates (`dl__yyyymmdd_cst`) to the latest available CST partition.
 2. For 90-day windows in 03/04, align `BETWEEN` dates to your chosen end date.
 
