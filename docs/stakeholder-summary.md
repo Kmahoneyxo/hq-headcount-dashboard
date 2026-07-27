@@ -1,9 +1,12 @@
 # Stakeholder Summary — Perfect Book & Optimal Headcount
 
+> **⚠ Preview data — do not share externally without caveats.**  
+> **Segment = company size (S/M/L/XL), not sales segment (M/UMM/ACC/NAM).** Labels like **US-M** mean "M-sized employer accounts," not the Mid Market org. **Do not sum `current_reps` across rows** (same rep appears in multiple size buckets; dashboard total ~4,349 vs ~942 unique US reps). **Hire signals on BNL-S, CA-S, UK-S, etc. are not valid GTM planning units** — those are company-size pools. NAM, DCA, UMM are missing entirely. SQL v2 in progress. See [`data-model-audit.md`](./data-model-audit.md).
+
 **Date:** 2026-07-27  
 **Query:** `sql/10_perfect_book_headcount_country_segment.sql`  
 **Window:** 90 days (20260427–20260725 vs prior 20260128–20260426)  
-**Grain:** Country × Segment
+**Grain:** Country × company size *(labeled "segment" — not sales GTM segment)*
 
 ---
 
@@ -17,7 +20,7 @@ We built a first-pass **global headcount capacity model** that:
 
 **Key finding:** Most high-revenue markets show **Optimize** — reps are carrying books **below** the growth-optimal size, but **total rep count exceeds** what the account base supports at that book size. This suggests **consolidation and book redistribution** rather than net-new hiring in those markets.
 
-**Markets showing Hire signal** (under-staffed vs model): DACH-M, DACH-L, IT-M, FR-XL, UK-S, CA-S, BNL-S
+**Markets showing Hire signal** (under-staffed vs model — *directional only at company-size grain*): DACH-M, DACH-L, IT-M, FR-XL, UK-S, CA-S, BNL-S *(size-S rows are not GTM segments; treat with caution)*
 
 ---
 
@@ -81,8 +84,8 @@ Large S-segment pool represents major assignment opportunity; hire recommendatio
 2. **Optimal headcount** = assigned accounts ÷ perfect book
 3. **Headcount gap** = current reps − optimal headcount
 
-**Example talking point (US-M):**
-> "US-M has 735 reps averaging 55 accounts each. At a perfect book of ~80 accounts, the model supports ~500 reps on the current account base — suggesting optimization opportunity rather than net-new hires, unless we assign significant whitespace."
+**Example talking point (US · size M — not Mid Market org):**
+> "The US size-M account pool has 735 rep-slots averaging 55 accounts each *(not 735 unique reps — do not sum with other size rows)*. At a perfect book of ~80 accounts, this slice supports ~500 reps — suggesting optimization opportunity within this size bucket. True Mid Market / UMM / NAM headcount requires SQL v2 sales-segment grain."
 
 **Example talking point (DACH-M):**
 > "DACH-M has 131 reps averaging 43 accounts. Perfect book is 31–40 accounts with 60% median growth. Model supports 162 reps — **hire gap of ~31**."
