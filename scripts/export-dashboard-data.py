@@ -7,6 +7,7 @@ Usage:
 
 Outputs (by default):
   docs/data/headcount-dashboard.csv           — all market fields (headcount.json)
+  docs/data/headcount-dashboard-rep-book.csv  — all reps with book profile (rep_book.json)
   docs/data/headcount-dashboard-book-health.csv — flagged reps (book_health.json)
   docs/data/headcount-dashboard.xlsx          — full workbook (requires openpyxl)
 """
@@ -22,8 +23,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_HC_IN = ROOT / "docs" / "data" / "headcount.json"
 DEFAULT_BH_IN = ROOT / "docs" / "data" / "book_health.json"
+DEFAULT_RB_IN = ROOT / "docs" / "data" / "rep_book.json"
 OUT_DIR = ROOT / "docs" / "data"
 MARKETS_CSV_OUT = OUT_DIR / "headcount-dashboard.csv"
+REP_BOOK_CSV_OUT = OUT_DIR / "headcount-dashboard-rep-book.csv"
 BOOK_HEALTH_CSV_OUT = OUT_DIR / "headcount-dashboard-book-health.csv"
 XLSX_OUT = OUT_DIR / "headcount-dashboard.xlsx"
 
@@ -102,11 +105,16 @@ MARKET_KEY_ORDER = list(MARKET_FIELD_LABELS.keys())
 
 BOOK_HEALTH_FIELD_LABELS: dict[str, str] = {
     "market": "Market",
+    "country": "Country",
+    "segment": "Segment",
     "sales_rep_id": "Sales rep ID",
+    "sales_team_name": "Sales team",
     "pcid_count": "PCID count",
     "pqr_90d": "PQR 90d ($)",
     "revenue_90d": "Revenue 90d ($)",
     "ideal_pcid": "Ideal PCID",
+    "segment_avg_pcid": "Segment avg PCID",
+    "segment_avg_pqr": "Segment avg PQR ($)",
     "vs_ideal_pcid": "Vs ideal PCID",
     "too_big": "Too big",
     "too_little": "Too little",
@@ -115,6 +123,29 @@ BOOK_HEALTH_FIELD_LABELS: dict[str, str] = {
 }
 
 BOOK_HEALTH_KEY_ORDER = list(BOOK_HEALTH_FIELD_LABELS.keys())
+
+REP_BOOK_FIELD_LABELS: dict[str, str] = {
+    "market": "Market",
+    "country": "Country",
+    "segment": "Segment",
+    "sales_rep_id": "Sales rep ID",
+    "sales_team_name": "Sales team",
+    "pcid_count": "PCID count",
+    "pqr_90d": "PQR 90d ($)",
+    "revenue_90d": "Revenue 90d ($)",
+    "impact_calls_90d": "Impact calls 90d",
+    "impact_calls_per_account": "Impact calls / account",
+    "ideal_pcid": "Ideal PCID",
+    "segment_avg_pcid": "Segment avg PCID",
+    "segment_avg_pqr": "Segment avg PQR ($)",
+    "vs_ideal_pcid": "Vs ideal PCID",
+    "too_big": "Too big",
+    "too_little": "Too little",
+    "peel_to_ideal": "Peel to ideal",
+    "grow_slots": "Grow slots",
+}
+
+REP_BOOK_KEY_ORDER = list(REP_BOOK_FIELD_LABELS.keys())
 
 SBS_FIELD_LABELS: dict[str, str] = {
     "country": "Country",
@@ -157,20 +188,46 @@ def market_column_keys(markets: list[dict]) -> list[str]:
     return keys
 
 
+def _split_market_key(market_key: str) -> tuple[str, str]:
+    if "-" in market_key:
+        country, segment = market_key.split("-", 1)
+        return country, segment
+    return "", ""
+
+
+def enrich_rep_row(row: dict, market_key: str = "") -> dict:
+    out = dict(row)
+    if market_key and not out.get("market"):
+        out["market"] = market_key
+    if not out.get("country") or not out.get("segment"):
+        mk = out.get("market") or market_key
+        country, segment = _split_market_key(str(mk))
+        out.setdefault("country", country)
+        out.setdefault("segment", segment)
+    return out
+
+
 def flatten_book_health(payload: dict) -> list[dict]:
     rows: list[dict] = []
     for market_key, market_data in sorted(payload.get("markets", {}).items()):
         for rep in market_data.get("reps", []):
-            row = {"market": market_key}
-            row.update(rep)
-            rows.append(row)
+            rows.append(enrich_rep_row(rep, market_key))
     return rows
 
 
-def book_health_column_keys(rows: list[dict]) -> list[str]:
+def flatten_rep_book(payload: dict, book_health: dict | None = None) -> list[dict]:
+    reps = payload.get("reps")
+    if reps:
+        return [enrich_rep_row(r) for r in reps]
+    if book_health:
+        return flatten_book_health(book_health)
+    return []
+
+
+def column_keys(rows: list[dict], preferred: list[str]) -> list[str]:
     seen: set[str] = set()
     keys: list[str] = []
-    for key in BOOK_HEALTH_KEY_ORDER:
+    for key in preferred:
         if key not in seen:
             keys.append(key)
             seen.add(key)
@@ -180,6 +237,14 @@ def book_health_column_keys(rows: list[dict]) -> list[str]:
                 keys.append(key)
                 seen.add(key)
     return keys
+
+
+def book_health_column_keys(rows: list[dict]) -> list[str]:
+    return column_keys(rows, BOOK_HEALTH_KEY_ORDER)
+
+
+def rep_book_column_keys(rows: list[dict]) -> list[str]:
+    return column_keys(rows, REP_BOOK_KEY_ORDER)
 
 
 def label_for(key: str, labels: dict[str, str]) -> str:
@@ -213,6 +278,12 @@ def write_book_health_csv(book_health: dict, path: Path) -> None:
     write_csv_rows(rows, keys, BOOK_HEALTH_FIELD_LABELS, path, "flagged reps")
 
 
+def write_rep_book_csv(rep_book: dict, book_health: dict, path: Path) -> None:
+    rows = flatten_rep_book(rep_book, book_health)
+    keys = rep_book_column_keys(rows)
+    write_csv_rows(rows, keys, REP_BOOK_FIELD_LABELS, path, "reps")
+
+
 def style_header_row(ws, bold) -> None:
     for cell in ws[1]:
         cell.font = bold
@@ -237,7 +308,7 @@ def append_sheet(wb, title: str, keys: list[str], labels: dict[str, str], rows: 
     return ws
 
 
-def write_xlsx(payload: dict, book_health: dict, path: Path) -> bool:
+def write_xlsx(payload: dict, book_health: dict, rep_book: dict, path: Path) -> bool:
     try:
         from openpyxl import Workbook
         from openpyxl.styles import Font
@@ -265,6 +336,11 @@ def write_xlsx(payload: dict, book_health: dict, path: Path) -> bool:
     ws_markets.freeze_panes = "A2"
     ws_markets.auto_filter.ref = ws_markets.dimensions
 
+    rep_rows = flatten_rep_book(rep_book, book_health)
+    rep_keys = rep_book_column_keys(rep_rows)
+    ws_rep = append_sheet(wb, "Rep book", rep_keys, REP_BOOK_FIELD_LABELS, rep_rows, bold)
+    ws_rep.column_dimensions["E"].width = 28
+
     book_rows = flatten_book_health(book_health)
     book_keys = book_health_column_keys(book_rows)
     append_sheet(wb, "Book health (flagged reps)", book_keys, BOOK_HEALTH_FIELD_LABELS, book_rows, bold)
@@ -291,8 +367,12 @@ def write_xlsx(payload: dict, book_health: dict, path: Path) -> bool:
         ("Book health data as of", book_health.get("updated_at", "")),
         ("Book health source query", book_health.get("query", "")),
         ("Book health note", book_health.get("note", "")),
+        ("Rep book data as of", rep_book.get("updated_at", "")),
+        ("Rep book source query", rep_book.get("query", "")),
+        ("Rep book note", rep_book.get("note", "")),
         ("Export generated", exported_at),
         ("Markets in export", len(markets)),
+        ("Reps in export (Rep book tab)", len(rep_rows)),
         ("Flagged reps in export", len(book_rows)),
         ("SBS whitespace rows", len(sbs_rows)),
     ]
@@ -317,19 +397,30 @@ def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_json_optional(path: Path) -> dict:
+    if path.is_file():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {}
+
+
 def main() -> None:
     hc_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_HC_IN
     bh_path = DEFAULT_BH_IN
+    rb_path = DEFAULT_RB_IN
     if len(sys.argv) > 2:
         bh_path = Path(sys.argv[2])
+    if len(sys.argv) > 3:
+        rb_path = Path(sys.argv[3])
 
     payload = load_json(hc_path)
     book_health = load_json(bh_path)
+    rep_book = load_json_optional(rb_path)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     write_markets_csv(payload, MARKETS_CSV_OUT)
+    write_rep_book_csv(rep_book, book_health, REP_BOOK_CSV_OUT)
     write_book_health_csv(book_health, BOOK_HEALTH_CSV_OUT)
-    write_xlsx(payload, book_health, XLSX_OUT)
+    write_xlsx(payload, book_health, rep_book, XLSX_OUT)
 
 
 if __name__ == "__main__":

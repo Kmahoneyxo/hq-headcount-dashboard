@@ -30,10 +30,17 @@ def main() -> None:
         by_market[key].append(
             {
                 "sales_rep_id": r.get("sales_rep_id"),
+                "country": r.get("country"),
+                "segment": r.get("segment"),
+                "sales_team_name": r.get("sales_team_name"),
                 "pcid_count": r.get("pcid_count"),
                 "pqr_90d": r.get("pqr_90d"),
                 "revenue_90d": r.get("revenue_90d"),
+                "impact_calls_90d": r.get("impact_calls_90d"),
+                "impact_calls_per_account": r.get("impact_calls_per_account"),
                 "ideal_pcid": r.get("ideal_pcid"),
+                "segment_avg_pcid": r.get("segment_avg_pcid"),
+                "segment_avg_pqr": r.get("segment_avg_pqr"),
                 "vs_ideal_pcid": r.get("vs_ideal_pcid"),
                 "too_big": bool(r.get("too_big")),
                 "too_little": bool(r.get("too_little")),

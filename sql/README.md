@@ -16,13 +16,16 @@ Execute in order via **dp-mcp** → `execute_query` (queryType: `TRINO`, environ
 | 10 | `10_perfect_book_headcount_country_segment.sql` | **Perfect book + optimal headcount** | Country × segment perfect book threshold + headcount gap |
 | 11 | `11_book_score_join.sql` | **Book Building FY26 score** | FY26 book score by country × segment from `sales_book_summary_v2` |
 | 16 | `16_dashboard_export.sql` | **Full dashboard export** | Ideal HC, PQR, book health, split-hire (Layer 1+2) |
-| 17 | `17_rep_book_profile.sql` | **Rep book health** | Flagged reps (too big/too little) → `book_health.json` |
+| 17 | `17_rep_book_profile.sql` | **Rep book health (flagged)** | Flagged reps (too big/too little) → `book_health.json` |
+| 17a | `17_rep_book_profile_all.sql` | **Rep book (all reps)** | Full rep book profile → `rep_book.json` + export |
 
 ## Dashboard refresh
 
 Run query **16** on Quest **prod** (interactive times out at 10m). Export → `scripts/json-from-mcp-results.py`.
 
 Run query **17** for rep-level flags → `scripts/merge-book-health.py`.
+
+Run query **17a** (`17_rep_book_profile_all.sql`) for all reps → `scripts/merge-rep-book.py`.
 
 ## Before running
 

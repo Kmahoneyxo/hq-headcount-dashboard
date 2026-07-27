@@ -59,13 +59,14 @@ This writes:
 
 | File | Use |
 |------|-----|
-| `docs/data/headcount-dashboard.xlsx` | **Full download** — 5 sheets: **Markets** (all fields + summary columns), **Book health (flagged reps)**, **SBS whitespace**, **Market summaries** (Over/Under HC + why), **About** |
+| `docs/data/headcount-dashboard.xlsx` | **Full download** — 6 sheets: **Markets**, **Rep book** (all reps — audit trail), **Book health (flagged reps)**, **SBS whitespace**, **Market summaries**, **About** |
 | `docs/data/headcount-dashboard.csv` | Markets only — all columns from `headcount.json` |
+| `docs/data/headcount-dashboard-rep-book.csv` | All reps — one row per rep from `rep_book.json` (segment, team, PCIDs, ideal, flags) |
 | `docs/data/headcount-dashboard-book-health.csv` | Flagged reps only — flattened from `book_health.json` |
 
-The live dashboard header links to the Excel workbook (full data) and the markets CSV. Use Excel for the complete export including rep-level book health.
+The live dashboard header links to the Excel workbook (full data), rep-book CSV, and markets CSV. Use Excel **Rep book** tab to reconcile market rollup → individual reps.
 
-**Include in weekly refresh:** run export script after updating `headcount.json` and `book_health.json`, then commit JSON + xlsx + both CSVs.
+**Include in weekly refresh:** run export script after updating `headcount.json`, `rep_book.json`, and `book_health.json`, then commit JSON + xlsx + all CSVs.
 
 ### Google Sheet (manual import)
 
@@ -119,7 +120,10 @@ python3 scripts/export-dashboard-data.py
 # Save sql/17 in same workspace, run on prod, export → query17_results.json
 python3 scripts/merge-book-health.py docs/data/query17_results.json
 
-git add docs/data/headcount.json docs/data/book_health.json docs/data/headcount-dashboard.*
+# All reps for export audit trail (sql/17_rep_book_profile_all.sql)
+python3 scripts/merge-rep-book.py docs/data/query17_all_results.json
+
+git add docs/data/headcount.json docs/data/book_health.json docs/data/rep_book.json docs/data/headcount-dashboard.*
 git commit -m "Refresh dashboard from Quest prod"
 git push
 ```
@@ -138,6 +142,12 @@ GitHub Pages redeploys in ~1–2 min.
 1. In the same workspace, **Add query** → paste `sql/17_rep_book_profile.sql`.
 2. Name it `HQ Rep Book Profile (sql/17)` · Trino · prod.
 3. Run on prod → export → `merge-book-health.py`.
+
+#### Also save sql/17 all reps (export audit trail)
+
+1. **Add query** → paste `sql/17_rep_book_profile_all.sql`.
+2. Name it `HQ Rep Book All (sql/17a)` · Trino · prod.
+3. Run on prod → export → `merge-rep-book.py` → `export-dashboard-data.py`.
 
 #### Troubleshooting
 
@@ -161,7 +171,7 @@ GitHub Pages redeploys in ~1–2 min.
 
 ## JSON schema
 
-See `dashboard/data/headcount.json` for the live format. Key fields map from query 10:
+See `docs/data/headcount.json` for the live format. Key fields map from query 10:
 
 | JSON field | SQL column |
 |------------|------------|
@@ -202,13 +212,13 @@ On GitHub Pages, Refresh is for picking up a **new push** — not for pulling li
 
 ### Live warehouse refresh (one-time setup)
 
-Set a command that re-runs query 10 and writes `dashboard/data/headcount.json`:
+Set a command that re-runs query 10 and writes `docs/data/headcount.json`:
 
 ```bash
-export DASHBOARD_REFRESH_CMD="python3 scripts/csv-to-dashboard-json.py dashboard/data/export.csv"
+export DASHBOARD_REFRESH_CMD="python3 scripts/csv-to-dashboard-json.py docs/data/export.csv"
 python3 scripts/dashboard-server.py
 ```
 
-Workflow: export query 10 from Quest/iDash to `dashboard/data/export.csv`, then click Refresh.
+Workflow: export query 10 from Quest/iDash to `docs/data/export.csv`, then click Refresh.
 
 For full automation, save query 10 as a scheduled Quest report and point `DASHBOARD_REFRESH_CMD` at a script that exports CSV and converts it.

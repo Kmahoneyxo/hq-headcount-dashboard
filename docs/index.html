@@ -18,7 +18,8 @@
           <input type="checkbox" id="hide-jp" checked />
           Hide Japan (out of scope)
         </label>
-        <a href="./data/headcount-dashboard.xlsx" class="btn btn-secondary" download>Download Excel (full data)</a>
+        <a href="./data/headcount-dashboard.xlsx" class="btn btn-secondary" download title="Markets + rep book (all reps) + flagged reps + SBS">Download Excel (full data)</a>
+        <a href="./data/headcount-dashboard-rep-book.csv" class="btn btn-secondary" download title="One row per rep — audit trail from market rollup">Download CSV (rep book)</a>
         <a href="./data/headcount-dashboard.csv" class="btn btn-secondary" download>Download CSV (markets)</a>
         <button type="button" id="refresh-btn" class="btn">
           <span id="refresh-label">Refresh data</span>
@@ -68,7 +69,7 @@
 
     <section class="panel hidden" id="flagged-reps-wrap">
       <h2>Flagged reps (too big / too little)</h2>
-      <p class="caption">From sql/17 · top 25 by peel/grow slots · full list in book_health.json</p>
+      <p class="caption">From sql/17 · top 25 by peel/grow slots · full rep book in Excel/CSV export</p>
       <div class="table-wrap table-wrap-sm">
         <table>
           <thead>
