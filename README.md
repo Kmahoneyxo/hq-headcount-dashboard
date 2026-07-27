@@ -9,7 +9,7 @@ Interactive dashboard in `dashboard/` — deploys to **GitHub Pages** for team s
 | | |
 |--|--|
 | **Local preview** | `cd dashboard && python3 -m http.server 8080` |
-| **Share URL** | https://kmahoneyxo.github.io/hq-headcount-dashboard/ (after Pages setup) |
+| **Share URL** | https://kmahoneyxo.github.io/hq-headcount-dashboard/ (after Pages setup — see [docs/share-dashboard.md](docs/share-dashboard.md)) |
 | **Setup & refresh** | [docs/share-dashboard.md](docs/share-dashboard.md) |
 
 **Due:** October 1, 2026  

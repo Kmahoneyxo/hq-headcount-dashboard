@@ -16,11 +16,12 @@ Send that URL to Sales Ops / HQ. Anyone with the link can view it.
 
 ## One-time setup (5 minutes)
 
-1. Merge this branch to `main` (or push `dashboard/` to `main`).
+1. Push this branch to GitHub (dashboard files in `dashboard/`).
 2. On GitHub: **Settings → Pages**
-   - Source: **GitHub Actions**
-3. The workflow `.github/workflows/deploy-pages.yml` runs automatically.
-4. Copy the published URL from **Settings → Pages**.
+   - **Build and deployment → Source:** Deploy from a branch
+   - **Branch:** `cursor/optimal-book-base-dataset-v1` (or `main` after merge)
+   - **Folder:** `/dashboard`
+3. Wait ~1–2 minutes, then open the share URL below.
 
 ---
 
