@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert query 10 CSV export to dashboard/data/headcount.json.
+"""Convert query 10 CSV export to docs/data/headcount.json.
 
 Usage:
   python3 scripts/csv-to-dashboard-json.py export.csv
@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "dashboard" / "data" / "headcount.json"
+OUT = ROOT / "docs" / "data" / "headcount.json"
 
 
 def main() -> None:

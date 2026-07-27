@@ -4,11 +4,11 @@ Shareable web dashboard + SQL pipeline for HQ headcount planning: per **country 
 
 ## Team dashboard (shareable)
 
-Interactive dashboard in `dashboard/` — deploys to **GitHub Pages** for team sharing.
+Interactive dashboard in `docs/` — deploys to **GitHub Pages** for team sharing.
 
 | | |
 |--|--|
-| **Local preview** | `cd dashboard && python3 -m http.server 8080` |
+| **Local preview** | `python3 scripts/dashboard-server.py` |
 | **Share URL** | https://kmahoneyxo.github.io/hq-headcount-dashboard/ (after Pages setup — see [docs/share-dashboard.md](docs/share-dashboard.md)) |
 | **Setup & refresh** | [docs/share-dashboard.md](docs/share-dashboard.md) |
 

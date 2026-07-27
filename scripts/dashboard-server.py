@@ -7,10 +7,10 @@ Usage:
 Open http://localhost:8080 and click **Refresh data**.
 
 The button calls POST /api/refresh, which runs DASHBOARD_REFRESH_CMD (if set) and
-returns the updated snapshot from dashboard/data/headcount.json.
+returns the updated snapshot from docs/data/headcount.json.
 
-Example — refresh from a CSV export you dropped in dashboard/data/export.csv:
-  DASHBOARD_REFRESH_CMD="python3 scripts/csv-to-dashboard-json.py dashboard/data/export.csv" \\
+Example — refresh from a CSV export you dropped in docs/data/export.csv:
+  DASHBOARD_REFRESH_CMD="python3 scripts/csv-to-dashboard-json.py docs/data/export.csv" \\
     python3 scripts/dashboard-server.py
 
 Example — custom script that calls Quest and writes headcount.json:
@@ -28,7 +28,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DASHBOARD = ROOT / "dashboard"
+DASHBOARD = ROOT / "docs"
 JSON_OUT = DASHBOARD / "data" / "headcount.json"
 REFRESH_CMD = os.environ.get("DASHBOARD_REFRESH_CMD", "")
 
@@ -66,7 +66,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 subprocess.run(REFRESH_CMD, shell=True, check=True, cwd=str(ROOT))
             elif not JSON_OUT.exists():
                 raise RuntimeError(
-                    "Set DASHBOARD_REFRESH_CMD to update data, or add dashboard/data/headcount.json"
+                    "Set DASHBOARD_REFRESH_CMD to update data, or add docs/data/headcount.json"
                 )
             payload = json.loads(JSON_OUT.read_text(encoding="utf-8"))
             payload["refreshed_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
