@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HQ Headcount Capacity Model</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div>
+        <h1>HQ Headcount Capacity Model</h1>
+        <p class="subtitle" id="meta-line">Loading…</p>
+      </div>
+      <div class="header-actions">
+        <label class="toggle">
+          <input type="checkbox" id="hide-jp" checked />
+          Hide Japan (out of scope)
+        </label>
+        <button type="button" id="refresh-btn" class="btn">
+          <span id="refresh-label">Refresh data</span>
+        </button>
+      </div>
+    </div>
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  </header>
+
+  <main class="container">
+    <section class="callout" id="headline"></section>
+
+    <section class="kpi-grid" id="kpis"></section>
+
+    <section class="filters">
+      <div class="filter-group" id="segment-filters"></div>
+      <div class="filter-group" id="rec-filters"></div>
+      <select id="sort-by" class="select">
+        <option value="revenue">Sort: revenue</option>
+        <option value="gap">Sort: headcount gap</option>
+        <option value="reps">Sort: current reps</option>
+      </select>
+    </section>
+
+    <section class="charts-grid">
+      <div class="panel">
+        <h2>Headcount gap by market</h2>
+        <p class="caption">Current reps minus optimal headcount (reps). Positive = over-staffed.</p>
+        <canvas id="gap-chart" height="320"></canvas>
+      </div>
+      <div class="panel panel-narrow">
+        <h2>Recommendations</h2>
+        <p class="caption">Filtered market count by action</p>
+        <canvas id="rec-chart" height="220"></canvas>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Market detail</h2>
+      <p class="caption">Perfect book = growth peak before diminishing returns · Optimal HC = assigned accounts ÷ perfect book</p>
+      <div class="table-wrap">
+        <table id="market-table">
+          <thead>
+            <tr>
+              <th>Market</th>
+              <th>Rev (90d)</th>
+              <th>Reps</th>
+              <th>Avg book</th>
+              <th>Perfect book</th>
+              <th>Optimal HC</th>
+              <th>Gap</th>
+              <th>Rec</th>
+            </tr>
+          </thead>
+          <tbody id="market-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="charts-grid">
+      <div class="panel">
+        <h2>SBS whitespace (unassigned, 90d)</h2>
+        <p class="caption">Segment-global pool — not country-specific</p>
+        <canvas id="sbs-chart" height="180"></canvas>
+      </div>
+      <div class="panel">
+        <h2>How to read this</h2>
+        <ul class="notes">
+          <li><strong>Hire</strong> — under-staffed vs model with positive growth in optimal bucket</li>
+          <li><strong>Optimize</strong> — over-staffed; consolidate/redistribute books before net-new hires</li>
+          <li><strong>Hold</strong> — within ±10% of optimal</li>
+          <li><strong>Do Not Hire</strong> — market growth ≤ 0 in optimal bucket</li>
+        </ul>
+        <p class="caption refresh-note" id="refresh-note"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>HQ Headcount Dashboard · Query 10 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

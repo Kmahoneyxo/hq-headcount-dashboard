@@ -1,6 +1,16 @@
 # HQ Headcount Dashboard
 
-Looker Studio dashboard for HQ headcount planning: per **country × segment**, suggest **optimal headcount** and operationalize the **perfect book** — the account threshold where revenue growth peaks before diminishing returns.
+Shareable web dashboard + SQL pipeline for HQ headcount planning: per **country × segment**, suggest **optimal headcount** and operationalize the **perfect book** — the account threshold where revenue growth peaks before diminishing returns.
+
+## Team dashboard (shareable)
+
+Interactive dashboard in `dashboard/` — deploys to **GitHub Pages** for team sharing.
+
+| | |
+|--|--|
+| **Local preview** | `cd dashboard && python3 -m http.server 8080` |
+| **Share URL** | https://kmahoneyxo.github.io/hq-headcount-dashboard/ (after Pages setup) |
+| **Setup & refresh** | [docs/share-dashboard.md](docs/share-dashboard.md) |
 
 **Due:** October 1, 2026  
 **Gameplan:** [Google Doc](https://docs.google.com/document/d/1NtJ-bAiX3T2s5eMC7WiX0WV9lVVVsvCkgBOwZlryhHI/edit)
