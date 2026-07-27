@@ -150,7 +150,7 @@ function amerMarkets() {
 }
 
 function filteredMarkets() {
-  return payload.markets
+  return (payload?.markets ?? [])
     .filter((m) => {
       if (hideJapan && isJapan(m)) return false;
       if (regionFilter === "amer" && !amerMarkets().includes(m.country)) return false;
@@ -200,7 +200,7 @@ function renderHeadline() {
 }
 
 function allMarketsForLookup() {
-  return payload.markets.filter((m) => !hideJapan || !isJapan(m));
+  return (payload?.markets ?? []).filter((m) => !hideJapan || !isJapan(m));
 }
 
 function findLookupMarket() {
@@ -428,6 +428,42 @@ function chartsAvailable() {
   return typeof Chart !== "undefined";
 }
 
+const CHART_JS_URLS = [
+  "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js",
+];
+
+function loadScript(url, timeoutMs = 4000) {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error("timeout")), timeoutMs);
+    const script = document.createElement("script");
+    script.src = url;
+    script.async = true;
+    script.onload = () => {
+      window.clearTimeout(timer);
+      resolve();
+    };
+    script.onerror = () => {
+      window.clearTimeout(timer);
+      reject(new Error("load failed"));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+async function ensureChartJs() {
+  if (chartsAvailable()) return true;
+  for (const url of CHART_JS_URLS) {
+    try {
+      await loadScript(url);
+      if (chartsAvailable()) return true;
+    } catch {
+      /* try next CDN */
+    }
+  }
+  return false;
+}
+
 function bookGapPct(m) {
   if (!m.perfect_book_target) return null;
   return Math.round((m.current_avg_book / m.perfect_book_target) * 100);
@@ -627,10 +663,7 @@ function renderAll() {
   renderKpis();
   renderFilters();
   renderTable();
-  renderGapChart();
-  renderBookScoreChart();
-  renderRecChart();
-  renderSbsChart();
+  renderCharts();
 }
 
 function bindEvents() {
@@ -671,21 +704,48 @@ function bindEvents() {
   });
 }
 
+function renderCharts() {
+  renderGapChart();
+  renderBookScoreChart();
+  renderRecChart();
+  renderSbsChart();
+}
+
 async function init() {
   try {
     await loadConfig();
     await loadData();
-    bindEvents();
-    renderAll();
-    if (!chartsAvailable()) {
-      showToast(
-        "Charts unavailable (Chart.js CDN blocked). Tables and KPIs still work — try another network or VPN.",
-        "warn",
-      );
-    }
   } catch (err) {
     document.querySelector(".container").innerHTML =
       `<div class="error"><strong>Failed to load dashboard data.</strong> ${err.message}</div>`;
+    return;
+  }
+
+  try {
+    bindEvents();
+    renderMeta();
+    renderLookup();
+    renderHeadline();
+    renderKpis();
+    renderFilters();
+    renderTable();
+  } catch (err) {
+    showToast(err.message || "Dashboard render failed", "err");
+    return;
+  }
+
+  const chartsOk = await ensureChartJs();
+  if (chartsOk) {
+    try {
+      renderCharts();
+    } catch (err) {
+      showToast(err.message || "Charts failed to render", "warn");
+    }
+  } else {
+    showToast(
+      "Charts unavailable (Chart.js CDN blocked). Tables and KPIs still work — try another network or VPN.",
+      "warn",
+    );
   }
 }
 
