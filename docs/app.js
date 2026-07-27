@@ -424,6 +424,10 @@ function renderFilters() {
     .join("");
 }
 
+function chartsAvailable() {
+  return typeof Chart !== "undefined";
+}
+
 function bookGapPct(m) {
   if (!m.perfect_book_target) return null;
   return Math.round((m.current_avg_book / m.perfect_book_target) * 100);
@@ -466,6 +470,7 @@ function renderTable() {
 }
 
 function renderGapChart() {
+  if (!chartsAvailable()) return;
   const markets = [...filteredMarkets()]
     .sort((a, b) => Math.abs(b.headcount_gap) - Math.abs(a.headcount_gap))
     .slice(0, 12);
@@ -503,6 +508,7 @@ function renderGapChart() {
 }
 
 function renderRecChart() {
+  if (!chartsAvailable()) return;
   const markets = filteredMarkets();
   const counts = {};
   markets.forEach((m) => {
@@ -534,6 +540,7 @@ function renderRecChart() {
 }
 
 function renderSbsChart() {
+  if (!chartsAvailable()) return;
   const ctx = document.getElementById("sbs-chart");
   const markets = filteredMarkets().filter((m) => (m.sbs_whitespace_country ?? m.sbs_whitespace) > 0);
   const rows = markets.length
@@ -569,6 +576,7 @@ function renderSbsChart() {
 }
 
 function renderBookScoreChart() {
+  if (!chartsAvailable()) return;
   const markets = [...filteredMarkets()]
     .filter((m) => m.avg_pct_book_built != null)
     .sort((a, b) => b.revenue_90d - a.revenue_90d)
@@ -669,6 +677,12 @@ async function init() {
     await loadData();
     bindEvents();
     renderAll();
+    if (!chartsAvailable()) {
+      showToast(
+        "Charts unavailable (Chart.js CDN blocked). Tables and KPIs still work — try another network or VPN.",
+        "warn",
+      );
+    }
   } catch (err) {
     document.querySelector(".container").innerHTML =
       `<div class="error"><strong>Failed to load dashboard data.</strong> ${err.message}</div>`;

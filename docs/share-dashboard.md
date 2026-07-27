@@ -1,6 +1,6 @@
 # Share the live dashboard with your team
 
-The team dashboard lives in `dashboard/` and deploys to **GitHub Pages** when you push to `main`.
+The team dashboard lives in `docs/` and deploys to **GitHub Pages** when you push to `cursor/optimal-book-base-dataset-v1` (or `main` after merge).
 
 ## Share link (after setup)
 
