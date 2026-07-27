@@ -52,13 +52,16 @@ def main() -> None:
                     "headcount_gap": int(float(row["headcount_gap"])),
                     "headcount_recommendation": row["headcount_recommendation"],
                     "sbs_whitespace": int(float(ws)) if ws else None,
+                    "avg_fy26_book_score": float(row["avg_fy26_book_score"]) if row.get("avg_fy26_book_score") not in (None, "") else None,
+                    "avg_pct_book_built": float(row["avg_pct_book_built"]) if row.get("avg_pct_book_built") not in (None, "") else None,
+                    "book_score_action": row.get("book_score_action"),
                 }
             )
 
     payload = {
         "updated_at": date.today().isoformat(),
         "window": "90d — see sql/10_perfect_book_headcount_country_segment.sql",
-        "query": "sql/10_perfect_book_headcount_country_segment.sql",
+        "query": "sql/12_headcount_with_book_score.sql",
         "markets": sorted(markets, key=lambda m: -m["revenue_90d"]),
         "sbs_whitespace": [
             {"segment": s, "accounts": a} for s, a in sorted(sbs_by_segment.items())

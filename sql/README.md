@@ -14,8 +14,12 @@ Execute in order via **dp-mcp** → `execute_query` (queryType: `TRINO`, environ
 | 8 | `08_team_vs_optimal_book.sql` | Team vs optimal + Hire/Hold/Optimize v1 | Team-level headcount signal |
 | 9 | `09_headcount_capacity_model.sql` | Team-level capacity model | Hire / Hold / Optimize / Do Not Hire |
 | 10 | `10_perfect_book_headcount_country_segment.sql` | **Perfect book + optimal headcount** | Country × segment perfect book threshold + headcount gap |
+| 11 | `11_book_score_join.sql` | **Book Building FY26 score** | FY26 book score by country × segment from `sales_book_summary_v2` |
+| 12 | `12_headcount_with_book_score.sql` | **Dashboard source query** | Query 10 + FY26 book score + Japan excluded |
 
-## Before running
+## Dashboard refresh
+
+Run query **12** and export to `docs/data/headcount.json` (or use `scripts/csv-to-dashboard-json.py`).
 
 1. Update partition dates (`dl__yyyymmdd_cst`) to the latest available CST partition.
 2. For 90-day windows in 03/04, align `BETWEEN` dates to your chosen end date.

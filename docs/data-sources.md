@@ -46,12 +46,19 @@ On assigned books (90d): clicks ↔ apply_starts correlation = 0.74; apply_start
 |-------|-------|-----------------|----------------------|---------|
 | `current_parent_rep_assignment` | parent company | `sales_rep_id` = `current_sales_rep_id` | 2202 / 2211 reps | Rep name, team, region, segment, manager hierarchy |
 | `rep_activity_sales` | rep × day | `sales_rep_id` = `current_sales_rep_id` | 2181 / 2211 reps | **Rep coverage** — calls, emails, meetings, impact_calls |
-| `sales_book_summary_v2` | parent × rep (long) | `rep_id` = `current_sales_rep_id` | 1298 / 2211 reps | Book scoring variables, sales team name |
+| `sales_book_summary_v2` | parent × rep (long) | `rep_id` = `current_sales_rep_id` | 1298 / 2211 reps | **Book Building FY26 score** — 10 account flags (qtd_spent, sales_covered, etc.) |
 | `cs_roster` | rep (CS only) | `cs_rep_id` — **does not join JAM sales rep id** | 0 | CS rep roster only (1095 CS reps); not for sales headcount |
 
 **Recommended join for v1:** `JAM.current_sales_rep_id = current_parent_rep_assignment.sales_rep_id` for rep metadata; add `rep_activity_sales` for true rep coverage metrics.
 
-### Regional cost data (gap)
+### Book Building FY26 score
+
+- **Tableau:** [Book Building FY26](https://us-east-1.online.tableau.com/#/site/indeed/views/BookBuildingFY26/BookBuildingFY26)
+- **Trino table:** `datalake.sales_data_strategy_dsa.sales_book_summary_v2`
+- **Rep score:** `AVG(value)` across 10 account-level flags (latest `time_period`); range −1 to +1
+- **% book built:** share of flags with `value > 0`
+- **SQL:** `sql/11_book_score_join.sql` (market rollup), joined in `sql/12_headcount_with_book_score.sql`
+
 
 No comp/cost table found in `sales_data_strategy_dsa`. Query `09_headcount_capacity_model.sql` uses a **region cost tier proxy** (High / Medium-High / Medium / Standard) based on `sales_region` and country. Replace with Finance/HR comp data when available for ROI-weighted hire decisions.
 

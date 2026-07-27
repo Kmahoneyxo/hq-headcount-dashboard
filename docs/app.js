@@ -7,6 +7,7 @@ let sortBy = "revenue";
 let gapChart = null;
 let recChart = null;
 let sbsChart = null;
+let bookScoreChart = null;
 let lastLoadedAt = null;
 let isRefreshing = false;
 
@@ -194,6 +195,8 @@ function renderTable() {
         <td class="num">${fmtNum(m.current_reps)}</td>
         <td class="num">${fmtNum(m.current_avg_book)}</td>
         <td class="num">${bucket} (${fmtNum(m.perfect_book_target)})</td>
+        <td class="num">${m.avg_fy26_book_score != null ? m.avg_fy26_book_score.toFixed(2) : "—"}</td>
+        <td class="num">${m.avg_pct_book_built != null ? m.avg_pct_book_built + "%" : "—"}</td>
         <td class="num">${fmtNum(m.optimal_headcount)}</td>
         <td class="num">${gapStr}</td>
         <td><span class="rec rec-${m.headcount_recommendation.replace(/ /g, "\\ ")}">${m.headcount_recommendation}</span></td>
@@ -298,6 +301,51 @@ function renderSbsChart() {
   });
 }
 
+function renderBookScoreChart() {
+  const markets = [...filteredMarkets()]
+    .filter((m) => m.avg_pct_book_built != null)
+    .sort((a, b) => b.revenue_90d - a.revenue_90d)
+    .slice(0, 10);
+  const ctx = document.getElementById("book-score-chart");
+  if (!ctx) return;
+  if (bookScoreChart) bookScoreChart.destroy();
+  if (!markets.length) return;
+  bookScoreChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: markets.map((m) => `${m.country}-${m.segment}`),
+      datasets: [
+        {
+          label: "FY26 % book built",
+          data: markets.map((m) => m.avg_pct_book_built),
+          backgroundColor: "#4c8bf5",
+        },
+        {
+          label: "Book size vs perfect (%)",
+          data: markets.map((m) =>
+            Math.round((m.current_avg_book / m.perfect_book_target) * 100),
+          ),
+          backgroundColor: "#f5a623",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: "#9aa3b5" } },
+      },
+      scales: {
+        y: {
+          title: { display: true, text: "Percent", color: "#9aa3b5" },
+          ticks: { color: "#9aa3b5" },
+          grid: { color: "#2a3040" },
+        },
+        x: { ticks: { color: "#9aa3b5" }, grid: { display: false } },
+      },
+    },
+  });
+}
+
 function renderAll() {
   renderMeta();
   renderHeadline();
@@ -305,6 +353,7 @@ function renderAll() {
   renderFilters();
   renderTable();
   renderGapChart();
+  renderBookScoreChart();
   renderRecChart();
   renderSbsChart();
 }
