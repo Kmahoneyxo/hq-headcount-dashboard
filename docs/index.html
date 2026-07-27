@@ -19,6 +19,8 @@
           <input type="checkbox" id="hide-jp" checked />
           Hide Japan (out of scope)
         </label>
+        <a href="./data/headcount-dashboard.xlsx" class="btn btn-secondary" download>Download Excel</a>
+        <a href="./data/headcount-dashboard.csv" class="btn btn-secondary" download>Download CSV</a>
         <button type="button" id="refresh-btn" class="btn">
           <span id="refresh-label">Refresh data</span>
         </button>
@@ -28,6 +30,31 @@
   </header>
 
   <main class="container">
+    <section class="lookup-panel" id="lookup-panel">
+      <div class="lookup-header">
+        <div>
+          <h2>Ideal headcount lookup</h2>
+          <p class="caption">Country × segment → ideal HC, gap, and recommendation</p>
+        </div>
+      </div>
+      <div class="lookup-controls">
+        <label class="lookup-field">
+          <span>Country</span>
+          <select id="lookup-country" class="select"></select>
+        </label>
+        <label class="lookup-field">
+          <span>Segment</span>
+          <select id="lookup-segment" class="select">
+            <option value="S">S</option>
+            <option value="M" selected>M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+          </select>
+        </label>
+      </div>
+      <div class="lookup-answer" id="lookup-answer"></div>
+    </section>
+
     <section class="callout" id="headline"></section>
 
     <section class="kpi-grid" id="kpis"></section>
@@ -37,16 +64,17 @@
       <div class="filter-group" id="segment-filters"></div>
       <div class="filter-group" id="rec-filters"></div>
       <select id="sort-by" class="select">
-        <option value="revenue">Sort: revenue</option>
+        <option value="ideal_hc">Sort: ideal HC</option>
         <option value="gap">Sort: headcount gap</option>
+        <option value="revenue">Sort: revenue</option>
         <option value="reps">Sort: current reps</option>
       </select>
     </section>
 
     <section class="charts-grid">
       <div class="panel">
-        <h2>Headcount gap by market</h2>
-        <p class="caption">Current reps minus optimal headcount (reps). Positive = over-staffed.</p>
+        <h2>Headcount gap vs ideal HC</h2>
+        <p class="caption">Current reps minus ideal headcount. Positive = over-staffed.</p>
         <div class="chart-panel">
           <canvas id="gap-chart"></canvas>
         </div>
@@ -69,23 +97,25 @@
 
     <section class="panel">
       <h2>Market detail</h2>
-      <p class="caption">Perfect book = growth peak before diminishing returns · Optimal HC = assigned accounts ÷ perfect book</p>
+      <p class="caption">Ideal HC = assigned accounts ÷ ideal book size · Ideal book = growth peak before diminishing returns</p>
       <div class="table-wrap">
         <table id="market-table">
           <thead>
             <tr>
               <th class="sticky-col">Market</th>
-              <th class="num">Avg book</th>
-              <th class="num">Perfect book</th>
-              <th class="num">Optimal HC</th>
+              <th class="num highlight-col">Ideal HC</th>
+              <th class="num">Current reps</th>
               <th class="num">Gap</th>
+              <th>HC rec</th>
+              <th class="num">Ideal book</th>
+              <th class="num">Avg book</th>
               <th class="num">FY26 % built</th>
+              <th class="num">FY26 score</th>
               <th class="num">Headroom</th>
               <th class="num">SBS pool</th>
               <th>$/job</th>
               <th>Coverage</th>
               <th>Action</th>
-              <th>HC rec</th>
             </tr>
           </thead>
           <tbody id="market-body"></tbody>
@@ -104,12 +134,23 @@
       <div class="panel">
         <h2>How to read this</h2>
         <ul class="notes">
-          <li><strong>Hire</strong> — under-staffed vs model with positive growth in optimal bucket</li>
+          <li><strong>Ideal HC</strong> — assigned accounts ÷ ideal book size for that country × segment</li>
+          <li><strong>Hire</strong> — under-staffed vs model with positive growth in ideal book range</li>
           <li><strong>Optimize</strong> — over-staffed; consolidate/redistribute books before net-new hires</li>
-          <li><strong>Hold</strong> — within ±10% of optimal</li>
-          <li><strong>Do Not Hire</strong> — market growth ≤ 0 in optimal bucket</li>
+          <li><strong>Hold</strong> — within ±10% of ideal HC</li>
+          <li><strong>Do Not Hire</strong> — market growth ≤ 0 in ideal book range</li>
         </ul>
         <p class="caption refresh-note" id="refresh-note"></p>
+      </div>
+      <div class="panel">
+        <h2>FY26 score methodology</h2>
+        <ul class="notes" id="score-methodology">
+          <li><strong>Source:</strong> <code>sales_book_summary_v2</code> (Book Building FY26) — same flags as Tableau workbook</li>
+          <li><strong>Rep score:</strong> AVG of 10 account flags per parent × rep; range −1 to +1</li>
+          <li><strong>% book built:</strong> share of flags with value &gt; 0 (shown in table)</li>
+          <li><strong>In this dash:</strong> market-level average across reps in segment (sql/11, joined in query 16)</li>
+          <li><strong>Status:</strong> methodology implemented; policy target % still TBD (Addy). Chart compares FY26 % built vs current book as % of data-derived ideal book — they are independent signals.</li>
+        </ul>
       </div>
     </section>
   </main>

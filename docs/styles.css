@@ -89,6 +89,17 @@ h2 {
 
 .btn:hover:not(:disabled) { opacity: 0.9; }
 
+.btn-secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-secondary:hover { opacity: 0.85; }
+
 .btn:disabled {
   opacity: 0.65;
   cursor: wait;
@@ -176,6 +187,112 @@ h2 {
 
 .kpi.hire .kpi-value { color: var(--hire); }
 .kpi.optimize .kpi-value { color: var(--optimize); }
+
+.kpi.primary .kpi-value { color: var(--accent); }
+
+.lookup-panel {
+  background: linear-gradient(180deg, #1a2438 0%, var(--surface) 100%);
+  border: 1px solid #2a4060;
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+
+.lookup-header h2 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+}
+
+.lookup-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 14px 0 16px;
+}
+
+.lookup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.lookup-field .select {
+  min-width: 120px;
+}
+
+.lookup-answer {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.lookup-market {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.lookup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.lookup-stat {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.lookup-stat.primary {
+  border-color: var(--accent);
+  background: #1a2a44;
+}
+
+.lookup-stat-value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.lookup-stat.primary .lookup-stat-value {
+  color: var(--accent);
+  font-size: 1.75rem;
+}
+
+.lookup-stat-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.lookup-formula {
+  margin: 14px 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.lookup-missing {
+  margin: 0;
+  color: var(--optimize);
+  font-size: 0.9rem;
+}
+
+.highlight-col {
+  color: var(--accent);
+}
+
+th.highlight-col {
+  color: var(--accent);
+}
+
+tr.lookup-row td {
+  background: #1a2a44;
+}
+
+tr.lookup-row td.sticky-col {
+  background: #1a2a44;
+}
 
 .filters {
   display: flex;

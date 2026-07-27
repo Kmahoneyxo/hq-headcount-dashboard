@@ -108,6 +108,11 @@ def main() -> None:
     OUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(f"Wrote {len(markets)} markets to {OUT}")
 
+    import subprocess
+    export_script = ROOT / "scripts" / "export-dashboard-data.py"
+    if export_script.is_file():
+        subprocess.run([sys.executable, str(export_script), str(OUT)], check=False)
+
 
 if __name__ == "__main__":
     main()

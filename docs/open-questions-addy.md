@@ -1,27 +1,41 @@
 # Open questions for Addy (Friday sync)
 
-## FY26 book score policy
+## Resolved (Katie — Jul 2026)
 
-1. **MM target score** — What is the official FY26 target for `% book built` and average flag score by segment (especially MM/M)? Dashboard has a placeholder column `fy26_target_pct_book_built` until confirmed.
+| Topic | Decision |
+|-------|----------|
+| **PQR** | Prior quarter revenue (prior 90–92 days) |
+| **Too big** | Segment avg PCID **and/or** segment avg PQR exceeded **plus** outcome signal (coverage ↓ or current rev ↓ vs prior Q) |
+| **Prior quarter** | Last 90–92 day revenue window (same as model: prior 90d vs current 90d) |
+| **Split-hire vs Optimize** | Split-hire OK at **country × segment** even when market-level says Optimize |
+| **Which accounts to move** | No preference v1 — goal is **ideal/even books**; peel only to `perfect_book_target`, never over-strip donor |
 
-2. **Z-score vs target average** — Book Building FY26 today uses account-level flags averaged to a rep score. Should the dashboard compare markets to:
-   - a **z-score / evenness** benchmark across reps, or
-   - a **target average score per book** (policy threshold)?
+## Still open
 
-3. **Side-by-side interpretation** — When **data perfect book** (growth inflection from JAM) differs from **FY26 policy score** direction (e.g. small books but low FY26 % built), which takes precedence for staffing recommendations?
+### FY26 book score policy
 
-## SBS / whitespace
+1. **MM target score** — Official FY26 target for `% book built` and average flag score by segment (especially MM/M)? Placeholder: `fy26_target_pct_book_built`.
 
-4. **Country assignment for unassigned accounts** — We use PCID `hq_country` (fallback `billing_country`) rolled to market codes (GB→UK, DE/AT/CH→DACH, BE/NL/LU→BNL). Is that the right rule for “build N books in country X”?
+2. **Z-score vs target average** — Compare markets to z-score/evenness vs target avg score per book?
 
-5. **SBS pool deduping** — Unassigned counts are distinct PCIDs with JAM activity in 90d where team is `None`. Should we also require `sales_rep_id IS NULL` on PCID?
+3. **Side-by-side interpretation** — When data perfect book differs from FY26 policy direction, which takes precedence?
 
-## Opp pipeline & coverage
+### SBS / whitespace
 
-6. **$/job plateau** — We use `agg_job_id` distinct jobs per rep and median rev/job by book-size bucket. Confirm this matches the opp-pipeline definition from your meeting notes.
+4. **Country assignment for unassigned accounts** — PCID `hq_country` (fallback `billing_country`) → market codes (GB→UK, DACH, BNL). Correct?
 
-7. **Coverage metric** — Dashboard uses `rep_activity_sales.impact_calls` per account. Prefer impact_calls, total_calls, or meetings for Hold/Consolidate rules?
+5. **SBS pool deduping** — Require `sales_rep_id IS NULL` on PCID in addition to JAM team `None`?
 
-## Maryam / health dash
+### Opp pipeline & coverage
 
-8. **Refresh stack** — What is Maryam’s health dashboard using for scheduled refresh and mobile layout? Worth mirroring for GitHub Pages vs Looker Studio split.
+6. **$/job plateau** — Confirm `agg_job_id` + median rev/job matches opp-pipeline definition.
+
+7. **Coverage metric** — Confirm `impact_calls` per account for Hold/Consolidate rules.
+
+### Maryam / health dash
+
+8. **Refresh stack** — Health dash refresh cadence and mobile layout to mirror for Layer 1.
+
+### Evenness metric
+
+9. **“Even books” KPI** — Prefer stddev of PCID count across reps, max−min, or % reps within ±10% of ideal for the health dash?

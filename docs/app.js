@@ -4,7 +4,9 @@ let segmentFilter = "all";
 let recFilter = "all";
 let regionFilter = "amer";
 let hideJapan = true;
-let sortBy = "revenue";
+let sortBy = "ideal_hc";
+let lookupCountry = "US";
+let lookupSegment = "M";
 let gapChart = null;
 let recChart = null;
 let sbsChart = null;
@@ -132,6 +134,7 @@ function filteredMarkets() {
       return true;
     })
     .sort((a, b) => {
+      if (sortBy === "ideal_hc") return (b.optimal_headcount || 0) - (a.optimal_headcount || 0);
       if (sortBy === "gap") return Math.abs(b.headcount_gap) - Math.abs(a.headcount_gap);
       if (sortBy === "reps") return b.current_reps - a.current_reps;
       return b.revenue_90d - a.revenue_90d;
@@ -144,7 +147,7 @@ function renderMeta() {
   const live = config.live_refresh ? " · Live refresh on" : "";
   const region = regionFilter === "amer" ? " · AMER focus" : " · Global";
   el.textContent =
-    `Perfect book + optimal headcount · ${payload.window} · Snapshot ${payload.updated_at}${region}${loaded}${live} · ${filteredMarkets().length} markets shown`;
+    `Ideal headcount by country × segment · ${payload.window} · Snapshot ${payload.updated_at}${region}${loaded}${live} · ${filteredMarkets().length} markets shown`;
   document.getElementById("refresh-note").textContent = config.refresh_api
     ? "Refresh pulls query 16 from the warehouse when dashboard-server.py is running with QUEST_AUTH_TOKEN."
     : "On GitHub Pages, Refresh reloads the latest JSON file. Weekly Quest export → csv-to-dashboard-json.py → push.";
@@ -154,26 +157,102 @@ function renderHeadline() {
   const markets = filteredMarkets();
   const hire = markets.filter((m) => m.headcount_recommendation === "Hire");
   const optimize = markets.filter((m) => m.headcount_recommendation === "Optimize");
-  const buildSbs = markets.filter((m) => (m.recommended_action || "").includes("Build"));
-  const hireList = hire.slice(0, 5).map((m) => `${m.country}-${m.segment}`).join(", ");
+  const lookup = findLookupMarket();
+  const lookupLine = lookup
+    ? `<strong>${lookup.country}-${lookup.segment} ideal HC:</strong> ${fmtNum(lookup.optimal_headcount)} reps ` +
+      `(ideal book ${fmtNum(lookup.perfect_book_target)}, current ${fmtNum(lookup.current_reps)}, gap ${lookup.headcount_gap > 0 ? "+" : ""}${fmtNum(lookup.headcount_gap)} ${lookup.headcount_recommendation}). `
+    : "";
   document.getElementById("headline").innerHTML =
-    `<strong>Headline:</strong> ${optimize.length} markets Optimize vs ${hire.length} Hire` +
-    (buildSbs.length ? ` · ${buildSbs.length} can build new books from country SBS` : "") +
-    `. Compare data perfect book vs FY26 policy score per row.` +
-    (hire.length ? ` <strong>Hire:</strong> ${hireList}${hire.length > 5 ? "…" : ""}.` : "");
+    lookupLine +
+    `<strong>Filtered view:</strong> ${optimize.length} markets Optimize vs ${hire.length} Hire.` +
+    (hire.length
+      ? ` <strong>Hire:</strong> ${hire.slice(0, 5).map((m) => `${m.country}-${m.segment}`).join(", ")}${hire.length > 5 ? "…" : ""}.`
+      : "");
+}
+
+function allMarketsForLookup() {
+  return payload.markets.filter((m) => !hideJapan || !isJapan(m));
+}
+
+function findLookupMarket() {
+  return allMarketsForLookup().find(
+    (m) => m.country === lookupCountry && m.segment === lookupSegment,
+  );
+}
+
+function renderLookup() {
+  const countries = [...new Set(allMarketsForLookup().map((m) => m.country))].sort();
+  const countrySelect = document.getElementById("lookup-country");
+  if (countrySelect.options.length !== countries.length) {
+    countrySelect.innerHTML = countries
+      .map(
+        (c) =>
+          `<option value="${c}"${c === lookupCountry ? " selected" : ""}>${c}</option>`,
+      )
+      .join("");
+    if (!countries.includes(lookupCountry) && countries.length) {
+      lookupCountry = countries.includes("US") ? "US" : countries[0];
+      countrySelect.value = lookupCountry;
+    }
+  }
+  document.getElementById("lookup-segment").value = lookupSegment;
+
+  const m = findLookupMarket();
+  const el = document.getElementById("lookup-answer");
+  if (!m) {
+    el.innerHTML =
+      `<p class="lookup-missing">No data for <strong>${lookupCountry}-${lookupSegment}</strong> in this snapshot. ` +
+      `Try another market or refresh query 16 for full coverage.</p>`;
+    return;
+  }
+  const gap = m.headcount_gap;
+  const gapStr = gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
+  const recClass = m.headcount_recommendation.replace(/ /g, "\\ ");
+  el.innerHTML = `
+    <div class="lookup-market">${m.country}-${m.segment}</div>
+    <div class="lookup-grid">
+      <div class="lookup-stat primary">
+        <div class="lookup-stat-value">${fmtNum(m.optimal_headcount)}</div>
+        <div class="lookup-stat-label">Ideal headcount</div>
+      </div>
+      <div class="lookup-stat">
+        <div class="lookup-stat-value">${fmtNum(m.current_reps)}</div>
+        <div class="lookup-stat-label">Current reps</div>
+      </div>
+      <div class="lookup-stat">
+        <div class="lookup-stat-value">${gapStr}</div>
+        <div class="lookup-stat-label">Gap (reps)</div>
+      </div>
+      <div class="lookup-stat">
+        <div class="lookup-stat-value">${fmtNum(m.perfect_book_target)}</div>
+        <div class="lookup-stat-label">Ideal book (accounts/rep)</div>
+      </div>
+      <div class="lookup-stat">
+        <div class="lookup-stat-value"><span class="rec rec-${recClass}">${m.headcount_recommendation}</span></div>
+        <div class="lookup-stat-label">Recommendation</div>
+      </div>
+      <div class="lookup-stat">
+        <div class="lookup-stat-value">${m.avg_pct_book_built != null ? m.avg_pct_book_built.toFixed(1) + "%" : "—"}</div>
+        <div class="lookup-stat-label">FY26 % book built</div>
+      </div>
+    </div>
+    <p class="lookup-formula">Formula: ${fmtNum(m.assigned_accounts)} assigned accounts ÷ ${fmtNum(m.perfect_book_target)} ideal book = ${fmtNum(m.optimal_headcount)} ideal HC</p>
+  `;
 }
 
 function renderKpis() {
   const markets = filteredMarkets();
+  const lookup = findLookupMarket();
   const hire = markets.filter((m) => m.headcount_recommendation === "Hire");
   const over = markets.reduce((s, m) => s + Math.max(0, m.headcount_gap), 0);
-  const under = markets.reduce((s, m) => s + Math.abs(Math.min(0, m.headcount_gap)), 0);
-  const headroom = markets.reduce((s, m) => s + (m.headroom_accounts || 0), 0);
+  const idealTotal = markets.reduce((s, m) => s + (m.optimal_headcount || 0), 0);
+  const currentTotal = markets.reduce((s, m) => s + (m.current_reps || 0), 0);
   document.getElementById("kpis").innerHTML = `
-    <div class="kpi"><div class="kpi-value">${markets.length}</div><div class="kpi-label">Markets shown</div></div>
+    <div class="kpi primary"><div class="kpi-value">${lookup ? fmtNum(lookup.optimal_headcount) : "—"}</div><div class="kpi-label">${lookup ? `${lookup.country}-${lookup.segment} ideal HC` : "Lookup ideal HC"}</div></div>
+    <div class="kpi"><div class="kpi-value">${fmtNum(idealTotal)}</div><div class="kpi-label">Ideal HC (filtered total)</div></div>
+    <div class="kpi"><div class="kpi-value">${fmtNum(currentTotal)}</div><div class="kpi-label">Current reps (filtered)</div></div>
     <div class="kpi hire"><div class="kpi-value">${hire.length}</div><div class="kpi-label">Hire markets</div></div>
     <div class="kpi optimize"><div class="kpi-value">+${fmtNum(over)}</div><div class="kpi-label">Over-staffed reps</div></div>
-    <div class="kpi hire"><div class="kpi-value">${fmtNum(headroom)}</div><div class="kpi-label">Headroom accounts</div></div>
   `;
 }
 
@@ -225,19 +304,25 @@ function renderTable() {
         built != null
           ? `${built.toFixed(1)}%${fy26Target != null ? " / " + fy26Target + "% tgt" : ""}`
           : "—";
-      return `<tr>
+      const fy26Score =
+        m.avg_fy26_book_score != null ? m.avg_fy26_book_score.toFixed(3) : "—";
+      const isLookupRow =
+        m.country === lookupCountry && m.segment === lookupSegment;
+      return `<tr${isLookupRow ? ' class="lookup-row"' : ""}>
         <td class="sticky-col">${m.country}-${m.segment}</td>
-        <td class="num">${fmtNum(m.current_avg_book)}</td>
-        <td class="num">${bucket} (${fmtNum(m.perfect_book_target)})${gapPct != null ? `<br><span class="sub">${gapPct}% of perfect</span>` : ""}</td>
-        <td class="num">${fmtNum(m.optimal_headcount)}</td>
+        <td class="num highlight-col"><strong>${fmtNum(m.optimal_headcount)}</strong></td>
+        <td class="num">${fmtNum(m.current_reps)}</td>
         <td class="num">${gapStr}</td>
+        <td><span class="rec rec-${m.headcount_recommendation.replace(/ /g, "\\ ")}">${m.headcount_recommendation}</span></td>
+        <td class="num">${bucket} (${fmtNum(m.perfect_book_target)})${gapPct != null ? `<br><span class="sub">${gapPct}% of ideal</span>` : ""}</td>
+        <td class="num">${fmtNum(m.current_avg_book)}</td>
         <td class="num">${fy26Cell}</td>
+        <td class="num">${fy26Score}</td>
         <td class="num">${fmtNum(m.headroom_accounts)}</td>
         <td class="num">${fmtNum(m.sbs_whitespace_country ?? m.sbs_whitespace)}</td>
         <td><span class="status status-${(m.opp_pipeline_status || "unknown").toLowerCase()}">${m.opp_pipeline_status || "—"}</span></td>
         <td><span class="status status-${(m.coverage_status || "unknown").toLowerCase()}">${m.coverage_status || "—"}</span></td>
         <td class="action-cell">${m.recommended_action || m.book_score_action || "—"}</td>
-        <td><span class="rec rec-${m.headcount_recommendation.replace(/ /g, "\\ ")}">${m.headcount_recommendation}</span></td>
       </tr>`;
     })
     .join("");
@@ -392,6 +477,7 @@ function renderBookScoreChart() {
 
 function renderAll() {
   renderMeta();
+  renderLookup();
   renderHeadline();
   renderKpis();
   renderFilters();
@@ -412,6 +498,14 @@ function bindEvents() {
     renderAll();
   });
   document.getElementById("refresh-btn").addEventListener("click", refreshData);
+  document.getElementById("lookup-country").addEventListener("change", (e) => {
+    lookupCountry = e.target.value;
+    renderAll();
+  });
+  document.getElementById("lookup-segment").addEventListener("change", (e) => {
+    lookupSegment = e.target.value;
+    renderAll();
+  });
   document.getElementById("region-filters").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-region]");
     if (!btn) return;

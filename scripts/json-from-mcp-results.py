@@ -68,6 +68,11 @@ def main() -> None:
     if us_m:
         print(f"US-M perfect_book: {us_m.get('perfect_book_bucket')} target={us_m.get('perfect_book_target')}")
 
+    import subprocess
+    export_script = ROOT / "scripts" / "export-dashboard-data.py"
+    if export_script.is_file():
+        subprocess.run([sys.executable, str(export_script), str(OUT)], check=False)
+
 
 if __name__ == "__main__":
     main()

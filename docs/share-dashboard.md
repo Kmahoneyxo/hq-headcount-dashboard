@@ -47,6 +47,34 @@ python3 scripts/json-from-mcp-results.py docs/data/query16_results.json
 
 Then commit and push to `cursor/optimal-book-base-dataset-v1`. GitHub Pages redeploys in ~1 minute.
 
+### Export Excel / CSV (for stakeholders)
+
+After updating `headcount.json`, regenerate the spreadsheet:
+
+```bash
+python3 scripts/export-dashboard-data.py
+```
+
+This writes:
+
+| File | Use |
+|------|-----|
+| `docs/data/headcount-dashboard.xlsx` | Excel — 3 sheets: **Markets**, **SBS whitespace**, **About** |
+| `docs/data/headcount-dashboard.csv` | CSV — markets only (opens in Excel or Google Sheets) |
+
+The live dashboard also has **Download Excel** / **Download CSV** buttons in the header (same files).
+
+**Include in weekly refresh:** run export script after `json-from-mcp-results.py`, then commit both JSON + xlsx + csv.
+
+### Google Sheet (manual import)
+
+1. In Google Drive: **New → File upload** → `headcount-dashboard.xlsx`, or **Import** the CSV.
+2. Or: open a blank Sheet → **File → Import → Upload** → choose the xlsx/csv.
+3. Share the Sheet with Sales Ops (@indeed.com) with view or comment access.
+4. Re-import weekly after Quest refresh (or use a scheduled Apps Script if you automate Quest export later).
+
+For a persistent Looker Studio report, connect it to the Google Sheet as the data source.
+
 ### Refresh from Quest / iDash
 
 1. Save query 16 as a Quest report in iDash.

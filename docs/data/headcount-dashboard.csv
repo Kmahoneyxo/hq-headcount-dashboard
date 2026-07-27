@@ -1,0 +1,11 @@
+Market,Country,Segment,Ideal headcount,Current reps,Headcount gap,HC recommendation,Ideal book size (accounts/rep),Perfect book bucket,Perfect book ceiling,Perfect book growth %,Current avg book,Assigned accounts,Revenue 90d ($),Recommended action,FY26 % book built,FY26 book score,FY26 target % (TBD),Headroom accounts,SBS whitespace (country),SBS revenue 90d ($),Books buildable from SBS,Opp plateau book max,Opp plateau $/job,Opp pipeline status,Coverage inflection book max,Coverage at inflection,Median impact calls/account,Coverage status
+US-M,US,M,549,735,186,Optimize,73,07: 66-80,80,0.187,55,40049,191378311.0,Optimize HC,46.9,-0.076,,13230,103681,160679658.0,1420,100,61.96,Growing,10,15,1,Declining
+UK-M,UK,M,1313,160,-1153,Hire,5,01: 1-10,10,0.4,41,6564,22290790.0,Hire + build books from SBS,47.9,-0.056,,0,17406,17062549.0,3481,80,47.8,Growing,10,10,1,Declining
+US-S,US,S,118,508,390,Optimize,45,05: 41-50,50,0.2,10,5300,13240721.0,Optimize HC,46.7,-0.084,,17780,1765233,502167251.0,39227,10,194.28,Plateaued,10,29,20,OK
+DACH-M,DACH,M,78,131,53,Optimize,73,07: 66-80,80,0.3,43,5668,9407809.0,Optimize HC,50.0,0.005,,3930,10886,6745421.0,149,65,44.3,Growing,10,17,2,Declining
+UK-L,UK,L,140,172,32,Optimize,15,02: 11-20,20,0.3,12,2097,8301713.0,Optimize HC,49.9,-0.014,,516,1879,428831.0,125,20,7.2,Growing,10,11,5,Declining
+DACH-L,DACH,L,401,154,-247,Hire,5,01: 1-10,10,0.4,13,2004,4096268.0,Hire + build books from SBS,52.8,0.055,,0,1298,417037.0,259,10,10.8,Plateaued,20,11,8,OK
+BNL-L,BNL,L,66,88,22,Optimize,15,02: 11-20,20,0.3,11,996,2450421.0,Optimize HC,49.8,-0.022,,352,599,351367.0,39,20,8.6,Growing,20,17,6,OK
+FR-XL,FR,XL,116,77,-39,Hire,5,01: 1-10,10,0.3,8,582,1995476.0,Hire + build books from SBS,52.1,0.032,,0,637,80994.0,127,10,0.7,Growing,10,6,5,OK
+UK-S,UK,S,368,141,-227,Hire,5,01: 1-10,10,0.3,13,1838,974670.0,Hire + build books from SBS,48.2,-0.048,,0,364298,53614691.0,72859,10,131.6,Plateaued,10,29,20,Declining
+CA-S,CA,S,111,66,-45,Hire,5,01: 1-10,10,0.2,8,556,554640.0,Hire + build books from SBS,50.0,-0.006,,0,276061,41707962.0,55212,10,93.8,Growing,10,20,20,OK
