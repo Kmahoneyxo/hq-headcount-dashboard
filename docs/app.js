@@ -13,6 +13,7 @@ let recChart = null;
 let sbsChart = null;
 let bookScoreChart = null;
 let lastLoadedAt = null;
+let lastReloadedAt = null;
 let isRefreshing = false;
 
 const AMER_MARKETS = ["US", "CA", "UK", "DACH", "BNL"];
@@ -34,16 +35,27 @@ async function loadConfig() {
 }
 
 async function loadData() {
-  const res = await fetch("./data/headcount.json?" + Date.now(), { cache: "no-store" });
+  const cacheBust = Date.now();
+  const res = await fetch(`./data/headcount.json?${cacheBust}`, { cache: "no-store" });
   if (!res.ok) throw new Error("Could not load headcount.json");
   payload = await res.json();
   lastLoadedAt = new Date();
   try {
-    const bh = await fetch("./data/book_health.json?" + Date.now(), { cache: "no-store" });
+    const bh = await fetch(`./data/book_health.json?${cacheBust}`, { cache: "no-store" });
     bookHealth = bh.ok ? await bh.json() : null;
   } catch {
     bookHealth = null;
   }
+}
+
+function dataFingerprint() {
+  return JSON.stringify({
+    updated_at: payload?.updated_at,
+    refreshed_at: payload?.refreshed_at,
+    markets: payload?.markets,
+    book_updated_at: bookHealth?.updated_at,
+    book_markets: bookHealth?.markets,
+  });
 }
 
 function idealPcid(m) {
@@ -76,8 +88,7 @@ function setRefreshLoading(loading) {
 async function refreshData() {
   if (isRefreshing) return;
   setRefreshLoading(true);
-  const previousUpdatedAt = payload?.updated_at;
-  const previousRefreshedAt = payload?.refreshed_at;
+  const previousFingerprint = dataFingerprint();
   try {
     if (config.refresh_api) {
       showToast("Running query 16 against warehouse…", "warn");
@@ -88,27 +99,26 @@ async function refreshData() {
       }
     }
     await loadData();
+    lastReloadedAt = lastLoadedAt;
     renderAll();
-    const loaded = lastLoadedAt.toLocaleTimeString();
-    if (
-      payload.updated_at !== previousUpdatedAt ||
-      payload.refreshed_at !== previousRefreshedAt
-    ) {
-      showToast(
-        `Data updated · snapshot ${payload.updated_at}${payload.refreshed_at ? " · pulled " + payload.refreshed_at : ""} · loaded ${loaded}`,
-        "ok",
-      );
+    const reloadedAt = lastReloadedAt.toLocaleTimeString();
+    const dataChanged = dataFingerprint() !== previousFingerprint;
+    const snapshot = payload.updated_at;
+    const pulled = payload.refreshed_at ? ` · pulled ${payload.refreshed_at}` : "";
+
+    if (dataChanged) {
+      showToast(`Data updated · snapshot ${snapshot}${pulled} · reloaded ${reloadedAt}`, "ok");
     } else if (config.refresh_api && config.live_refresh) {
-      showToast(`Up to date · snapshot ${payload.updated_at} · loaded ${loaded}`, "ok");
+      showToast(`Up to date · snapshot ${snapshot} · reloaded ${reloadedAt}`, "ok");
     } else if (config.refresh_api) {
       showToast(
-        `Loaded latest file · ${payload.updated_at}. Set QUEST_AUTH_TOKEN on the server for warehouse refresh.`,
+        `Reloaded local files · snapshot ${snapshot} · ${reloadedAt}. Set DASHBOARD_REFRESH_CMD for warehouse refresh.`,
         "warn",
       );
     } else {
       showToast(
-        `Already on latest snapshot (${payload.updated_at}). For warehouse refresh, run python3 scripts/dashboard-server.py`,
-        "warn",
+        `Reloaded published data · snapshot ${snapshot} · ${reloadedAt}. New warehouse data requires Quest export → push to GitHub.`,
+        "ok",
       );
     }
   } catch (err) {
@@ -158,14 +168,18 @@ function filteredMarkets() {
 
 function renderMeta() {
   const el = document.getElementById("meta-line");
-  const loaded = lastLoadedAt ? ` · Browser loaded ${lastLoadedAt.toLocaleTimeString()}` : "";
-  const live = config.live_refresh ? " · Live refresh on" : "";
+  const timing = lastReloadedAt
+    ? ` · Reloaded ${lastReloadedAt.toLocaleTimeString()}`
+    : lastLoadedAt
+      ? ` · Loaded ${lastLoadedAt.toLocaleTimeString()}`
+      : "";
+  const live = config.live_refresh ? " · Live warehouse refresh on" : "";
   const region = regionFilter === "amer" ? " · AMER focus" : " · Global";
   el.textContent =
-    `Ideal headcount by country × segment · ${payload.window} · Snapshot ${payload.updated_at}${region}${loaded}${live} · ${filteredMarkets().length} markets shown`;
+    `Ideal headcount by country × segment · ${payload.window} · Snapshot ${payload.updated_at}${region}${timing}${live} · ${filteredMarkets().length} markets shown`;
   document.getElementById("refresh-note").textContent = config.refresh_api
-    ? "Refresh pulls query 16 from the warehouse when dashboard-server.py is running with QUEST_AUTH_TOKEN."
-    : "On GitHub Pages, Refresh reloads the latest JSON file. Weekly Quest export → csv-to-dashboard-json.py → push.";
+    ? "Refresh runs your local refresh command via dashboard-server.py (set DASHBOARD_REFRESH_CMD for warehouse pulls)."
+    : "On GitHub Pages, Refresh re-fetches the published JSON from this site (use after a git push). Warehouse refresh: export from Quest, update docs/data/, push.";
 }
 
 function renderHeadline() {

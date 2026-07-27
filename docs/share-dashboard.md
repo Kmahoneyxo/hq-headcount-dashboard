@@ -193,10 +193,12 @@ Open http://localhost:8080 and use **Refresh data**.
 
 ### Refresh button behavior
 
-| Hosting | What Refresh does |
-|---------|-------------------|
-| **GitHub Pages** | Re-fetches `headcount.json` (picks up updates after you push new data) |
-| **dashboard-server.py** | Calls `POST /api/refresh`, runs your refresh command, reloads charts |
+| Hosting | What Refresh does | Toast you should see |
+|---------|-------------------|----------------------|
+| **GitHub Pages** | Re-fetches `headcount.json` + `book_health.json` from the live site (cache-busted). Does **not** query the warehouse. | **Reloaded published data** — success even if the snapshot date is unchanged. **Data updated** if the JSON on disk changed since your last load (e.g. after a push). |
+| **dashboard-server.py** | Calls `POST /api/refresh`, optionally runs `DASHBOARD_REFRESH_CMD`, then reloads JSON from disk | **Data updated** when files change; **Up to date** when warehouse + files are current |
+
+On GitHub Pages, Refresh is for picking up a **new push** — not for pulling live Quest data. After you export from Quest, run the scripts, commit, and push; then click Refresh (or hard-reload the page) to see the new snapshot.
 
 ### Live warehouse refresh (one-time setup)
 
