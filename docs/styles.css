@@ -710,6 +710,46 @@ tr.lookup-row td.sticky-col {
   color: var(--text);
 }
 
+.methodology-reference {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  background: #1a2438;
+  border: 1px solid #2a4060;
+  border-radius: 8px;
+  color: #c8d8f0;
+  line-height: 1.45;
+}
+
+.methodology-reference a {
+  color: #7eb8ff;
+}
+
+.methodology-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin: 8px 0 12px;
+}
+
+.methodology-table th,
+.methodology-table td {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.methodology-table th {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.methodology-table code {
+  font-size: 0.78rem;
+}
+
 .hidden {
   display: none !important;
 }

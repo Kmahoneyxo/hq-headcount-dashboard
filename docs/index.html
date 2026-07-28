@@ -175,6 +175,94 @@
           <li><strong>SBS whitespace</strong> — unassigned accounts in country (assignable to reps); books_buildable = whitespace ÷ ideal PCID</li>
           <li><strong>Segment</strong> — GTM sales segment from team name (M, UMM, ACC, L, NAM, DCA)</li>
         </ul>
+        <p class="methodology-reference">
+          <strong>Official HQ reference (Indeed SSO):</strong>
+          <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">Connect PTD — book &amp; headcount methodology</a>
+        </p>
+        <details class="methodology-details">
+          <summary>HQ methodology — two layers (Layer 1 → Layer 2)</summary>
+          <div class="methodology-body">
+            <p>This dashboard implements the HQ capacity model in two layers. <strong>Layer 1 (book health)</strong> confirms ideal book size and rep-level health before any staffing action. <strong>Layer 2 (headcount)</strong> applies that book size to total assigned accounts to derive optimal headcount and Hire / Hold / Optimize recommendations.</p>
+            <table class="methodology-table">
+              <thead>
+                <tr><th>Layer</th><th>Question</th><th>Dashboard signals</th><th>sql/16 fields</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>1 — Book health</strong></td>
+                  <td>What is the ideal book? Is each rep's book healthy?</td>
+                  <td>Perfect book, PQR, impact coverage, FY26 score, too big / too little</td>
+                  <td><code>ideal_pcid</code>, <code>median_impact_calls_per_account</code>, <code>fy26_pct_book_built</code>, <code>reps_too_big</code>, <code>reps_too_little</code>, <code>reps_healthy</code></td>
+                </tr>
+                <tr>
+                  <td><strong>2 — Headcount</strong></td>
+                  <td>How many reps should this market carry?</td>
+                  <td>Optimal HC, gap, recommendation, SBS routing</td>
+                  <td><code>ideal_headcount</code>, <code>headcount_gap</code>, <code>recommended_action</code>, <code>sbs_whitespace</code>, <code>books_buildable_from_sbs</code></td>
+                </tr>
+              </tbody>
+            </table>
+            <p><strong>Build sequence:</strong> validate ideal book size (Layer 1) → compute optimal headcount (Layer 2) → split / grow books only after Layer 1 is trusted. Do not act on HC recommendations where growth curve is flat or sample size is too small.</p>
+          </div>
+        </details>
+        <details class="methodology-details">
+          <summary>Terminology — HQ definitions ↔ dashboard fields</summary>
+          <div class="methodology-body">
+            <table class="methodology-table">
+              <thead>
+                <tr><th>HQ term</th><th>Definition</th><th>Dashboard / sql/16</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>PCID</strong></td>
+                  <td>Parent company IDs per rep — book size (account count)</td>
+                  <td><code>avg_pcid_per_rep</code>, <code>ideal_pcid</code></td>
+                </tr>
+                <tr>
+                  <td><strong>PQR</strong></td>
+                  <td>Prior-quarter revenue — book weight (prior 90d window)</td>
+                  <td><code>avg_pqr_per_rep</code>, <code>segment_avg_pqr</code></td>
+                </tr>
+                <tr>
+                  <td><strong>Perfect / ideal book</strong></td>
+                  <td>Accounts per rep at revenue-growth plateau (diminishing returns)</td>
+                  <td><code>ideal_pcid</code>, <code>perfect_book_bucket</code></td>
+                </tr>
+                <tr>
+                  <td><strong>Optimal headcount</strong></td>
+                  <td>Assigned accounts ÷ ideal book size</td>
+                  <td><code>ideal_headcount</code></td>
+                </tr>
+                <tr>
+                  <td><strong>Impact coverage</strong></td>
+                  <td>Impact calls per assigned account (trailing 90d)</td>
+                  <td><code>median_impact_calls_per_account</code>, <code>coverage_status</code></td>
+                </tr>
+                <tr>
+                  <td><strong>Healthy book</strong></td>
+                  <td>Not too big or too little; PCID near ideal, PQR ≥ segment avg, coverage ≥ 90% of segment norm, revenue ≥ PQR</td>
+                  <td><code>reps_healthy</code>, <code>pct_reps_healthy</code>, rep book export</td>
+                </tr>
+                <tr>
+                  <td><strong>Too big / too little</strong></td>
+                  <td>PCID and/or PQR above segment avg with weak coverage or revenue decline; or below ideal PCID</td>
+                  <td><code>reps_too_big</code>, <code>reps_too_little</code> (sql/17)</td>
+                </tr>
+                <tr>
+                  <td><strong>SBS whitespace</strong></td>
+                  <td>Unassigned accounts in country (team None) — assignable pool</td>
+                  <td><code>sbs_whitespace</code>, <code>books_buildable_from_sbs</code></td>
+                </tr>
+                <tr>
+                  <td><strong>FY26 book score</strong></td>
+                  <td>Policy book-build flags from <code>sales_book_summary_v2</code></td>
+                  <td><code>fy26_pct_book_built</code>, <code>fy26_book_score</code></td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="caption">Terminology aligned with HQ capacity model. See <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">Connect PTD</a> for full methodology (Indeed SSO).</p>
+          </div>
+        </details>
         <details class="methodology-details">
           <summary>Why these numbers? — PQR vs PCID methodology</summary>
           <div class="methodology-body">
@@ -206,7 +294,7 @@
   </main>
 
   <footer class="footer">
-    <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a></p>
+    <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a> · <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">HQ methodology (Connect PTD)</a></p>
   </footer>
 
   <script src="app.js?v=20260728e"></script>

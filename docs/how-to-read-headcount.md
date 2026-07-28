@@ -1,25 +1,23 @@
 # How to read: Ideal headcount by country × segment
 
 **Live dashboard:** https://kmahoneyxo.github.io/hq-headcount-dashboard/  
-**Owner:** Katie Mahoney · **Updated:** weekly (90d JAM window)
+**Owner:** Katie Mahoney · **Updated:** weekly (90d JAM window)  
+**Official HQ methodology (Indeed SSO):** [Connect PTD — book & headcount methodology](https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/)
 
 ---
 
-## Critical caveats (read before sharing)
+## HQ methodology — two layers
 
-> **Preview data — SQL v2 in progress.** Do not use for headcount decisions until grain is fixed.
+This dashboard implements the HQ capacity model in **two layers**. Validate Layer 1 before acting on Layer 2.
 
-1. **Segment = company size (S/M/L/XL), not sales segment.** Dashboard rows like **US-M** mean "US-assigned accounts where the employer is size M" — **not** the Mid Market sales org. True sales segments are **M, UMM, L, NAM, DCA**, etc. (from team names like `US-M-DE-NYC-2`, `US-MUpper-DE-STM-1`).
+| Layer | Question | Key metrics |
+|-------|----------|-------------|
+| **1 — Book health** | What is the ideal book size? Is each rep's book healthy? | Ideal PCID, PQR, impact coverage, FY26 score, too big / too little |
+| **2 — Headcount** | How many reps should this market carry? | Ideal HC, headcount gap, Hire / Hold / Optimize, SBS routing |
 
-2. **Do not sum `current_reps` across rows.** The same rep appears in multiple company-size buckets (84% of US reps span >1 size). Summing dashboard rows yields **~4,349** vs **~942** unique US reps — inflated ~3×.
+**Build sequence:** confirm ideal book size → compute optimal headcount → split or grow books only after Layer 1 is trusted.
 
-3. **Missing sales segments.** NAM, DCA, UMM, and others have **no dashboard row**. ~480 US reps in NAM+DCA alone are omitted.
-
-4. **US-S, CA-S, BNL-S are not GTM segments.** They are company-size pools, not headcount planning units. Ignore Hire signals on size-S rows.
-
-5. **Perfect book / optimal HC can be unstable** at this grain (e.g. UK-M shows absurd Hire gap). Treat outliers as data-quality flags, not action items.
-
-See [`data-model-audit.md`](./data-model-audit.md) for full audit evidence.
+See the dashboard **"How to read this"** panel for field-level definitions and the [Connect PTD doc](https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/) for the full HQ framework (requires Indeed SSO).
 
 ---
 
@@ -33,9 +31,23 @@ See [`data-model-audit.md`](./data-model-audit.md) for full audit evidence.
 
 | # | Metric | Meaning |
 |---|--------|---------|
-| 1 | **Ideal book size** | Target accounts per rep where revenue growth peaks (e.g. **73** for US-M) |
-| 2 | **Optimal headcount** | Total assigned accounts ÷ ideal book size (e.g. **549** reps for US-M) |
-| 3 | **Headcount gap** | Current reps − optimal (e.g. **+186** = over-staffed vs model) |
+| 1 | **Ideal book size** | Target accounts per rep where revenue growth peaks (e.g. **90** for US-M) |
+| 2 | **Optimal headcount** | Total assigned accounts ÷ ideal book size (e.g. **320** reps for US-M) |
+| 3 | **Headcount gap** | Current reps − optimal (e.g. **−93** = under-staffed vs model) |
+
+---
+
+## Terminology (HQ ↔ dashboard)
+
+| HQ term | Definition | sql/16 field |
+|---------|------------|--------------|
+| **PCID** | Parent company IDs per rep — book size | `ideal_pcid`, `avg_pcid_per_rep` |
+| **PQR** | Prior-quarter revenue — book weight (prior 90d) | `avg_pqr_per_rep`, `segment_avg_pqr` |
+| **Perfect / ideal book** | Accounts per rep at revenue-growth plateau | `ideal_pcid`, `perfect_book_bucket` |
+| **Optimal headcount** | Assigned accounts ÷ ideal book | `ideal_headcount` |
+| **Impact coverage** | Impact calls per assigned account (90d) | `median_impact_calls_per_account` |
+| **Healthy book** | Not too big/too little; PCID near ideal, PQR ≥ segment avg, coverage ≥ 90% of segment norm | `reps_healthy`, `pct_reps_healthy` |
+| **SBS whitespace** | Unassigned accounts in country — assignable pool | `sbs_whitespace`, `books_buildable_from_sbs` |
 
 ---
 
@@ -54,6 +66,19 @@ Reps flagged **too big** when impact calls/account fall below 90% of segment ave
 
 ---
 
+## Book health (Layer 1)
+
+A rep has a **healthy book** when they are not flagged too_big or too_little (sql/16–17):
+
+- PCID within ±10% of ideal (and not below ideal)
+- PQR at or above segment benchmark
+- Impact coverage ≥ 90% of segment average
+- Current revenue ≥ prior-quarter PQR
+
+The market lookup shows segment thresholds and % of reps meeting this definition.
+
+---
+
 ## SBS whitespace / assignable accounts
 
 | Field | Meaning |
@@ -62,11 +87,11 @@ Reps flagged **too big** when impact calls/account fall below 90% of segment ave
 | **books_buildable_from_sbs** | Whitespace ÷ ideal PCID — how many full rep books could be built |
 | **sbs_revenue_90d** | Revenue from unassigned pool (90d) |
 
-SBS is **country-level** — all segment rows in a country share the same pool. There is no separate "good accounts" field; SBS whitespace is the assignable opportunity.
+SBS is **country-level** — all segment rows in a country share the same pool.
 
 ---
 
-## Recommendation
+## Recommendation (Layer 2)
 
 | Rec | Meaning |
 |-----|---------|
@@ -77,26 +102,29 @@ SBS is **country-level** — all segment rows in a country share the same pool. 
 
 ---
 
-## Example: US · size M *(not US Mid Market sales org)*
+## Grain & caveats
 
-| | Value |
-|---|------|
-| Ideal book | 73 accounts/rep (66–80 band) |
-| Optimal headcount | **549** reps |
-| Current reps | 735 *(within this size bucket only — do not roll up)* |
-| Gap | **+186** (Optimize) |
+1. **Segment = GTM sales segment** from team name (M, UMM, ACC, L, NAM, DCA) — not company size. One rep per segment row; safe to sum within a market.
+2. **Japan** excluded from model.
+3. Uses **90-day revenue growth** — refresh weekly after JAM updates.
+4. **Not** Finance headcount cost or comp — capacity model only.
+5. **FY26 book score** shown for context; policy target % may be added later.
+6. **Split/new book** actions are a separate layer (book health) — use after optimal HC is trusted.
 
-**Plain English:** This row pools all US teams' **M-sized employer accounts** — NAM, DCA, Mid Market, UMM, etc. At 73 accounts per rep, that pool supports ~549 reps in this slice. The 735 figure is **not** a unique rep count and must not be summed with US-S/L/XL. SQL v2 will split by true sales segment.
+See [`data-model-audit.md`](./data-model-audit.md) for audit history.
 
 ---
 
-## Caveats (say these out loud)
+## Example: US · M (Mid Market sales segment)
 
-1. **Japan** excluded from model.
-2. Uses **90-day revenue growth** — refresh weekly after JAM updates.
-3. **Not** Finance headcount cost or comp — capacity model only.
-4. **FY26 book score** shown for context; policy target % may be added later.
-5. **Split/new book** actions are a separate layer (book health) — coming after optimal HC is trusted.
+| | Value |
+|---|------|
+| Ideal book | 90 accounts/rep (81–99 band) |
+| Optimal headcount | **320** reps |
+| Current reps | 227 |
+| Gap | **−93** (Hire) |
+
+**Plain English:** US Mid Market has 227 reps averaging 127 PCIDs each vs an ideal of 90. At ideal book size the account base supports ~320 reps — under-staffed by ~93. Books are overweight; redistribute/split before net-new hiring.
 
 ---
 

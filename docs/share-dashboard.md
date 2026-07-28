@@ -10,6 +10,8 @@ Once GitHub Pages is enabled:
 
 Send that URL to Sales Ops / HQ. Anyone with the link can view it.
 
+**HQ methodology reference (Indeed SSO):** [Connect PTD — book & headcount methodology](https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/) — official framework this dashboard implements. The live dash links to it in the methodology panel and footer.
+
 > **Important:** This repo contains Indeed sales data. Keep the repository **private** and only share the Pages URL with your team, **or** use the Looker Studio path below for @indeed.com sharing with access controls.
 
 ---
