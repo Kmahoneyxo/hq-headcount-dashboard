@@ -245,7 +245,42 @@ h2 {
 .lookup-market {
   font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.lookup-section {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.lookup-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.lookup-section-title {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.lookup-optimal-details {
+  margin-top: 8px;
+}
+
+.narrative-col {
+  min-width: 200px;
+  max-width: 280px;
+}
+
+.narrative-cell {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #c8d8f0;
+  max-width: 280px;
+  white-space: normal;
 }
 
 .market-summary {

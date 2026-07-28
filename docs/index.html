@@ -42,8 +42,8 @@
     <section class="lookup-panel" id="lookup-panel">
       <div class="lookup-header">
         <div>
-          <h2>Market lookup — Ideal HC · Ideal PCID · PQR</h2>
-          <p class="caption">Country × segment → headcount, book size, and prior-quarter revenue benchmarks</p>
+          <h2>Market lookup — book health → recommendations</h2>
+          <p class="caption">Country × segment → current book health, then actionable next steps (peel, split, hire, grow)</p>
         </div>
       </div>
       <div class="lookup-controls">
@@ -67,12 +67,6 @@
       </div>
       <div class="lookup-answer" id="lookup-answer"></div>
     </section>
-
-    <section class="panel" id="optimal-book-panel"></section>
-
-    <section class="panel" id="book-health-panel"></section>
-
-    <section class="panel" id="book-action-panel"></section>
 
     <section class="panel hidden" id="flagged-reps-wrap">
       <h2>Flagged reps (too big / too little)</h2>
@@ -137,12 +131,14 @@
 
     <section class="panel">
       <h2>Market detail</h2>
-      <p class="caption">Layer 1 book health + Layer 2 book action · scroll → for FY26 &amp; SBS</p>
+      <p class="caption">Book health → recommendations narrative, then metrics · scroll → for FY26 &amp; SBS</p>
       <div class="table-wrap">
         <table id="market-table">
           <thead>
             <tr>
               <th class="sticky-col">Market</th>
+              <th class="narrative-col">Book health</th>
+              <th class="narrative-col">Recommendations</th>
               <th class="num highlight-col">Ideal HC</th>
               <th class="num">Ideal PCID</th>
               <th class="num">Avg PQR</th>

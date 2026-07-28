@@ -81,10 +81,15 @@ MARKET_FIELD_LABELS: dict[str, str] = {
     "coverage_at_inflection": "Coverage at inflection",
     "median_impact_calls_per_account": "Median impact calls/account",
     "coverage_status": "Coverage status",
-    "summary_status": "Summary status",
-    "summary_primary": "Summary — why (plain English)",
-    "summary_bullets": "Summary — supporting detail",
-    "summary_narrative": "Summary — full narrative",
+    "book_health_status": "Book health status",
+    "health_primary": "Book health — snapshot",
+    "health_bullets": "Book health — detail",
+    "recommendation_primary": "Recommendations — top action",
+    "recommendation_bullets": "Recommendations — detail",
+    "summary_status": "Summary status (HC)",
+    "summary_primary": "Book health — snapshot",
+    "summary_bullets": "Recommendations — detail",
+    "summary_narrative": "Full narrative (health → recs)",
     "optimal_book_primary": "Optimal book — why (plain English)",
     "optimal_book_bullets": "Optimal book — supporting detail",
     "optimal_book_rationale": "Optimal book — full rationale",
@@ -172,10 +177,14 @@ def market_row(market: dict) -> dict:
         row["sbs_whitespace_country"] = row["sbs_whitespace"]
     if not row.get("summary_status"):
         enrich_market(row)
-    if isinstance(row.get("summary_bullets"), list):
-        row["summary_bullets"] = " · ".join(row["summary_bullets"])
-    if isinstance(row.get("optimal_book_bullets"), list):
-        row["optimal_book_bullets"] = " · ".join(row["optimal_book_bullets"])
+    for list_field in (
+        "summary_bullets",
+        "health_bullets",
+        "recommendation_bullets",
+        "optimal_book_bullets",
+    ):
+        if isinstance(row.get(list_field), list):
+            row[list_field] = " · ".join(row[list_field])
     return row
 
 

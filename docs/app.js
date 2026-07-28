@@ -245,6 +245,113 @@ function fmtPct(p) {
   return Math.round(p * 100) + "%";
 }
 
+function flagPct(count, total) {
+  if (!total || count == null) return "";
+  return ` (${Math.round((100 * count) / total)}%)`;
+}
+
+function bookHealthStatusClass(status) {
+  if (status === "Overweight") return "summary-over";
+  if (status === "Underweight") return "summary-under";
+  return "summary-target";
+}
+
+function hcStatusClass(status) {
+  if (status === "Over HC") return "summary-over";
+  if (status === "Under HC") return "summary-under";
+  return "summary-target";
+}
+
+function narrativeBlock(title, badge, badgeClass, primary, bullets) {
+  if (!primary && !bullets.length) return "";
+  return `<div class="market-summary ${badgeClass}">
+    <div class="market-summary-header">
+      <span class="market-summary-badge">${badge}</span>
+      <span class="market-summary-label">${title}</span>
+    </div>
+    ${primary ? `<p class="market-summary-primary">${primary}</p>` : ""}
+    ${
+      bullets.length
+        ? `<ul class="market-summary-bullets">${bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
+        : ""
+    }
+  </div>`;
+}
+
+function truncateText(text, max = 120) {
+  if (!text || text.length <= max) return text || "—";
+  return text.slice(0, max - 1) + "…";
+}
+
+function buildHealthFromMarket(m) {
+  if (m.health_primary) {
+    return {
+      primary: m.health_primary,
+      bullets: m.health_bullets || [],
+      status: m.book_health_status || "—",
+    };
+  }
+  const ideal = idealPcid(m);
+  const reps = m.current_reps || 0;
+  const tooBig = m.reps_too_big ?? 0;
+  const tooLittle = m.reps_too_little ?? 0;
+  const parts = [];
+  if (reps) parts.push(`${fmtNum(reps)} reps`);
+  if (m.current_avg_book != null && ideal != null) {
+    const seg = m.segment_avg_pcid != null ? `, segment avg ${fmtNum(Math.round(m.segment_avg_pcid))}` : "";
+    parts.push(`avg ${fmtNum(m.current_avg_book)} PCIDs/rep vs ideal ${fmtNum(ideal)}${seg}`);
+  }
+  if (m.avg_pqr_per_rep != null) {
+    const segPqr =
+      m.segment_avg_pqr != null ? ` (segment ${fmtMoney(m.segment_avg_pqr)})` : "";
+    parts.push(`avg PQR ${fmtMoney(m.avg_pqr_per_rep)}${segPqr}`);
+  }
+  if (tooBig || tooLittle) {
+    parts.push(
+      `${fmtNum(tooBig)} too big${flagPct(tooBig, reps)}, ${fmtNum(tooLittle)} too little${flagPct(tooLittle, reps)}`,
+    );
+  }
+  if (m.avg_pct_book_built != null) {
+    parts.push(`FY26 book build ${m.avg_pct_book_built.toFixed(1)}%`);
+  }
+  let status = "On target";
+  if (ideal && m.current_avg_book) {
+    const ratio = m.current_avg_book / ideal;
+    if (ratio > 1.1) status = "Overweight";
+    else if (ratio < 0.9) status = "Underweight";
+  }
+  return {
+    primary: parts.length ? parts.join(". ") + "." : "",
+    bullets: [],
+    status,
+  };
+}
+
+function buildRecommendationsFromMarket(m) {
+  if (m.recommendation_primary) {
+    return {
+      primary: m.recommendation_primary,
+      bullets: m.recommendation_bullets || [],
+    };
+  }
+  const bullets = [];
+  const ideal = idealPcid(m);
+  if (m.reps_too_big && ideal) {
+    bullets.push(
+      `${fmtNum(m.reps_too_big)} reps should peel toward ideal PCID of ${fmtNum(ideal)}` +
+        (m.splittable_pool ? ` (${fmtNum(m.splittable_pool)} PCIDs pooled).` : "."),
+    );
+  }
+  if (m.book_action && m.book_action !== "Books near ideal") bullets.push(m.book_action);
+  if (m.recommended_action && m.recommended_action !== "On track") {
+    bullets.push(m.recommended_action);
+  }
+  return {
+    primary: m.book_action || m.recommended_action || m.headcount_recommendation || "",
+    bullets,
+  };
+}
+
 function buildOptimalBookRationale(m) {
   if (m.optimal_book_primary) {
     return {
@@ -276,61 +383,8 @@ function buildOptimalBookRationale(m) {
   return { primary, bullets };
 }
 
-function renderOptimalBookPanel(m) {
-  const el = document.getElementById("optimal-book-panel");
-  if (!el) return;
-  if (!m) {
-    el.innerHTML = "";
-    el.classList.add("hidden");
-    return;
-  }
-  el.classList.remove("hidden");
-  const ideal = idealPcid(m);
-  const { primary, bullets } = buildOptimalBookRationale(m);
-  const bucket = m.perfect_book_bucket || "—";
-  const growth = m.perfect_book_growth_pct;
-  el.innerHTML = `
-    <h2>Optimal book · ${m.country}-${m.segment}</h2>
-    <p class="caption">Data-derived target accounts/rep from revenue-growth peaks (sql/16 perfect_book)</p>
-    <div class="lookup-grid lookup-grid-primary optimal-book-stats">
-      <div class="lookup-stat primary">
-        <div class="lookup-stat-value">${fmtNum(ideal)}</div>
-        <div class="lookup-stat-label">Ideal / optimal PCID</div>
-      </div>
-      <div class="lookup-stat primary">
-        <div class="lookup-stat-value">${m.segment_avg_pqr != null ? fmtMoney(m.segment_avg_pqr) : "—"}</div>
-        <div class="lookup-stat-label">Segment avg PQR benchmark</div>
-      </div>
-      <div class="lookup-stat">
-        <div class="lookup-stat-value">${bucket}</div>
-        <div class="lookup-stat-label">Growth-optimal band</div>
-      </div>
-      <div class="lookup-stat">
-        <div class="lookup-stat-value">${growth != null ? fmtPct(growth) : "—"}</div>
-        <div class="lookup-stat-label">Median growth in band</div>
-      </div>
-      <div class="lookup-stat">
-        <div class="lookup-stat-value">${m.segment_avg_pcid != null ? fmtNum(Math.round(m.segment_avg_pcid)) : "—"}</div>
-        <div class="lookup-stat-label">Segment avg PCID (today)</div>
-      </div>
-      <div class="lookup-stat">
-        <div class="lookup-stat-value">${fmtNum(m.current_avg_book)}</div>
-        <div class="lookup-stat-label">Current avg PCID</div>
-      </div>
-    </div>
-    <div class="optimal-book-rationale">
-      <div class="market-summary-header">
-        <span class="market-summary-badge optimal">Optimal</span>
-        <span class="market-summary-label">Why this book size?</span>
-      </div>
-      ${primary ? `<p class="market-summary-primary">${primary}</p>` : ""}
-      ${
-        bullets.length
-          ? `<ul class="market-summary-bullets">${bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
-          : ""
-      }
-    </div>
-  `;
+function renderOptimalBookPanel(_m) {
+  /* consolidated into lookup panel */
 }
 
 function renderLookup() {
@@ -356,126 +410,141 @@ function renderLookup() {
     el.innerHTML =
       `<p class="lookup-missing">No data for <strong>${lookupCountry}-${lookupSegment}</strong> in this snapshot. ` +
       `Try another market or refresh query 16 for full coverage.</p>`;
-    renderOptimalBookPanel(null);
+    renderFlaggedRepsTable("", null);
     return;
   }
+
   const gap = m.headcount_gap;
   const gapStr = gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
   const recClass = m.headcount_recommendation.replace(/ /g, "\\ ");
-  const status = m.summary_status || "—";
-  const statusClass =
-    status === "Over HC"
-      ? "summary-over"
-      : status === "Under HC"
-        ? "summary-under"
-        : "summary-target";
-  const primary = m.summary_primary || "";
-  const bullets = m.summary_bullets || [];
-  const summaryHtml =
-    primary || bullets.length
-      ? `<div class="market-summary ${statusClass}">
-          <div class="market-summary-header">
-            <span class="market-summary-badge">${status}</span>
-            <span class="market-summary-label">Why we think this</span>
-          </div>
-          ${primary ? `<p class="market-summary-primary">${primary}</p>` : ""}
-          ${
-            bullets.length
-              ? `<ul class="market-summary-bullets">${bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
-              : ""
-          }
-        </div>`
-      : "";
-  el.innerHTML = `
-    <div class="lookup-market">${m.country}-${m.segment}</div>
-    ${summaryHtml}
-    <div class="lookup-grid lookup-grid-primary">
-      <div class="lookup-stat primary">
-        <div class="lookup-stat-value">${fmtNum(m.optimal_headcount)}</div>
-        <div class="lookup-stat-label">Ideal headcount</div>
-      </div>
-      <div class="lookup-stat primary">
-        <div class="lookup-stat-value">${fmtNum(idealPcid(m))}</div>
-        <div class="lookup-stat-label">Ideal PCID (accounts/rep)</div>
-      </div>
-      <div class="lookup-stat primary">
-        <div class="lookup-stat-value">${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"}</div>
-        <div class="lookup-stat-label">Avg PQR / rep (prior Q)</div>
-      </div>
-    </div>
-    <div class="lookup-grid">
-      <div class="lookup-stat">
-        <div class="lookup-stat-value">${fmtNum(m.current_reps)}</div>
-        <div class="lookup-stat-label">Current reps</div>
-      </div>
-      <div class="lookup-stat">
-        <div class="lookup-stat-value">${fmtNum(m.current_avg_book)}</div>
-        <div class="lookup-stat-label">Avg PCID / rep</div>
-      </div>
-      <div class="lookup-stat">
-        <div class="lookup-stat-value">${gapStr}</div>
-        <div class="lookup-stat-label">HC gap (reps)</div>
-      </div>
-      <div class="lookup-stat">
-        <div class="lookup-stat-value">${m.rev_vs_pqr_pct != null ? (m.rev_vs_pqr_pct > 0 ? "+" : "") + m.rev_vs_pqr_pct + "%" : "—"}</div>
-        <div class="lookup-stat-label">Rev vs PQR (market)</div>
-      </div>
-      <div class="lookup-stat">
-        <div class="lookup-stat-value"><span class="rec rec-${recClass}">${m.headcount_recommendation}</span></div>
-        <div class="lookup-stat-label">HC recommendation</div>
-      </div>
-      <div class="lookup-stat">
-        <div class="lookup-stat-value">${m.avg_pct_book_built != null ? m.avg_pct_book_built.toFixed(1) + "%" : "—"}</div>
-        <div class="lookup-stat-label">FY26 % book built</div>
-      </div>
-    </div>
-    <p class="lookup-formula">Ideal HC: ${fmtNum(m.assigned_accounts)} assigned PCIDs ÷ ${fmtNum(idealPcid(m))} ideal PCID = ${fmtNum(m.optimal_headcount)} reps</p>
-  `;
-  renderOptimalBookPanel(m);
-  renderBookHealthPanel(m);
-  renderBookActionPanel(m);
-}
-
-function renderBookHealthPanel(m) {
-  const el = document.getElementById("book-health-panel");
-  if (!el) return;
+  const hcStatus = m.summary_status || "—";
+  const health = buildHealthFromMarket(m);
+  const recs = buildRecommendationsFromMarket(m);
+  const ideal = idealPcid(m);
+  const reps = m.current_reps || 0;
+  const tooBig = m.reps_too_big ?? 0;
+  const tooLittle = m.reps_too_little ?? 0;
+  const { primary: optimalPrimary, bullets: optimalBullets } = buildOptimalBookRationale(m);
   const key = marketKey(m);
   const bh = bookHealth?.markets?.[key];
-  const tooBig = m.reps_too_big ?? bh?.reps_too_big ?? "—";
-  const tooLittle = m.reps_too_little ?? bh?.reps_too_little ?? "—";
+
   el.innerHTML = `
-    <h2>Layer 1 — Book health · ${key}</h2>
-    <p class="caption">Too big = PCID and/or PQR above segment avg + coverage ↓ or current rev ↓ vs PQR</p>
-    <div class="lookup-grid">
-      <div class="lookup-stat"><div class="lookup-stat-value">${fmtNum(idealPcid(m))}</div><div class="lookup-stat-label">Ideal PCID</div></div>
-      <div class="lookup-stat"><div class="lookup-stat-value">${fmtNum(m.current_avg_book)}</div><div class="lookup-stat-label">Avg PCID</div></div>
-      <div class="lookup-stat"><div class="lookup-stat-value">${m.segment_avg_pcid != null ? fmtNum(m.segment_avg_pcid) : "—"}</div><div class="lookup-stat-label">Segment avg PCID</div></div>
-      <div class="lookup-stat"><div class="lookup-stat-value">${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"}</div><div class="lookup-stat-label">Avg PQR / rep</div></div>
-      <div class="lookup-stat"><div class="lookup-stat-value">${m.segment_avg_pqr != null ? fmtMoney(m.segment_avg_pqr) : "—"}</div><div class="lookup-stat-label">Segment avg PQR</div></div>
-      <div class="lookup-stat"><div class="lookup-stat-value">${tooBig}</div><div class="lookup-stat-label">Reps too big</div></div>
-      <div class="lookup-stat"><div class="lookup-stat-value">${tooLittle}</div><div class="lookup-stat-label">Reps too little</div></div>
+    <div class="lookup-market">${m.country}-${m.segment}</div>
+
+    <div class="lookup-section">
+      <h3 class="lookup-section-title">1. Current book health</h3>
+      ${narrativeBlock(
+        "State today",
+        health.status,
+        bookHealthStatusClass(health.status),
+        health.primary,
+        health.bullets,
+      )}
+      <div class="lookup-grid lookup-grid-primary">
+        <div class="lookup-stat primary">
+          <div class="lookup-stat-value">${fmtNum(m.current_avg_book)}</div>
+          <div class="lookup-stat-label">Avg PCID / rep</div>
+        </div>
+        <div class="lookup-stat primary">
+          <div class="lookup-stat-value">${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"}</div>
+          <div class="lookup-stat-label">Avg PQR / rep</div>
+        </div>
+        <div class="lookup-stat primary">
+          <div class="lookup-stat-value">${fmtNum(reps)}</div>
+          <div class="lookup-stat-label">Rep count</div>
+        </div>
+      </div>
+      <div class="lookup-grid">
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${fmtNum(ideal)}</div>
+          <div class="lookup-stat-label">Ideal PCID benchmark</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${m.segment_avg_pcid != null ? fmtNum(Math.round(m.segment_avg_pcid)) : "—"}</div>
+          <div class="lookup-stat-label">Segment avg PCID</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${m.segment_avg_pqr != null ? fmtMoney(m.segment_avg_pqr) : "—"}</div>
+          <div class="lookup-stat-label">Segment avg PQR</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${fmtNum(tooBig)}${flagPct(tooBig, reps)}</div>
+          <div class="lookup-stat-label">Reps too big</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${fmtNum(tooLittle)}${flagPct(tooLittle, reps)}</div>
+          <div class="lookup-stat-label">Reps too little</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${m.avg_pct_book_built != null ? m.avg_pct_book_built.toFixed(1) + "%" : m.avg_fy26_book_score != null ? m.avg_fy26_book_score.toFixed(1) : "—"}</div>
+          <div class="lookup-stat-label">${m.avg_pct_book_built != null ? "FY26 % book built" : "FY26 book score"}</div>
+        </div>
+      </div>
     </div>
+
+    <div class="lookup-section">
+      <h3 class="lookup-section-title">2. Recommendations</h3>
+      ${narrativeBlock(
+        "Next steps",
+        hcStatus,
+        hcStatusClass(hcStatus),
+        recs.primary,
+        recs.bullets,
+      )}
+      <div class="lookup-grid">
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${fmtNum(m.optimal_headcount)}</div>
+          <div class="lookup-stat-label">Ideal headcount</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${gapStr}</div>
+          <div class="lookup-stat-label">HC gap (reps)</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value"><span class="rec rec-${recClass}">${m.headcount_recommendation}</span></div>
+          <div class="lookup-stat-label">HC recommendation</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${m.splittable_pool != null ? fmtNum(m.splittable_pool) : "—"}</div>
+          <div class="lookup-stat-label">Splittable PCID pool</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${m.new_heads_from_split != null ? fmtNum(m.new_heads_from_split) : "—"}</div>
+          <div class="lookup-stat-label">New heads from split</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${fmtNum(m.books_buildable_from_sbs ?? 0)}</div>
+          <div class="lookup-stat-label">Books from SBS</div>
+        </div>
+      </div>
+      <p class="lookup-formula">Ideal HC: ${fmtNum(m.assigned_accounts)} assigned PCIDs ÷ ${fmtNum(ideal)} ideal PCID = ${fmtNum(m.optimal_headcount)} reps</p>
+    </div>
+
+    ${
+      optimalPrimary
+        ? `<details class="methodology-details lookup-optimal-details">
+            <summary>Why ideal PCID is ${fmtNum(ideal)} — growth-optimal band (sql/16)</summary>
+            <div class="methodology-body">
+              <p>${optimalPrimary}</p>
+              ${
+                optimalBullets.length
+                  ? `<ul class="market-summary-bullets">${optimalBullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
+                  : ""
+              }
+            </div>
+          </details>`
+        : ""
+    }
   `;
   renderFlaggedRepsTable(key, bh);
 }
 
-function renderBookActionPanel(m) {
-  const el = document.getElementById("book-action-panel");
-  if (!el) return;
-  const pool = m.splittable_pool ?? bookHealth?.markets?.[marketKey(m)]?.splittable_pool;
-  const newHeads = m.new_heads_from_split;
-  el.innerHTML = `
-    <h2>Layer 2 — Book action · ${marketKey(m)}</h2>
-    <p class="caption">Split-hire OK at segment level even when market HC says Optimize · peel only to ideal PCID</p>
-    <div class="lookup-grid">
-      <div class="lookup-stat"><div class="lookup-stat-value">${pool != null ? fmtNum(pool) : "—"}</div><div class="lookup-stat-label">Splittable PCID pool</div></div>
-      <div class="lookup-stat"><div class="lookup-stat-value">${newHeads != null ? fmtNum(newHeads) : "—"}</div><div class="lookup-stat-label">New heads from split</div></div>
-      <div class="lookup-stat"><div class="lookup-stat-value">${fmtNum(m.books_buildable_from_sbs ?? 0)}</div><div class="lookup-stat-label">Books from SBS</div></div>
-      <div class="lookup-stat"><div class="lookup-stat-value">${fmtNum(m.headroom_accounts ?? 0)}</div><div class="lookup-stat-label">Headroom PCIDs</div></div>
-    </div>
-    <p class="book-action-line"><strong>Book action:</strong> ${m.book_action || m.recommended_action || "—"}</p>
-    <p class="book-action-line"><strong>HC action:</strong> ${m.recommended_action || m.headcount_recommendation || "—"}</p>
-  `;
+function renderBookHealthPanel(_m) {
+  /* consolidated into lookup panel */
+}
+
+function renderBookActionPanel(_m) {
+  /* consolidated into lookup panel */
 }
 
 function renderFlaggedRepsTable(key, bh) {
@@ -609,8 +678,12 @@ function renderTable() {
           : "—";
       const isLookupRow =
         m.country === lookupCountry && m.segment === lookupSegment;
+      const health = buildHealthFromMarket(m);
+      const recs = buildRecommendationsFromMarket(m);
       return `<tr${isLookupRow ? ' class="lookup-row"' : ""}>
         <td class="sticky-col">${m.country}-${m.segment}</td>
+        <td class="narrative-cell" title="${health.primary || ""}">${truncateText(health.primary, 140)}</td>
+        <td class="narrative-cell" title="${recs.primary || ""}">${truncateText(recs.primary, 140)}</td>
         <td class="num highlight-col"><strong>${fmtNum(m.optimal_headcount)}</strong></td>
         <td class="num">${fmtNum(idealPcid(m))}</td>
         <td class="num">${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"}</td>
