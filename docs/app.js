@@ -25,6 +25,17 @@ const REC_COLORS = {
   "Do Not Hire": "#f07178",
 };
 
+const IMPACT_COVERAGE_DEFINITION =
+  "Impact coverage = impact calls per assigned account over the trailing 90 days. " +
+  "We sum impact_calls from rep_activity_sales (sql/16) for each rep, divide by that rep's PCID count " +
+  "(impact_calls_per_account), then report the market median (median_impact_calls_per_account). " +
+  "Reps are flagged too big when impact calls/account fall below 90% of the segment average (along with high PCID/PQR). " +
+  "Coverage status is Declining when avg book exceeds the inflection book size and median coverage drops below 90% of peak at that size.";
+
+const SBS_OPPORTUNITY_DEFINITION =
+  "SBS whitespace = parent company IDs with no sales team assignment (team None on JAM) in this country. " +
+  "These are assignable accounts reps could grow into. books_buildable_from_sbs = whitespace ÷ ideal PCID.";
+
 async function loadConfig() {
   try {
     const res = await fetch("./data/config.json?" + Date.now());
@@ -327,6 +338,77 @@ function buildHealthFromMarket(m) {
   };
 }
 
+function coverageStatusClass(status) {
+  if (status === "Declining") return "summary-over";
+  if (status === "OK") return "summary-target";
+  return "summary-under";
+}
+
+function buildImpactCoverage(m) {
+  if (m.impact_coverage_primary) {
+    return {
+      primary: m.impact_coverage_primary,
+      bullets: m.impact_coverage_bullets || [],
+      status: m.coverage_status || "—",
+      median: m.median_impact_calls_per_account,
+    };
+  }
+  const median = m.median_impact_calls_per_account;
+  const status = m.coverage_status || "Unknown";
+  const inflectBook = m.coverage_inflection_book_max;
+  const atInflect = m.coverage_at_inflection;
+  const avgBook = m.current_avg_book;
+  const parts = [];
+  if (median != null) {
+    parts.push(
+      `Market median ${median} impact call${median === 1 ? "" : "s"} per account (90d)`,
+    );
+  }
+  if (inflectBook != null && atInflect != null) {
+    parts.push(
+      `coverage peaks at ${atInflect} calls/account near ${fmtNum(inflectBook)} accounts/rep`,
+    );
+  }
+  if (avgBook != null && inflectBook != null && avgBook > inflectBook) {
+    parts.push(`avg book (${fmtNum(avgBook)}) is above the coverage inflection point`);
+  }
+  const primary = parts.length
+    ? parts.join("; ") + "."
+    : "Impact coverage data not available for this market.";
+  return { primary, bullets: [], status, median };
+}
+
+function buildSbsOpportunity(m) {
+  if (m.sbs_opportunity_primary) {
+    return {
+      primary: m.sbs_opportunity_primary,
+      bullets: m.sbs_opportunity_bullets || [],
+    };
+  }
+  const sbs = m.sbs_whitespace_country ?? m.sbs_whitespace ?? 0;
+  const books = m.books_buildable_from_sbs ?? 0;
+  const revenue = m.sbs_revenue_90d;
+  const grow = m.total_grow_slots ?? 0;
+  const ideal = idealPcid(m);
+  if (!sbs) {
+    return { primary: "No SBS whitespace in this country snapshot.", bullets: [] };
+  }
+  let primary =
+    `${fmtNum(sbs)} unassigned accounts in ${m.country} SBS pool` +
+    (books
+      ? ` — ~${fmtNum(books)} assignable rep books at ideal size (${fmtNum(ideal)} PCIDs/rep)`
+      : "");
+  primary += ".";
+  const bullets = [];
+  if (revenue != null) bullets.push(`SBS pool revenue (90d): ${fmtMoney(revenue)}.`);
+  if (grow) {
+    bullets.push(
+      `${fmtNum(grow)} grow slots on underweight reps could absorb accounts before net-new books.`,
+    );
+  }
+  return { primary, bullets };
+}
+
 function buildRecommendationsFromMarket(m) {
   if (m.recommendation_primary) {
     return {
@@ -336,6 +418,13 @@ function buildRecommendationsFromMarket(m) {
   }
   const bullets = [];
   const ideal = idealPcid(m);
+  const sbs = m.sbs_whitespace_country ?? m.sbs_whitespace ?? 0;
+  const books = m.books_buildable_from_sbs ?? 0;
+  if (sbs > 0 && books > 0) {
+    bullets.push(
+      `${fmtNum(sbs)} accounts in ${m.country} SBS whitespace could be assigned (~${fmtNum(books)} books at ideal PCID).`,
+    );
+  }
   if (m.reps_too_big && ideal) {
     bullets.push(
       `${fmtNum(m.reps_too_big)} reps should peel toward ideal PCID of ${fmtNum(ideal)}` +
@@ -419,6 +508,8 @@ function renderLookup() {
   const recClass = m.headcount_recommendation.replace(/ /g, "\\ ");
   const hcStatus = m.summary_status || "—";
   const health = buildHealthFromMarket(m);
+  const impact = buildImpactCoverage(m);
+  const sbsOpp = buildSbsOpportunity(m);
   const recs = buildRecommendationsFromMarket(m);
   const ideal = idealPcid(m);
   const reps = m.current_reps || 0;
@@ -483,6 +574,44 @@ function renderLookup() {
     </div>
 
     <div class="lookup-section">
+      <h3 class="lookup-section-title">
+        Impact coverage
+        <span class="metric-tip" title="${IMPACT_COVERAGE_DEFINITION}">?</span>
+      </h3>
+      ${narrativeBlock(
+        "Rep touch rate",
+        impact.status,
+        coverageStatusClass(impact.status),
+        impact.primary,
+        impact.bullets,
+      )}
+      <div class="lookup-grid">
+        <div class="lookup-stat primary">
+          <div class="lookup-stat-value">${impact.median != null ? impact.median : "—"}</div>
+          <div class="lookup-stat-label">Median impact calls / account (90d)</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${m.coverage_at_inflection != null ? m.coverage_at_inflection : "—"}</div>
+          <div class="lookup-stat-label">Peak at inflection</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${m.coverage_inflection_book_max != null ? fmtNum(m.coverage_inflection_book_max) : "—"}</div>
+          <div class="lookup-stat-label">Inflection book size (PCIDs/rep)</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${m.coverage_status || "—"}</div>
+          <div class="lookup-stat-label">Coverage status</div>
+        </div>
+      </div>
+      <details class="methodology-details lookup-optimal-details">
+        <summary>What is impact coverage?</summary>
+        <div class="methodology-body">
+          <p>${IMPACT_COVERAGE_DEFINITION}</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="lookup-section">
       <h3 class="lookup-section-title">2. Recommendations</h3>
       ${narrativeBlock(
         "Next steps",
@@ -491,6 +620,18 @@ function renderLookup() {
         recs.primary,
         recs.bullets,
       )}
+      <div class="lookup-subsection sbs-opportunity">
+        <h4 class="lookup-subsection-title">
+          SBS / assignable account opportunity
+          <span class="metric-tip" title="${SBS_OPPORTUNITY_DEFINITION}">?</span>
+        </h4>
+        <p class="lookup-sbs-primary">${sbsOpp.primary}</p>
+        ${
+          sbsOpp.bullets.length
+            ? `<ul class="market-summary-bullets">${sbsOpp.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
+            : ""
+        }
+      </div>
       <div class="lookup-grid">
         <div class="lookup-stat">
           <div class="lookup-stat-value">${fmtNum(m.optimal_headcount)}</div>

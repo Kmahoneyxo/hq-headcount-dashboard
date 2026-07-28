@@ -39,6 +39,33 @@ See [`data-model-audit.md`](./data-model-audit.md) for full audit evidence.
 
 ---
 
+## Impact coverage
+
+**Definition (sql/16):** Sum of `impact_calls` from `rep_activity_sales` over the trailing 90 days, divided by assigned PCIDs per rep (`impact_calls_per_account`). The dashboard shows the **market median** (`median_impact_calls_per_account`).
+
+| Field | Meaning |
+|-------|---------|
+| **Median impact calls/account** | Typical rep touch rate per assigned account (90d) |
+| **Coverage inflection book max** | Book size where impact calls/account peak |
+| **Coverage at inflection** | Peak median impact calls/account at that book size |
+| **Coverage status** | OK, Declining (avg book past inflection + coverage ↓), or Unknown |
+
+Reps flagged **too big** when impact calls/account fall below 90% of segment average (with high PCID/PQR).
+
+---
+
+## SBS whitespace / assignable accounts
+
+| Field | Meaning |
+|-------|---------|
+| **sbs_whitespace_country** | Unassigned parent company IDs in country (team None on JAM) |
+| **books_buildable_from_sbs** | Whitespace ÷ ideal PCID — how many full rep books could be built |
+| **sbs_revenue_90d** | Revenue from unassigned pool (90d) |
+
+SBS is **country-level** — all segment rows in a country share the same pool. There is no separate "good accounts" field; SBS whitespace is the assignable opportunity.
+
+---
+
 ## Recommendation
 
 | Rec | Meaning |

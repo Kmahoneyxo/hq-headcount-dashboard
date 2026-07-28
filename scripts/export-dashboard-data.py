@@ -81,6 +81,10 @@ MARKET_FIELD_LABELS: dict[str, str] = {
     "coverage_at_inflection": "Coverage at inflection",
     "median_impact_calls_per_account": "Median impact calls/account",
     "coverage_status": "Coverage status",
+    "impact_coverage_primary": "Impact coverage — snapshot",
+    "impact_coverage_bullets": "Impact coverage — detail",
+    "sbs_opportunity_primary": "SBS opportunity — snapshot",
+    "sbs_opportunity_bullets": "SBS opportunity — detail",
     "book_health_status": "Book health status",
     "health_primary": "Book health — snapshot",
     "health_bullets": "Book health — detail",
@@ -182,6 +186,8 @@ def market_row(market: dict) -> dict:
         "health_bullets",
         "recommendation_bullets",
         "optimal_book_bullets",
+        "impact_coverage_bullets",
+        "sbs_opportunity_bullets",
     ):
         if isinstance(row.get(list_field), list):
             row[list_field] = " · ".join(row[list_field])

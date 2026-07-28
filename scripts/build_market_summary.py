@@ -210,6 +210,12 @@ def build_book_health(m: dict) -> dict:
 
     opp = m.get("opp_pipeline_status")
     cov = m.get("coverage_status")
+    median_cov = m.get("median_impact_calls_per_account")
+    if median_cov is not None:
+        bullets.append(
+            f"Impact coverage: {median_cov:g} median impact calls/account (90d)"
+            + (f", status {cov.lower()}." if cov else ".")
+        )
     if opp or cov:
         parts_sig = []
         if opp:
@@ -222,6 +228,98 @@ def build_book_health(m: dict) -> dict:
         "book_health_status": book_label,
         "health_primary": primary,
         "health_bullets": bullets,
+    }
+
+
+def build_impact_coverage(m: dict) -> dict:
+    """Plain-English impact coverage from sql/16 rep_activity_sales fields."""
+    median = m.get("median_impact_calls_per_account")
+    status = m.get("coverage_status") or "Unknown"
+    inflect_book = m.get("coverage_inflection_book_max")
+    at_inflect = m.get("coverage_at_inflection")
+    avg_book = m.get("current_avg_book")
+
+    parts: list[str] = []
+    if median is not None:
+        call_word = "call" if median == 1 else "calls"
+        parts.append(
+            f"Market median {median:g} impact {call_word} per assigned account over 90d "
+            f"(sum of impact_calls from rep_activity_sales ÷ PCIDs per rep)."
+        )
+    if inflect_book is not None and at_inflect is not None:
+        parts.append(
+            f"Coverage peaks at {at_inflect:g} calls/account when books are "
+            f"~{int(inflect_book)} accounts/rep."
+        )
+    if status == "Declining" and avg_book and inflect_book:
+        parts.append(
+            f"Status Declining: avg book ({int(round(avg_book))}) exceeds inflection size "
+            f"and median coverage is below 90% of peak."
+        )
+    elif status == "OK":
+        parts.append("Coverage status OK for current book size.")
+
+    primary = " ".join(parts) if parts else "Impact coverage data not available."
+
+    bullets: list[str] = [
+        "Impact coverage = impact calls per account over trailing 90d (sql/16, rep_activity_sales).",
+        "Too-big flag uses impact calls/account < 90% of segment average (with high PCID/PQR).",
+    ]
+    if inflect_book is not None:
+        bullets.append(
+            f"Inflection book max {int(inflect_book)} — books larger than this tend to see "
+            "fewer touches per account."
+        )
+
+    return {
+        "impact_coverage_primary": primary,
+        "impact_coverage_bullets": bullets,
+    }
+
+
+def build_sbs_opportunity(m: dict) -> dict:
+    """SBS whitespace / assignable accounts reps could grow into."""
+    sbs = m.get("sbs_whitespace_country") or m.get("sbs_whitespace") or 0
+    books = m.get("books_buildable_from_sbs") or 0
+    revenue = m.get("sbs_revenue_90d")
+    grow = m.get("total_grow_slots") or 0
+    ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
+    country = m.get("country", "")
+
+    if not sbs:
+        return {
+            "sbs_opportunity_primary": "No SBS whitespace in this country.",
+            "sbs_opportunity_bullets": [],
+        }
+
+    primary = (
+        f"{_fmt_int(sbs)} unassigned accounts in {country} SBS whitespace "
+        f"(team None on JAM — assignable to reps)."
+    )
+    if books and ideal:
+        primary += (
+            f" At ideal book size ({int(ideal)} PCIDs/rep), that supports "
+            f"~{_fmt_int(books)} new rep books."
+        )
+    else:
+        primary += "."
+
+    bullets: list[str] = []
+    if revenue:
+        bullets.append(f"SBS pool 90d revenue: {_fmt_money(revenue)}.")
+    if grow:
+        bullets.append(
+            f"{_fmt_int(grow)} grow slots on underweight reps — assign SBS accounts "
+            "to existing books first."
+        )
+    bullets.append(
+        "SBS is country-level (unassigned accounts have no sales segment); "
+        "segment rows share the same country pool."
+    )
+
+    return {
+        "sbs_opportunity_primary": primary,
+        "sbs_opportunity_bullets": bullets,
     }
 
 
@@ -242,6 +340,12 @@ def build_recommendations(m: dict) -> dict:
     _, book_label = _book_vs_ideal(m)
 
     bullets: list[str] = []
+
+    if sbs and int(sbs) > 0 and books_sbs:
+        bullets.append(
+            f"SBS opportunity: {_fmt_int(sbs)} accounts in {m.get('country', '')} whitespace "
+            f"could be assigned (~{_fmt_int(books_sbs)} books at ideal size)."
+        )
 
     if too_big and ideal is not None and pool:
         bullets.append(
@@ -404,10 +508,14 @@ def build_market_summary(m: dict) -> dict:
     """Return health → recommendations narrative + optimal book rationale."""
     status = summary_status(m)
     health = build_book_health(m)
+    impact = build_impact_coverage(m)
+    sbs_opp = build_sbs_opportunity(m)
     recs = build_recommendations(m)
     optimal = build_optimal_book_rationale(m)
 
     narrative = health["health_primary"]
+    if impact["impact_coverage_primary"]:
+        narrative += " " + impact["impact_coverage_primary"]
     if recs["recommendation_primary"]:
         narrative += " " + recs["recommendation_primary"]
     if recs["recommendation_bullets"]:
@@ -419,6 +527,8 @@ def build_market_summary(m: dict) -> dict:
         "summary_bullets": recs["recommendation_bullets"],
         "summary_narrative": narrative,
         **health,
+        **impact,
+        **sbs_opp,
         **recs,
         **optimal,
     }
