@@ -36,6 +36,12 @@ const SBS_OPPORTUNITY_DEFINITION =
   "SBS whitespace = parent company IDs with no sales team assignment (team None on JAM) in this country. " +
   "These are assignable accounts reps could grow into. books_buildable_from_sbs = whitespace ÷ ideal PCID.";
 
+const HEALTHY_BOOK_DEFINITION =
+  "A healthy book means the rep is not flagged too_big or too_little (sql/16–17). " +
+  "Too big = PCID or PQR above segment average plus weak impact coverage (<90% of segment avg) or current revenue below PQR. " +
+  "Too little = PCID below ideal (growth-optimal target). " +
+  "Healthy reps are near ideal PCID, at or above segment PQR benchmark, and maintain adequate impact coverage.";
+
 async function loadConfig() {
   try {
     const res = await fetch("./data/config.json?" + Date.now());
@@ -344,101 +350,108 @@ function coverageStatusClass(status) {
   return "summary-under";
 }
 
-function buildImpactCoverage(m) {
-  if (m.impact_coverage_primary) {
-    return {
-      primary: m.impact_coverage_primary,
-      bullets: m.impact_coverage_bullets || [],
-      status: m.coverage_status || "—",
-      median: m.median_impact_calls_per_account,
-    };
+function buildHcReason(m) {
+  if (m.hc_reason_primary) {
+    return { primary: m.hc_reason_primary, driver: m.hc_reason_driver || "" };
   }
-  const median = m.median_impact_calls_per_account;
-  const status = m.coverage_status || "Unknown";
-  const inflectBook = m.coverage_inflection_book_max;
-  const atInflect = m.coverage_at_inflection;
-  const avgBook = m.current_avg_book;
-  const parts = [];
-  if (median != null) {
-    parts.push(
-      `Market median ${median} impact call${median === 1 ? "" : "s"} per account (90d)`,
-    );
-  }
-  if (inflectBook != null && atInflect != null) {
-    parts.push(
-      `coverage peaks at ${atInflect} calls/account near ${fmtNum(inflectBook)} accounts/rep`,
-    );
-  }
-  if (avgBook != null && inflectBook != null && avgBook > inflectBook) {
-    parts.push(`avg book (${fmtNum(avgBook)}) is above the coverage inflection point`);
-  }
-  const primary = parts.length
-    ? parts.join("; ") + "."
-    : "Impact coverage data not available for this market.";
-  return { primary, bullets: [], status, median };
+  const status = m.summary_status || "—";
+  const gap = Math.abs(m.headcount_gap ?? 0);
+  const direction = status === "Under HC" ? "LOW" : status === "Over HC" ? "HIGH" : "";
+  if (!direction) return { primary: "HC at target.", driver: "at_target" };
+  return {
+    primary: `HC too ${direction} by ${fmtNum(gap)} reps — see book health and coverage signals.`,
+    driver: "gap",
+  };
 }
 
-function buildSbsOpportunity(m) {
-  if (m.sbs_opportunity_primary) {
-    return {
-      primary: m.sbs_opportunity_primary,
-      bullets: m.sbs_opportunity_bullets || [],
-    };
-  }
-  const sbs = m.sbs_whitespace_country ?? m.sbs_whitespace ?? 0;
-  const books = m.books_buildable_from_sbs ?? 0;
-  const revenue = m.sbs_revenue_90d;
-  const grow = m.total_grow_slots ?? 0;
-  const ideal = idealPcid(m);
-  if (!sbs) {
-    return { primary: "No SBS whitespace in this country snapshot.", bullets: [] };
-  }
-  let primary =
-    `${fmtNum(sbs)} unassigned accounts in ${m.country} SBS pool` +
-    (books
-      ? ` — ~${fmtNum(books)} assignable rep books at ideal size (${fmtNum(ideal)} PCIDs/rep)`
-      : "");
-  primary += ".";
-  const bullets = [];
-  if (revenue != null) bullets.push(`SBS pool revenue (90d): ${fmtMoney(revenue)}.`);
-  if (grow) {
-    bullets.push(
-      `${fmtNum(grow)} grow slots on underweight reps could absorb accounts before net-new books.`,
-    );
-  }
-  return { primary, bullets };
+function buildSbsRouting(m) {
+  const hasOpp = m.sbs_has_opportunity ?? (m.sbs_whitespace_country ?? m.sbs_whitespace ?? 0) > 0;
+  return {
+    hasOpp,
+    opportunity: m.sbs_opportunity_primary || "",
+    routing: m.sbs_routing_primary || "",
+    bullets: m.sbs_routing_bullets || m.sbs_opportunity_bullets || [],
+    books: m.books_buildable_from_sbs ?? 0,
+  };
+}
+
+function sbsOppLabel(m) {
+  const sbs = buildSbsRouting(m);
+  if (!sbs.hasOpp) return "—";
+  return sbs.books ? `Yes · ~${fmtNum(sbs.books)} books` : "Yes";
 }
 
 function buildRecommendationsFromMarket(m) {
-  if (m.recommendation_primary) {
+  return {
+    primary: m.recommendation_primary || m.recommended_action || m.headcount_recommendation || "",
+    bullets: (m.recommendation_bullets || []).slice(0, 2),
+  };
+}
+
+function buildHealthyBook(m) {
+  if (m.healthy_book_primary) {
     return {
-      primary: m.recommendation_primary,
-      bullets: m.recommendation_bullets || [],
+      primary: m.healthy_book_primary,
+      definition: m.healthy_book_definition || m.healthy_book_primary,
+      criteria: m.healthy_book_criteria || [],
+      thresholds: m.healthy_book_thresholds || {},
+      pct: m.pct_reps_healthy,
+      healthy: m.reps_healthy,
+      scored: m.reps_scored,
     };
   }
-  const bullets = [];
   const ideal = idealPcid(m);
-  const sbs = m.sbs_whitespace_country ?? m.sbs_whitespace ?? 0;
-  const books = m.books_buildable_from_sbs ?? 0;
-  if (sbs > 0 && books > 0) {
-    bullets.push(
-      `${fmtNum(sbs)} accounts in ${m.country} SBS whitespace could be assigned (~${fmtNum(books)} books at ideal PCID).`,
+  const segPqr = m.segment_avg_pqr;
+  const medianCov = m.median_impact_calls_per_account;
+  const criteria = [];
+  if (ideal != null) {
+    const low = Math.round(ideal * 0.9);
+    const high = Math.round(ideal * 1.1);
+    criteria.push(`PCID within ±10% of ideal (${low}–${high} at ideal ${fmtNum(ideal)})`);
+  }
+  if (segPqr != null) criteria.push(`PQR at or above segment benchmark (${fmtMoney(segPqr)})`);
+  if (medianCov != null) {
+    criteria.push(
+      `Impact coverage ≥ 90% of segment average (median ${medianCov} calls/account)`,
     );
   }
-  if (m.reps_too_big && ideal) {
-    bullets.push(
-      `${fmtNum(m.reps_too_big)} reps should peel toward ideal PCID of ${fmtNum(ideal)}` +
-        (m.splittable_pool ? ` (${fmtNum(m.splittable_pool)} PCIDs pooled).` : "."),
-    );
-  }
-  if (m.book_action && m.book_action !== "Books near ideal") bullets.push(m.book_action);
-  if (m.recommended_action && m.recommended_action !== "On track") {
-    bullets.push(m.recommended_action);
-  }
+  criteria.push("Not flagged too_big or too_little");
   return {
-    primary: m.book_action || m.recommended_action || m.headcount_recommendation || "",
-    bullets,
+    primary: "Healthy book = not flagged too big or too little per sql/16–17.",
+    definition: "",
+    criteria,
+    thresholds: {},
+    pct: null,
+    healthy: null,
+    scored: m.current_reps,
   };
+}
+
+function renderHealthyBookBlock(m, healthy) {
+  const t = healthy.thresholds;
+  const thresholdBits = [];
+  if (t.ideal_pcid != null) thresholdBits.push(`Ideal PCID ${fmtNum(t.ideal_pcid)}`);
+  if (t.pcid_band_low != null && t.pcid_band_high != null) {
+    thresholdBits.push(`±10% band ${fmtNum(t.pcid_band_low)}–${fmtNum(t.pcid_band_high)}`);
+  }
+  if (t.segment_avg_pqr != null) thresholdBits.push(`PQR benchmark ${fmtMoney(t.segment_avg_pqr)}`);
+  if (t.coverage_benchmark != null) {
+    thresholdBits.push(`Coverage median ${t.coverage_benchmark} calls/account`);
+  }
+  const pctLine =
+    healthy.pct != null && healthy.healthy != null && healthy.scored
+      ? `<p class="healthy-book-stat"><strong>${healthy.pct.toFixed(1)}%</strong> of reps have healthy books ` +
+        `(${fmtNum(healthy.healthy)} of ${fmtNum(healthy.scored)} not flagged)</p>`
+      : "";
+  return `<div class="healthy-book-block">
+    <div class="healthy-book-header">
+      <span class="healthy-book-title">What is a healthy book?</span>
+      <span class="metric-tip" title="${HEALTHY_BOOK_DEFINITION}">?</span>
+    </div>
+    ${thresholdBits.length ? `<p class="healthy-book-thresholds">${thresholdBits.join(" · ")}</p>` : ""}
+    <ul class="healthy-book-checklist">${healthy.criteria.map((c) => `<li>${c}</li>`).join("")}</ul>
+    ${pctLine}
+  </div>`;
 }
 
 function buildOptimalBookRationale(m) {
@@ -508,14 +521,12 @@ function renderLookup() {
   const recClass = m.headcount_recommendation.replace(/ /g, "\\ ");
   const hcStatus = m.summary_status || "—";
   const health = buildHealthFromMarket(m);
-  const impact = buildImpactCoverage(m);
-  const sbsOpp = buildSbsOpportunity(m);
+  const hcReason = buildHcReason(m);
+  const sbs = buildSbsRouting(m);
   const recs = buildRecommendationsFromMarket(m);
   const ideal = idealPcid(m);
-  const reps = m.current_reps || 0;
-  const tooBig = m.reps_too_big ?? 0;
-  const tooLittle = m.reps_too_little ?? 0;
-  const { primary: optimalPrimary, bullets: optimalBullets } = buildOptimalBookRationale(m);
+  const { primary: optimalPrimary } = buildOptimalBookRationale(m);
+  const healthy = buildHealthyBook(m);
   const key = marketKey(m);
   const bh = bookHealth?.markets?.[key];
 
@@ -523,156 +534,81 @@ function renderLookup() {
     <div class="lookup-market">${m.country}-${m.segment}</div>
 
     <div class="lookup-section">
-      <h3 class="lookup-section-title">1. Current book health</h3>
+      <h3 class="lookup-section-title">1. Book health</h3>
       ${narrativeBlock(
-        "State today",
+        "Books today",
         health.status,
         bookHealthStatusClass(health.status),
         health.primary,
-        health.bullets,
+        [],
       )}
-      <div class="lookup-grid lookup-grid-primary">
+      <div class="lookup-grid lookup-grid-compact">
         <div class="lookup-stat primary">
-          <div class="lookup-stat-value">${fmtNum(m.current_avg_book)}</div>
-          <div class="lookup-stat-label">Avg PCID / rep</div>
+          <div class="lookup-stat-value">${fmtNum(m.current_avg_book)} / ${fmtNum(ideal)}</div>
+          <div class="lookup-stat-label">Avg vs ideal PCID</div>
         </div>
         <div class="lookup-stat primary">
           <div class="lookup-stat-value">${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"}</div>
           <div class="lookup-stat-label">Avg PQR / rep</div>
         </div>
         <div class="lookup-stat primary">
-          <div class="lookup-stat-value">${fmtNum(reps)}</div>
-          <div class="lookup-stat-label">Rep count</div>
+          <div class="lookup-stat-value">${fmtNum(m.current_reps)} → ${fmtNum(m.optimal_headcount)}</div>
+          <div class="lookup-stat-label">Current → ideal HC</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${m.median_impact_calls_per_account != null ? m.median_impact_calls_per_account : "—"}</div>
+          <div class="lookup-stat-label">Impact calls / acct <span class="metric-tip" title="${IMPACT_COVERAGE_DEFINITION}">?</span></div>
         </div>
       </div>
-      <div class="lookup-grid">
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${fmtNum(ideal)}</div>
-          <div class="lookup-stat-label">Ideal PCID benchmark</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${m.segment_avg_pcid != null ? fmtNum(Math.round(m.segment_avg_pcid)) : "—"}</div>
-          <div class="lookup-stat-label">Segment avg PCID</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${m.segment_avg_pqr != null ? fmtMoney(m.segment_avg_pqr) : "—"}</div>
-          <div class="lookup-stat-label">Segment avg PQR</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${fmtNum(tooBig)}${flagPct(tooBig, reps)}</div>
-          <div class="lookup-stat-label">Reps too big</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${fmtNum(tooLittle)}${flagPct(tooLittle, reps)}</div>
-          <div class="lookup-stat-label">Reps too little</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${m.avg_pct_book_built != null ? m.avg_pct_book_built.toFixed(1) + "%" : m.avg_fy26_book_score != null ? m.avg_fy26_book_score.toFixed(1) : "—"}</div>
-          <div class="lookup-stat-label">${m.avg_pct_book_built != null ? "FY26 % book built" : "FY26 book score"}</div>
-        </div>
-      </div>
+      ${renderHealthyBookBlock(m, healthy)}
     </div>
 
-    <div class="lookup-section">
-      <h3 class="lookup-section-title">
-        Impact coverage
-        <span class="metric-tip" title="${IMPACT_COVERAGE_DEFINITION}">?</span>
-      </h3>
+    <div class="lookup-section lookup-hc-reason">
+      <h3 class="lookup-section-title">2. Why HC is ${hcStatus === "Under HC" ? "too low" : hcStatus === "Over HC" ? "too high" : "at target"}</h3>
       ${narrativeBlock(
-        "Rep touch rate",
-        impact.status,
-        coverageStatusClass(impact.status),
-        impact.primary,
-        impact.bullets,
-      )}
-      <div class="lookup-grid">
-        <div class="lookup-stat primary">
-          <div class="lookup-stat-value">${impact.median != null ? impact.median : "—"}</div>
-          <div class="lookup-stat-label">Median impact calls / account (90d)</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${m.coverage_at_inflection != null ? m.coverage_at_inflection : "—"}</div>
-          <div class="lookup-stat-label">Peak at inflection</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${m.coverage_inflection_book_max != null ? fmtNum(m.coverage_inflection_book_max) : "—"}</div>
-          <div class="lookup-stat-label">Inflection book size (PCIDs/rep)</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${m.coverage_status || "—"}</div>
-          <div class="lookup-stat-label">Coverage status</div>
-        </div>
-      </div>
-      <details class="methodology-details lookup-optimal-details">
-        <summary>What is impact coverage?</summary>
-        <div class="methodology-body">
-          <p>${IMPACT_COVERAGE_DEFINITION}</p>
-        </div>
-      </details>
-    </div>
-
-    <div class="lookup-section">
-      <h3 class="lookup-section-title">2. Recommendations</h3>
-      ${narrativeBlock(
-        "Next steps",
+        "Primary reason",
         hcStatus,
+        hcStatusClass(hcStatus),
+        hcReason.primary,
+        [],
+      )}
+      <p class="lookup-formula">Ideal HC: ${fmtNum(m.assigned_accounts)} PCIDs ÷ ${fmtNum(ideal)} ideal PCID = ${fmtNum(m.optimal_headcount)} reps · gap ${gapStr} · <span class="rec rec-${recClass}">${m.headcount_recommendation}</span></p>
+    </div>
+
+    <div class="lookup-section">
+      <h3 class="lookup-section-title">3. Recommendations</h3>
+      ${narrativeBlock(
+        "Next step",
+        m.headcount_recommendation,
         hcStatusClass(hcStatus),
         recs.primary,
         recs.bullets,
       )}
-      <div class="lookup-subsection sbs-opportunity">
-        <h4 class="lookup-subsection-title">
-          SBS / assignable account opportunity
-          <span class="metric-tip" title="${SBS_OPPORTUNITY_DEFINITION}">?</span>
-        </h4>
-        <p class="lookup-sbs-primary">${sbsOpp.primary}</p>
-        ${
-          sbsOpp.bullets.length
-            ? `<ul class="market-summary-bullets">${sbsOpp.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
-            : ""
-        }
-      </div>
-      <div class="lookup-grid">
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${fmtNum(m.optimal_headcount)}</div>
-          <div class="lookup-stat-label">Ideal headcount</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${gapStr}</div>
-          <div class="lookup-stat-label">HC gap (reps)</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value"><span class="rec rec-${recClass}">${m.headcount_recommendation}</span></div>
-          <div class="lookup-stat-label">HC recommendation</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${m.splittable_pool != null ? fmtNum(m.splittable_pool) : "—"}</div>
-          <div class="lookup-stat-label">Splittable PCID pool</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${m.new_heads_from_split != null ? fmtNum(m.new_heads_from_split) : "—"}</div>
-          <div class="lookup-stat-label">New heads from split</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${fmtNum(m.books_buildable_from_sbs ?? 0)}</div>
-          <div class="lookup-stat-label">Books from SBS</div>
-        </div>
-      </div>
-      <p class="lookup-formula">Ideal HC: ${fmtNum(m.assigned_accounts)} assigned PCIDs ÷ ${fmtNum(ideal)} ideal PCID = ${fmtNum(m.optimal_headcount)} reps</p>
+    </div>
+
+    <div class="lookup-section ${sbs.hasOpp ? "lookup-sbs-highlight" : ""}">
+      <h3 class="lookup-section-title">
+        4. SBS opportunity &amp; routing
+        <span class="metric-tip" title="${SBS_OPPORTUNITY_DEFINITION}">?</span>
+      </h3>
+      ${
+        sbs.hasOpp
+          ? `<p class="lookup-sbs-primary">${sbs.opportunity}</p>
+             <p class="lookup-sbs-routing"><strong>Routing:</strong> ${sbs.routing || "See country segments with grow slots."}</p>
+             ${
+               sbs.bullets.length
+                 ? `<ul class="market-summary-bullets">${sbs.bullets.filter(Boolean).map((b) => `<li>${b}</li>`).join("")}</ul>`
+                 : ""
+             }`
+          : `<p class="lookup-sbs-primary">No SBS whitespace in this country.</p>`
+      }
     </div>
 
     ${
       optimalPrimary
         ? `<details class="methodology-details lookup-optimal-details">
-            <summary>Why ideal PCID is ${fmtNum(ideal)} — growth-optimal band (sql/16)</summary>
-            <div class="methodology-body">
-              <p>${optimalPrimary}</p>
-              ${
-                optimalBullets.length
-                  ? `<ul class="market-summary-bullets">${optimalBullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
-                  : ""
-              }
-            </div>
+            <summary>Methodology — ideal PCID ${fmtNum(ideal)} (sql/16)</summary>
+            <div class="methodology-body"><p>${optimalPrimary}</p></div>
           </details>`
         : ""
     }
@@ -811,35 +747,23 @@ function renderTable() {
     .map((m) => {
       const gap = m.headcount_gap;
       const gapStr = gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
-      const fy26Target = m.fy26_target_pct_book_built;
-      const built = m.avg_pct_book_built;
-      const fy26Cell =
-        built != null
-          ? `${built.toFixed(1)}%${fy26Target != null ? " / " + fy26Target + "% tgt" : ""}`
-          : "—";
       const isLookupRow =
         m.country === lookupCountry && m.segment === lookupSegment;
-      const health = buildHealthFromMarket(m);
-      const recs = buildRecommendationsFromMarket(m);
+      const hcStatus = m.summary_status || "—";
+      const hcReason = buildHcReason(m);
+      const sbsFlag = sbsOppLabel(m);
+      const hcClass = hcStatusClass(hcStatus).replace("summary-", "");
       return `<tr${isLookupRow ? ' class="lookup-row"' : ""}>
         <td class="sticky-col">${m.country}-${m.segment}</td>
-        <td class="narrative-cell" title="${health.primary || ""}">${truncateText(health.primary, 140)}</td>
-        <td class="narrative-cell" title="${recs.primary || ""}">${truncateText(recs.primary, 140)}</td>
+        <td><span class="hc-verdict hc-verdict-${hcClass}">${hcStatus}</span></td>
+        <td class="narrative-cell" title="${hcReason.primary || ""}">${truncateText(hcReason.primary, 160)}</td>
+        <td class="sbs-opp-cell${buildSbsRouting(m).hasOpp ? " sbs-opp-yes" : ""}">${sbsFlag}</td>
         <td class="num highlight-col"><strong>${fmtNum(m.optimal_headcount)}</strong></td>
-        <td class="num">${fmtNum(idealPcid(m))}</td>
-        <td class="num">${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"}</td>
         <td class="num">${fmtNum(m.current_reps)}</td>
-        <td class="num">${fmtNum(m.current_avg_book)}</td>
         <td class="num">${gapStr}</td>
         <td><span class="rec rec-${m.headcount_recommendation.replace(/ /g, "\\ ")}">${m.headcount_recommendation}</span></td>
-        <td class="num">${m.reps_too_big != null ? fmtNum(m.reps_too_big) : "—"}</td>
-        <td class="num">${m.reps_too_little != null ? fmtNum(m.reps_too_little) : "—"}</td>
-        <td class="num">${m.splittable_pool != null ? fmtNum(m.splittable_pool) : "—"}</td>
-        <td class="num">${m.new_heads_from_split != null ? fmtNum(m.new_heads_from_split) : "—"}</td>
-        <td class="action-cell">${m.book_action || "—"}</td>
-        <td class="num">${fy26Cell}</td>
-        <td class="num">${fmtNum(m.sbs_whitespace_country ?? m.sbs_whitespace)}</td>
-        <td class="action-cell">${m.recommended_action || "—"}</td>
+        <td class="num">${fmtNum(m.current_avg_book)} / ${fmtNum(idealPcid(m))}</td>
+        <td class="action-cell">${truncateText(m.recommendation_primary || m.recommended_action || "—", 80)}</td>
       </tr>`;
     })
     .join("");

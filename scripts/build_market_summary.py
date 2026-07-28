@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Plain-English market summaries for headcount dashboard.
 
-Flow: current book health → actionable recommendations.
+One clear HC reason per market, prominent SBS routing, minimal duplicate bullets.
 Used by json-from-mcp-results.py (embed in headcount.json) and
 export-dashboard-data.py (Market summaries sheet).
 
@@ -18,6 +18,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_IN = ROOT / "docs" / "data" / "headcount.json"
+DEFAULT_REP_BOOK = ROOT / "docs" / "data" / "rep_book.json"
+
+# Healthy book thresholds (aligned with sql/16–17 rep_book_flags)
+PCID_TOLERANCE_PCT = 10  # document ±10% band around ideal PCID
+COVERAGE_FLOOR_RATIO = 0.90  # too_big uses segment_avg_coverage * 0.90
 
 
 def _num(v, default=0):
@@ -78,32 +83,6 @@ def _book_vs_ideal(m: dict) -> tuple[str, str]:
     return f"avg book {int(round(avg))} vs ideal {int(ideal)}", "on target"
 
 
-def _hc_context(m: dict, status: str) -> str:
-    """One sentence on headcount position for recommendations."""
-    current = _num(m.get("current_reps"))
-    optimal = int(round(_num(m.get("optimal_headcount") or m.get("optimal_headcount_assigned"))))
-    gap = int(round(_num(m.get("headcount_gap"))))
-    gap_abs = abs(gap)
-    rec = m.get("headcount_recommendation", "—")
-
-    if status == "Over HC":
-        return (
-            f"Market is over headcount by {gap_abs} reps ({current:,} current vs "
-            f"{optimal:,} ideal) — {rec}."
-        )
-    if status == "Under HC":
-        return (
-            f"Market is under headcount by {gap_abs} reps ({current:,} current vs "
-            f"{optimal:,} ideal) — {rec}."
-        )
-    if gap == 0:
-        return f"Headcount at target ({current:,} reps vs {optimal:,} ideal) — {rec}."
-    return (
-        f"Near target headcount ({current:,} current vs {optimal:,} ideal, "
-        f"gap {gap:+,}) — {rec}."
-    )
-
-
 def _fmt_pct(p: float | None) -> str:
     if p is None:
         return "—"
@@ -127,8 +106,166 @@ def _flag_pct(count, total) -> str:
     return f" ({round(100 * count / total):.0f}%)"
 
 
+def score_segment_for_sbs(m: dict) -> float:
+    """Heuristic: which segment in a country should receive SBS accounts."""
+    score = 0.0
+    status = summary_status(m)
+    _, book_label = _book_vs_ideal(m)
+
+    if status == "Under HC":
+        score += min(abs(_num(m.get("headcount_gap"))), 100) * 0.5
+    elif status == "Over HC":
+        score -= 40
+
+    if book_label == "underweight":
+        score += 50
+    elif book_label == "overweight":
+        score -= 35
+
+    grow = _num(m.get("total_grow_slots"))
+    score += min(grow, 5000) * 0.02
+    score += _num(m.get("reps_too_little")) * 0.5
+
+    avg_pqr = m.get("avg_pqr_per_rep")
+    seg_pqr = m.get("segment_avg_pqr")
+    if avg_pqr and seg_pqr and avg_pqr >= seg_pqr * 0.95:
+        score += 15
+
+    jv = m.get("opp_plateau_rev_per_job")
+    if jv:
+        score += min(float(jv), 50) * 0.3
+
+    if m.get("coverage_status") == "Declining":
+        score -= 25
+
+    return score
+
+
+def build_hc_reason(m: dict) -> dict:
+    """One dominant plain-English reason why HC is too high or too low."""
+    status = summary_status(m)
+    gap = int(round(_num(m.get("headcount_gap"))))
+    gap_abs = abs(gap)
+    current = int(round(_num(m.get("current_reps"))))
+    optimal = int(round(_num(m.get("optimal_headcount") or m.get("optimal_headcount_assigned"))))
+    _, book_label = _book_vs_ideal(m)
+    cov_status = m.get("coverage_status") or "Unknown"
+    median_cov = m.get("median_impact_calls_per_account")
+    rev_pct = m.get("rev_vs_pqr_pct")
+    growth = m.get("perfect_book_growth_pct")
+    new_heads = m.get("new_heads_from_split")
+    ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
+    avg_book = m.get("current_avg_book")
+
+    if status == "At target":
+        return {
+            "hc_reason_primary": (
+                f"HC at target — {current:,} reps vs {optimal:,} ideal "
+                f"(assigned accounts ÷ ideal PCID of {int(ideal) if ideal else '—'})."
+            ),
+            "hc_reason_driver": "at_target",
+        }
+
+    direction = "LOW" if status == "Under HC" else "HIGH"
+    drivers: list[tuple[str, int, str]] = []
+
+    if cov_status == "Declining":
+        cov_detail = (
+            f"impact coverage is declining"
+            + (f" ({median_cov:g} median calls/account)" if median_cov is not None else "")
+            + " while books exceed the coverage inflection point"
+        )
+        if status == "Under HC":
+            cov_detail += " — need more reps or smaller books to restore touch rate"
+        drivers.append(("impact_coverage", 100, cov_detail))
+
+    if status == "Over HC" and cov_status == "OK":
+        plateau = m.get("opp_pipeline_status") == "Plateaued"
+        weak_growth = growth is not None and growth <= 0
+        if plateau or weak_growth:
+            drivers.append(
+                (
+                    "impact_coverage_overstaff",
+                    88,
+                    "impact coverage is adequate but revenue growth has plateaued — over-staffed vs book capacity",
+                )
+            )
+
+    if book_label == "overweight":
+        book_detail = (
+            f"books are overweight ({int(round(avg_book))} vs ideal {int(ideal)} PCIDs/rep)"
+        )
+        if cov_status == "OK":
+            book_detail += " with OK impact coverage — redistribute/split before net-new hiring"
+        elif cov_status == "Declining":
+            book_detail += " and impact coverage is thin — books too big for touch rate"
+        elif status == "Under HC":
+            book_detail += " — the HC gap overstates need; split overweight books first"
+        drivers.append(("books_overweight", 95, book_detail))
+
+    if book_label == "underweight":
+        if status == "Over HC":
+            drivers.append(
+                (
+                    "underweight_overstaff",
+                    92,
+                    f"books are underweight ({int(round(avg_book))} vs ideal {int(ideal)} PCIDs/rep) — "
+                    "grow existing books before cutting reps",
+                )
+            )
+        elif status == "Under HC":
+            drivers.append(
+                (
+                    "underweight_understaff",
+                    85,
+                    f"books are underweight ({int(round(avg_book))} vs ideal {int(ideal)} PCIDs/rep) — "
+                    "hire to reach ideal book size per rep",
+                )
+            )
+
+    if new_heads and int(new_heads) >= 1:
+        drivers.append(
+            (
+                "split_first",
+                90,
+                f"split-hire {int(new_heads)} heads from pooled overweight PCIDs before net-new hiring",
+            )
+        )
+
+    if rev_pct is not None and rev_pct < -5:
+        drivers.append(
+            (
+                "pqr_decline",
+                75,
+                f"revenue is {abs(rev_pct):.0f}% below prior-quarter PQR — books may be too heavy or under-covered",
+            )
+        )
+    elif rev_pct is not None and rev_pct > 15 and status == "Over HC":
+        drivers.append(
+            (
+                "pqr_growth_overstaff",
+                65,
+                f"revenue is {rev_pct:.0f}% above PQR but model shows over-staffing vs ideal PCID",
+            )
+        )
+
+    drivers.append(
+        (
+            "gap",
+            40,
+            f"assigned accounts ÷ ideal PCID implies {gap_abs} rep gap ({current:,} current vs {optimal:,} ideal)",
+        )
+    )
+
+    drivers.sort(key=lambda x: -x[1])
+    driver_key, _, driver_detail = drivers[0]
+    primary = f"HC too {direction} by {gap_abs} reps — {driver_detail}."
+
+    return {"hc_reason_primary": primary, "hc_reason_driver": driver_key}
+
+
 def build_book_health(m: dict) -> dict:
-    """Section 1 — current book health snapshot vs segment benchmarks."""
+    """Compact book health snapshot."""
     ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
     avg_book = m.get("current_avg_book")
     seg_pcid = m.get("segment_avg_pcid")
@@ -138,301 +275,316 @@ def build_book_health(m: dict) -> dict:
     too_big = _num(m.get("reps_too_big"))
     too_little = _num(m.get("reps_too_little"))
     built = m.get("avg_pct_book_built")
-    fy26_score = m.get("avg_fy26_book_score")
     book_label = book_health_status(m)
-    book_phrase, _book_label_raw = _book_vs_ideal(m)
+    cov_status = m.get("coverage_status")
+    median_cov = m.get("median_impact_calls_per_account")
 
     parts: list[str] = []
-    if reps:
-        parts.append(f"{reps:,} reps")
     if avg_book is not None and ideal is not None:
-        seg_part = f", segment avg {int(round(seg_pcid))}" if seg_pcid is not None else ""
-        parts.append(
-            f"carrying avg {int(round(avg_book))} PCIDs/rep vs ideal {int(ideal)}{seg_part}"
-        )
-    if avg_pqr is not None:
-        seg_pqr_part = f" (segment {_fmt_money(seg_pqr)})" if seg_pqr is not None else ""
-        parts.append(f"avg PQR {_fmt_money(avg_pqr)}{seg_pqr_part}")
+        seg_part = f" (segment avg {int(round(seg_pcid))})" if seg_pcid is not None else ""
+        parts.append(f"Avg {int(round(avg_book))} PCIDs/rep vs ideal {int(ideal)}{seg_part}")
+    if avg_pqr is not None and seg_pqr is not None:
+        parts.append(f"PQR {_fmt_money(avg_pqr)} vs segment {_fmt_money(seg_pqr)}")
     if too_big or too_little:
         parts.append(
-            f"{too_big:,} too big{_flag_pct(too_big, reps)}, "
-            f"{too_little:,} too little{_flag_pct(too_little, reps)}"
+            f"{too_big} too big{_flag_pct(too_big, reps)}, "
+            f"{too_little} too little{_flag_pct(too_little, reps)}"
         )
+    if median_cov is not None:
+        parts.append(f"Impact coverage {median_cov:g} calls/account ({cov_status.lower() if cov_status else '—'})")
     if built is not None:
         parts.append(f"FY26 book build {built:.1f}%")
-    elif fy26_score is not None:
-        parts.append(f"FY26 book score {fy26_score:.1f}")
 
-    primary = ". ".join(parts) + "."
-    if book_label != "Unknown":
-        if book_label == "Overweight":
-            primary += " Books are overweight vs ideal PCID."
-        elif book_label == "Underweight":
-            primary += " Books are underweight vs ideal PCID."
-        else:
-            primary += " Books are near ideal PCID."
-
-    bullets: list[str] = []
-
-    if ideal is not None:
-        bucket = m.get("perfect_book_bucket")
-        band = (
-            bucket.split(": ", 1)[1]
-            if bucket and ": " in bucket
-            else f"up to {int(m.get('perfect_book_ceiling') or ideal)}"
-        )
-        growth = m.get("perfect_book_growth_pct")
-        growth_txt = _fmt_pct(growth) if growth is not None else "positive"
-        bullets.append(
-            f"Ideal PCID {int(round(ideal))} ({band} band, {growth_txt} median growth) — "
-            "growth-optimal target for headcount math."
-        )
-
-    if seg_pcid is not None:
-        bullets.append(
-            f"Segment avg PCID: {int(round(seg_pcid))} accounts/rep — "
-            "typical book size today (ideal PCID is the growth-optimal target)."
-        )
-    if seg_pqr is not None:
-        bullets.append(
-            f"Segment avg PQR: {_fmt_money(seg_pqr)} — benchmark for book revenue weight."
-        )
-
-    rev_pct = m.get("rev_vs_pqr_pct")
-    if rev_pct is not None:
-        direction = "above" if rev_pct > 0 else "below"
-        bullets.append(
-            f"Market revenue is {abs(rev_pct):.1f}% {direction} prior-quarter PQR."
-        )
-
-    if book_phrase:
-        bullets.append(f"Book size: {book_phrase}.")
-
-    opp = m.get("opp_pipeline_status")
-    cov = m.get("coverage_status")
-    median_cov = m.get("median_impact_calls_per_account")
-    if median_cov is not None:
-        bullets.append(
-            f"Impact coverage: {median_cov:g} median impact calls/account (90d)"
-            + (f", status {cov.lower()}." if cov else ".")
-        )
-    if opp or cov:
-        parts_sig = []
-        if opp:
-            parts_sig.append(f"opp pipeline {opp.lower()}")
-        if cov:
-            parts_sig.append(f"coverage {cov.lower()}")
-        bullets.append(f"Signals: {', '.join(parts_sig)}.")
+    primary = ". ".join(parts) + "." if parts else ""
+    if book_label == "Overweight":
+        primary += " Books overweight vs ideal."
+    elif book_label == "Underweight":
+        primary += " Books underweight vs ideal."
 
     return {
         "book_health_status": book_label,
         "health_primary": primary,
-        "health_bullets": bullets,
+        "health_bullets": [],
     }
 
 
-def build_impact_coverage(m: dict) -> dict:
-    """Plain-English impact coverage from sql/16 rep_activity_sales fields."""
-    median = m.get("median_impact_calls_per_account")
-    status = m.get("coverage_status") or "Unknown"
-    inflect_book = m.get("coverage_inflection_book_max")
-    at_inflect = m.get("coverage_at_inflection")
-    avg_book = m.get("current_avg_book")
-
-    parts: list[str] = []
-    if median is not None:
-        call_word = "call" if median == 1 else "calls"
-        parts.append(
-            f"Market median {median:g} impact {call_word} per assigned account over 90d "
-            f"(sum of impact_calls from rep_activity_sales ÷ PCIDs per rep)."
-        )
-    if inflect_book is not None and at_inflect is not None:
-        parts.append(
-            f"Coverage peaks at {at_inflect:g} calls/account when books are "
-            f"~{int(inflect_book)} accounts/rep."
-        )
-    if status == "Declining" and avg_book and inflect_book:
-        parts.append(
-            f"Status Declining: avg book ({int(round(avg_book))}) exceeds inflection size "
-            f"and median coverage is below 90% of peak."
-        )
-    elif status == "OK":
-        parts.append("Coverage status OK for current book size.")
-
-    primary = " ".join(parts) if parts else "Impact coverage data not available."
-
-    bullets: list[str] = [
-        "Impact coverage = impact calls per account over trailing 90d (sql/16, rep_activity_sales).",
-        "Too-big flag uses impact calls/account < 90% of segment average (with high PCID/PQR).",
-    ]
-    if inflect_book is not None:
-        bullets.append(
-            f"Inflection book max {int(inflect_book)} — books larger than this tend to see "
-            "fewer touches per account."
-        )
-
-    return {
-        "impact_coverage_primary": primary,
-        "impact_coverage_bullets": bullets,
-    }
-
-
-def build_sbs_opportunity(m: dict) -> dict:
-    """SBS whitespace / assignable accounts reps could grow into."""
+def build_sbs_opportunity(m: dict, country_markets: list[dict] | None = None) -> dict:
+    """SBS whitespace + segment routing recommendation."""
     sbs = m.get("sbs_whitespace_country") or m.get("sbs_whitespace") or 0
     books = m.get("books_buildable_from_sbs") or 0
     revenue = m.get("sbs_revenue_90d")
     grow = m.get("total_grow_slots") or 0
     ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
     country = m.get("country", "")
+    has_opp = bool(sbs and int(sbs) > 0)
 
-    if not sbs:
+    if not has_opp:
         return {
+            "sbs_has_opportunity": False,
             "sbs_opportunity_primary": "No SBS whitespace in this country.",
             "sbs_opportunity_bullets": [],
+            "sbs_routing_primary": "",
+            "sbs_routing_bullets": [],
         }
 
     primary = (
-        f"{_fmt_int(sbs)} unassigned accounts in {country} SBS whitespace "
-        f"(team None on JAM — assignable to reps)."
+        f"SBS opportunity: {_fmt_int(sbs)} unassigned accounts"
+        + (f" ({_fmt_money(revenue)} 90d revenue)" if revenue else "")
+        + f" — ~{_fmt_int(books)} books at ideal PCID ({int(ideal) if ideal else '—'})."
     )
-    if books and ideal:
-        primary += (
-            f" At ideal book size ({int(ideal)} PCIDs/rep), that supports "
-            f"~{_fmt_int(books)} new rep books."
-        )
-    else:
-        primary += "."
 
-    bullets: list[str] = []
-    if revenue:
-        bullets.append(f"SBS pool 90d revenue: {_fmt_money(revenue)}.")
-    if grow:
-        bullets.append(
-            f"{_fmt_int(grow)} grow slots on underweight reps — assign SBS accounts "
-            "to existing books first."
-        )
-    bullets.append(
-        "SBS is country-level (unassigned accounts have no sales segment); "
-        "segment rows share the same country pool."
+    routing = ""
+    routing_bullets: list[str] = []
+    if country_markets:
+        peers = [x for x in country_markets if x.get("country") == country]
+        ranked = sorted(peers, key=score_segment_for_sbs, reverse=True)
+        top = [x for x in ranked if score_segment_for_sbs(x) > 0][:3]
+        if top:
+            parts: list[str] = []
+            for i, seg in enumerate(top):
+                seg_name = seg.get("segment")
+                seg_ideal = seg.get("ideal_pcid") or seg.get("perfect_book_target")
+                grow_slots = seg.get("total_grow_slots") or 0
+                seg_pqr = seg.get("segment_avg_pqr")
+                jv = seg.get("opp_plateau_rev_per_job")
+                _, bl = _book_vs_ideal(seg)
+                why_bits: list[str] = []
+                if bl == "underweight":
+                    why_bits.append(
+                        f"underweight books ({int(round(seg['current_avg_book']))} vs ideal {int(seg_ideal)})"
+                    )
+                if grow_slots:
+                    why_bits.append(f"{_fmt_int(grow_slots)} grow slots")
+                hc = summary_status(seg)
+                if hc == "Under HC":
+                    why_bits.append(
+                        f"under HC by {abs(int(round(_num(seg.get('headcount_gap')))))}"
+                    )
+                if seg_pqr:
+                    why_bits.append(f"segment PQR {_fmt_money(seg_pqr)}")
+                if jv:
+                    why_bits.append(f"${jv:.0f}/job at opp plateau")
+                rank = ("Route 1st", "Route 2nd", "Route 3rd")[i]
+                parts.append(f"{rank}: {seg_name} — {', '.join(why_bits) if why_bits else 'best book capacity'}")
+            routing = "Assign SBS accounts to: " + "; ".join(parts) + "."
+        else:
+            routing = (
+                f"No segment in {country} has clear grow capacity — "
+                "fix overweight books before assigning SBS."
+            )
+
+    routing_bullets.append(
+        "SBS is country-level (unassigned accounts have no segment); routing uses PQR, "
+        "ideal PCID, grow slots, HC gap, and rev/job at opp plateau."
     )
+    if grow:
+        routing_bullets.append(
+            f"This segment has {_fmt_int(grow)} grow slots — fill underweight reps here first."
+        )
 
     return {
+        "sbs_has_opportunity": True,
         "sbs_opportunity_primary": primary,
-        "sbs_opportunity_bullets": bullets,
+        "sbs_opportunity_bullets": routing_bullets[:2],
+        "sbs_routing_primary": routing,
+        "sbs_routing_bullets": routing_bullets,
     }
 
 
 def build_recommendations(m: dict) -> dict:
-    """Section 2 — actionable next steps from flags and capacity model."""
+    """Top 1–2 actionable next steps only."""
     status = summary_status(m)
     ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
     too_big = _num(m.get("reps_too_big"))
-    too_little = _num(m.get("reps_too_little"))
     pool = m.get("splittable_pool")
-    grow = m.get("total_grow_slots")
     new_heads = m.get("new_heads_from_split")
     book_action = m.get("book_action")
     rec_action = m.get("recommended_action")
     sbs = m.get("sbs_whitespace_country") or m.get("sbs_whitespace")
     books_sbs = m.get("books_buildable_from_sbs")
     built = m.get("avg_pct_book_built")
-    _, book_label = _book_vs_ideal(m)
 
     bullets: list[str] = []
 
-    if sbs and int(sbs) > 0 and books_sbs:
-        bullets.append(
-            f"SBS opportunity: {_fmt_int(sbs)} accounts in {m.get('country', '')} whitespace "
-            f"could be assigned (~{_fmt_int(books_sbs)} books at ideal size)."
-        )
-
-    if too_big and ideal is not None and pool:
-        bullets.append(
-            f"{too_big:,} reps should peel accounts toward ideal PCID of {int(ideal)} — "
-            f"{_fmt_int(pool)} PCIDs in splittable pool."
-        )
-    elif too_big and ideal is not None:
-        bullets.append(
-            f"{too_big:,} reps flagged too big — peel toward ideal PCID of {int(ideal)}."
-        )
-
-    if too_little and grow:
-        bullets.append(
-            f"{too_little:,} reps have room to grow ({_fmt_int(grow)} total grow slots "
-            f"toward ideal PCID of {int(ideal) if ideal else '—'})."
-        )
-    elif too_little:
-        bullets.append(f"{too_little:,} reps flagged too little — grow books toward ideal PCID.")
-
     if m.get("split_hire_recommended") and new_heads:
         heads_n = int(new_heads)
-        head_word = "head" if heads_n == 1 else "heads"
         bullets.append(
-            f"Split-hire {heads_n:,} new {head_word} from {_fmt_int(pool)} pooled PCIDs"
-            + (f" ({book_action})." if book_action else ".")
+            f"Split-hire {heads_n:,} new {'head' if heads_n == 1 else 'heads'} "
+            f"from {_fmt_int(pool)} pooled PCIDs."
+        )
+    elif too_big and ideal and pool:
+        bullets.append(
+            f"Peel {too_big:,} overweight reps toward ideal PCID {int(ideal)} "
+            f"({_fmt_int(pool)} PCIDs in pool)."
         )
     elif book_action and book_action not in ("Books near ideal", "—"):
-        bullets.append(f"Book action: {book_action}.")
+        bullets.append(book_action)
 
-    bullets.append(_hc_context(m, status))
-
-    if status == "Under HC" and book_label == "overweight":
+    if sbs and int(sbs) > 0 and books_sbs and status == "Under HC":
         bullets.append(
-            "Headcount is short but books are already above ideal — "
-            "prioritize split/redistribution before net-new hiring."
+            f"Build from SBS: ~{_fmt_int(books_sbs)} books available at ideal size."
         )
-    elif status == "Over HC" and book_label == "underweight":
-        bullets.append(
-            "Over-staffed with underweight books — grow existing books before adding reps."
-        )
-
-    if sbs and int(sbs) > 0:
-        sbs_line = f"SBS whitespace: {_fmt_int(sbs)} unassigned accounts"
-        if books_sbs:
-            sbs_line += f" (~{_fmt_int(books_sbs)} buildable books at ideal size)."
-        else:
-            sbs_line += "."
-        if status == "Under HC" or too_little:
-            bullets.append(f"Hire/build from SBS — {sbs_line}")
-        else:
-            bullets.append(sbs_line)
 
     if built is not None and built < 50:
-        bullets.append(
-            f"Improve FY26 book build ({built:.1f}% of policy flags positive)."
-        )
+        bullets.append(f"Improve FY26 book build ({built:.1f}% positive flags).")
 
-    if rec_action and rec_action not in ("On track", "—"):
-        bullets.append(f"Recommended next step: {rec_action}.")
-
-    # Top-line recommendation: book action first, then HC action
     primary_parts: list[str] = []
-    if book_action and book_action not in ("Books near ideal", "—"):
-        primary_parts.append(book_action)
     if rec_action and rec_action not in ("On track", "—"):
         primary_parts.append(rec_action)
+    elif book_action and book_action not in ("Books near ideal", "—"):
+        primary_parts.append(book_action)
     elif m.get("headcount_recommendation"):
-        primary_parts.append(f"HC: {m['headcount_recommendation']}")
-    primary = ". ".join(primary_parts) + "." if primary_parts else _hc_context(m, status)
+        primary_parts.append(m["headcount_recommendation"])
+
+    primary = ". ".join(primary_parts) + "." if primary_parts else "On track."
 
     return {
         "recommendation_primary": primary,
-        "recommendation_bullets": bullets,
+        "recommendation_bullets": bullets[:2],
+    }
+
+
+def _market_key(m: dict) -> str:
+    return f"{m.get('country', '')}-{m.get('segment', '')}"
+
+
+def _pcid_band(ideal: float | int) -> tuple[int, int]:
+    """±10% band around ideal PCID for documentation."""
+    ideal_i = int(round(ideal))
+    low = int(round(ideal_i * (1 - PCID_TOLERANCE_PCT / 100)))
+    high = int(round(ideal_i * (1 + PCID_TOLERANCE_PCT / 100)))
+    return low, high
+
+
+def is_rep_healthy(rep: dict) -> bool:
+    """Healthy book = not flagged too_big or too_little (sql/17 logic)."""
+    return not rep.get("too_big") and not rep.get("too_little")
+
+
+def load_rep_book_by_market(rep_book_path: Path | None = None) -> dict[str, list[dict]]:
+    """Group rep_book.json reps by country-segment key."""
+    path = rep_book_path or DEFAULT_REP_BOOK
+    if not path.is_file():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    by_market: dict[str, list[dict]] = {}
+    for rep in payload.get("reps", []):
+        key = rep.get("market") or f"{rep.get('country', '')}-{rep.get('segment', '')}"
+        by_market.setdefault(key, []).append(rep)
+    return by_market
+
+
+def compute_healthy_rep_stats(reps: list[dict]) -> dict:
+    total = len(reps)
+    healthy = sum(1 for r in reps if is_rep_healthy(r))
+    pct = round(100.0 * healthy / total, 1) if total else None
+    return {
+        "reps_scored": total,
+        "reps_healthy": healthy,
+        "pct_reps_healthy": pct,
+    }
+
+
+def build_healthy_book_definition(m: dict, market_reps: list[dict] | None = None) -> dict:
+    """Plain-English healthy book criteria per segment + rep-level stats when available."""
+    ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
+    seg_pqr = m.get("segment_avg_pqr")
+    seg_pcid = m.get("segment_avg_pcid")
+    median_cov = m.get("median_impact_calls_per_account")
+    bucket = m.get("perfect_book_bucket")
+    band_label = bucket.split(": ", 1)[1] if bucket and ": " in bucket else None
+
+    thresholds: dict = {}
+    criteria: list[str] = []
+
+    if ideal is not None:
+        ideal_i = int(round(ideal))
+        low, high = _pcid_band(ideal_i)
+        thresholds["ideal_pcid"] = ideal_i
+        thresholds["pcid_band_low"] = low
+        thresholds["pcid_band_high"] = high
+        if band_label:
+            thresholds["perfect_book_band"] = band_label
+        criteria.append(
+            f"PCID within ±{PCID_TOLERANCE_PCT}% of ideal ({low}–{high} at ideal {ideal_i}"
+            + (f", {band_label} growth band)" if band_label else ")")
+            + f" — and not below ideal ({ideal_i}), which flags too_little"
+        )
+
+    if seg_pqr is not None:
+        thresholds["segment_avg_pqr"] = seg_pqr
+        criteria.append(
+            f"PQR (prior-quarter revenue) at or above segment benchmark ({_fmt_money(seg_pqr)})"
+        )
+
+    if median_cov is not None:
+        thresholds["coverage_benchmark"] = median_cov
+        criteria.append(
+            f"Impact coverage at or above {COVERAGE_FLOOR_RATIO:.0%} of segment average "
+            f"(≥ {median_cov * COVERAGE_FLOOR_RATIO:.1f} calls/account when segment median is {median_cov:g})"
+        )
+    else:
+        criteria.append(
+            f"Impact coverage at or above {COVERAGE_FLOOR_RATIO:.0%} of segment average "
+            "(impact calls per assigned account, 90d)"
+        )
+
+    criteria.append(
+        "Current revenue at or above prior-quarter PQR (no revenue-decline signal)"
+    )
+    criteria.append("Not flagged too_big or too_little (sql/16–17 book health flags)")
+
+    if seg_pcid is not None and ideal is not None:
+        criteria.append(
+            f"Too big = PCID ({int(round(seg_pcid))} segment avg) or PQR above segment avg "
+            "plus weak coverage or revenue below PQR; too little = below ideal PCID"
+        )
+
+    built = m.get("avg_pct_book_built")
+    if built is not None:
+        criteria.append(
+            f"FY26 book build context: segment avg {built:.1f}% flags positive "
+            "(informational — not a healthy/unhealthy gate)"
+        )
+
+    stats = compute_healthy_rep_stats(market_reps) if market_reps else {}
+    reps_total = stats.get("reps_scored") or _num(m.get("current_reps"))
+    pct = stats.get("pct_reps_healthy")
+    healthy_n = stats.get("reps_healthy")
+
+    definition_parts = []
+    if ideal is not None:
+        definition_parts.append(
+            f"A healthy book in {m.get('country', '')}-{m.get('segment', '')} means a rep's book "
+            f"is near the growth-optimal size (ideal PCID {int(round(ideal))}), "
+            f"carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow."
+        )
+    else:
+        definition_parts.append(
+            f"A healthy book in {m.get('country', '')}-{m.get('segment', '')} is not flagged "
+            "too_big or too_little per sql/16–17."
+        )
+
+    if pct is not None and healthy_n is not None and reps_total:
+        definition_parts.append(
+            f"{healthy_n:,} of {reps_total:,} reps ({pct:.1f}%) meet this definition in the current snapshot."
+        )
+
+    return {
+        "healthy_book_thresholds": thresholds,
+        "healthy_book_criteria": criteria,
+        "healthy_book_definition": " ".join(definition_parts),
+        "healthy_book_primary": definition_parts[0] if definition_parts else "",
+        **stats,
     }
 
 
 def build_optimal_book_rationale(m: dict) -> dict:
-    """Plain-English optimal book rationale from sql/16 perfect_book + segment benchmarks."""
+    """Plain-English optimal book rationale (collapsed in UI — detail only)."""
     ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
     bucket = m.get("perfect_book_bucket")
     ceiling = m.get("perfect_book_ceiling")
     growth = m.get("perfect_book_growth_pct")
-    seg_pqr = m.get("segment_avg_pqr")
-    seg_pcid = m.get("segment_avg_pcid")
-    avg_book = m.get("current_avg_book")
-    opp_max = m.get("opp_plateau_book_max")
-    cov_max = m.get("coverage_inflection_book_max")
 
     if ideal is None:
         return {
@@ -446,104 +598,87 @@ def build_optimal_book_rationale(m: dict) -> dict:
     growth_txt = _fmt_pct(growth) if growth is not None else "positive"
 
     primary = (
-        f"Optimal book for this segment is {ideal_i} accounts/rep ({band} band). "
-        f"We pick the largest book-size bucket where median revenue growth stays within "
-        f"85% of the segment peak ({growth_txt} in that band) and a bigger book no longer "
-        f"adds growth — that plateau is the data-driven target for headcount math."
+        f"Ideal PCID {ideal_i} ({band} band) — largest book-size bucket where median revenue "
+        f"growth stays within 85% of segment peak ({growth_txt} in that band)."
     )
 
-    bullets: list[str] = []
-
-    if seg_pqr is not None:
-        bullets.append(
-            f"Segment avg PQR (prior quarter revenue per rep): {_fmt_money(seg_pqr)} — "
-            "the benchmark for whether a rep's book is revenue-heavy vs peers."
-        )
-    if seg_pcid is not None:
-        bullets.append(
-            f"Segment avg PCID: {int(round(seg_pcid))} accounts/rep — "
-            "typical book size today; ideal PCID is the growth-optimal target, not the average."
-        )
-
-    if avg_book is not None and ideal:
-        ratio = avg_book / ideal
-        if ratio > 1.10:
-            bullets.append(
-                f"Current avg book ({int(round(avg_book))}) is above ideal — "
-                "more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID."
-            )
-        elif ratio < 0.90:
-            bullets.append(
-                f"Current avg book ({int(round(avg_book))}) is below ideal — "
-                "room to grow books toward the growth-optimal size before adding headcount."
-            )
-
-    if opp_max is not None:
-        opp_status = m.get("opp_pipeline_status", "").lower()
-        bullets.append(
-            f"Opp pipeline {'plateaus' if opp_status == 'plateaued' else 'still growing'} "
-            f"around {int(opp_max)} accounts/rep — revenue per job peaks near this book size."
-        )
-
-    if cov_max is not None:
-        bullets.append(
-            f"Coverage (impact calls/account) peaks near {int(cov_max)} accounts/rep — "
-            "books larger than this tend to see fewer touches per account."
-        )
-
-    bullets.append(
-        "Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; "
-        "too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
-    )
-
-    rationale = primary + " " + " ".join(bullets)
     return {
         "optimal_book_primary": primary,
-        "optimal_book_bullets": bullets,
-        "optimal_book_rationale": rationale,
+        "optimal_book_bullets": [],
+        "optimal_book_rationale": primary,
     }
 
 
-def build_market_summary(m: dict) -> dict:
-    """Return health → recommendations narrative + optimal book rationale."""
+def build_market_summary(
+    m: dict,
+    country_markets: list[dict] | None = None,
+    market_reps: list[dict] | None = None,
+) -> dict:
+    """Return compact health → HC reason → recommendations → SBS routing + healthy book."""
     status = summary_status(m)
     health = build_book_health(m)
-    impact = build_impact_coverage(m)
-    sbs_opp = build_sbs_opportunity(m)
+    hc = build_hc_reason(m)
+    sbs_opp = build_sbs_opportunity(m, country_markets)
     recs = build_recommendations(m)
     optimal = build_optimal_book_rationale(m)
+    healthy = build_healthy_book_definition(m, market_reps)
 
-    narrative = health["health_primary"]
-    if impact["impact_coverage_primary"]:
-        narrative += " " + impact["impact_coverage_primary"]
-    if recs["recommendation_primary"]:
-        narrative += " " + recs["recommendation_primary"]
-    if recs["recommendation_bullets"]:
-        narrative += " " + " ".join(recs["recommendation_bullets"])
+    health_bullets: list[str] = []
+    if healthy.get("pct_reps_healthy") is not None:
+        health_bullets.append(
+            f"Healthy books: {healthy['reps_healthy']:,} of {healthy['reps_scored']:,} reps "
+            f"({healthy['pct_reps_healthy']:.1f}%) not flagged too big or too little."
+        )
+
+    narrative = " ".join(
+        x
+        for x in [
+            health["health_primary"],
+            healthy.get("healthy_book_definition"),
+            hc["hc_reason_primary"],
+            recs["recommendation_primary"],
+            sbs_opp.get("sbs_routing_primary") or sbs_opp.get("sbs_opportunity_primary"),
+        ]
+        if x
+    )
 
     return {
         "summary_status": status,
-        "summary_primary": health["health_primary"],
+        "summary_primary": hc["hc_reason_primary"],
         "summary_bullets": recs["recommendation_bullets"],
         "summary_narrative": narrative,
         **health,
-        **impact,
+        "health_bullets": health_bullets,
+        **hc,
         **sbs_opp,
         **recs,
         **optimal,
+        **healthy,
     }
 
 
-def enrich_market(m: dict) -> dict:
+def enrich_market(
+    m: dict,
+    country_markets: list[dict] | None = None,
+    rep_book_by_market: dict[str, list[dict]] | None = None,
+) -> dict:
     """Add summary fields to a market dict (in place + return)."""
-    summary = build_market_summary(m)
+    reps = None
+    if rep_book_by_market is not None:
+        reps = rep_book_by_market.get(_market_key(m))
+    summary = build_market_summary(m, country_markets, reps)
     m.update(summary)
     return m
 
 
-def enrich_payload(payload: dict) -> dict:
-    for m in payload.get("markets", []):
-        enrich_market(m)
+def enrich_payload(payload: dict, rep_book_path: Path | None = None) -> dict:
+    markets = payload.get("markets", [])
+    by_country: dict[str, list[dict]] = {}
+    for m in markets:
+        by_country.setdefault(m.get("country", ""), []).append(m)
+    rep_book_by_market = load_rep_book_by_market(rep_book_path)
+    for m in markets:
+        enrich_market(m, by_country.get(m.get("country", ""), []), rep_book_by_market)
     return payload
 
 
@@ -554,22 +689,24 @@ def main() -> None:
         sys.exit(1)
 
     payload = json.loads(in_path.read_text(encoding="utf-8"))
-    enrich_payload(payload)
+    enrich_payload(payload, DEFAULT_REP_BOOK)
 
-    us_m = next(
-        (m for m in payload["markets"] if m.get("country") == "US" and m.get("segment") == "M"),
-        None,
-    )
-    if us_m:
-        print(f"US-M · {us_m['summary_status']} · books {us_m['book_health_status']}")
-        print("\n=== Current book health ===")
-        print(us_m["health_primary"])
-        for b in us_m.get("health_bullets", []):
-            print(f"  • {b}")
-        print("\n=== Recommendations ===")
-        print(us_m["recommendation_primary"])
-        for b in us_m.get("recommendation_bullets", []):
-            print(f"  • {b}")
+    for country, segment in [("US", "M"), ("US", "UMM")]:
+        market = next(
+            (m for m in payload["markets"] if m.get("country") == country and m.get("segment") == segment),
+            None,
+        )
+        if not market:
+            continue
+        print(f"\n=== {country}-{segment} healthy book ===")
+        print(market.get("healthy_book_definition", ""))
+        for c in market.get("healthy_book_criteria", []):
+            print(f"  • {c}")
+        pct = market.get("pct_reps_healthy")
+        if pct is not None:
+            print(
+                f"  → {market.get('reps_healthy')} / {market.get('reps_scored')} reps healthy ({pct}%)"
+            )
 
     in_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(f"\nWrote summaries for {len(payload.get('markets', []))} markets to {in_path}")

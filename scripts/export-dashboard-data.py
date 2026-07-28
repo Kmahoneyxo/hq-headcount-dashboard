@@ -53,6 +53,12 @@ MARKET_FIELD_LABELS: dict[str, str] = {
     "headcount_recommendation": "HC recommendation",
     "reps_too_big": "Reps too big",
     "reps_too_little": "Reps too little",
+    "reps_healthy": "Reps with healthy books",
+    "pct_reps_healthy": "% reps healthy",
+    "reps_scored": "Reps scored (rep book)",
+    "healthy_book_definition": "Healthy book — definition",
+    "healthy_book_criteria": "Healthy book — checklist",
+    "healthy_book_primary": "Healthy book — summary",
     "splittable_pool": "Splittable PCID pool",
     "total_grow_slots": "Total grow slots",
     "pcid_stddev": "PCID std dev",
@@ -81,11 +87,11 @@ MARKET_FIELD_LABELS: dict[str, str] = {
     "coverage_at_inflection": "Coverage at inflection",
     "median_impact_calls_per_account": "Median impact calls/account",
     "coverage_status": "Coverage status",
-    "impact_coverage_primary": "Impact coverage — snapshot",
-    "impact_coverage_bullets": "Impact coverage — detail",
-    "sbs_opportunity_primary": "SBS opportunity — snapshot",
-    "sbs_opportunity_bullets": "SBS opportunity — detail",
-    "book_health_status": "Book health status",
+    "hc_reason_primary": "HC reason — primary",
+    "hc_reason_driver": "HC reason — driver",
+    "sbs_has_opportunity": "SBS opportunity",
+    "sbs_routing_primary": "SBS routing recommendation",
+    "sbs_routing_bullets": "SBS routing — detail",
     "health_primary": "Book health — snapshot",
     "health_bullets": "Book health — detail",
     "recommendation_primary": "Recommendations — top action",
@@ -104,7 +110,12 @@ SUMMARY_FIELD_LABELS: dict[str, str] = {
     "country": "Country",
     "segment": "Segment",
     "summary_status": "Status",
-    "summary_primary": "Why (plain English)",
+    "summary_primary": "HC reason (primary)",
+    "hc_reason_primary": "HC reason (primary)",
+    "healthy_book_definition": "Healthy book — definition",
+    "pct_reps_healthy": "% reps healthy",
+    "sbs_routing_primary": "SBS routing",
+    "sbs_has_opportunity": "SBS opportunity",
     "summary_bullets": "Supporting detail",
     "optimal_book_primary": "Optimal book — why",
     "optimal_book_rationale": "Optimal book — full rationale",
@@ -158,6 +169,7 @@ REP_BOOK_FIELD_LABELS: dict[str, str] = {
     "vs_ideal_pcid": "Vs ideal PCID",
     "too_big": "Too big",
     "too_little": "Too little",
+    "healthy_book": "Healthy book",
     "peel_to_ideal": "Peel to ideal",
     "grow_slots": "Grow slots",
 }
@@ -186,11 +198,18 @@ def market_row(market: dict) -> dict:
         "health_bullets",
         "recommendation_bullets",
         "optimal_book_bullets",
-        "impact_coverage_bullets",
         "sbs_opportunity_bullets",
+        "sbs_routing_bullets",
+        "impact_coverage_bullets",
+        "healthy_book_criteria",
     ):
         if isinstance(row.get(list_field), list):
             row[list_field] = " · ".join(row[list_field])
+    for key, val in list(row.items()):
+        if isinstance(val, list):
+            row[key] = " · ".join(str(v) for v in val)
+        elif isinstance(val, dict):
+            row[key] = " · ".join(f"{k}: {v}" for k, v in val.items())
     return row
 
 
@@ -243,7 +262,10 @@ def flatten_book_health(payload: dict) -> list[dict]:
 def flatten_rep_book(payload: dict, book_health: dict | None = None) -> list[dict]:
     reps = payload.get("reps")
     if reps:
-        return [enrich_rep_row(r) for r in reps]
+        rows = [enrich_rep_row(r) for r in reps]
+        for row in rows:
+            row["healthy_book"] = not row.get("too_big") and not row.get("too_little")
+        return rows
     if book_health:
         return flatten_book_health(book_health)
     return []

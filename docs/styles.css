@@ -404,6 +404,64 @@ h2 {
   margin-bottom: 0;
 }
 
+.lookup-grid-compact {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.lookup-hc-reason .market-summary-primary {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.lookup-sbs-highlight {
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #152238;
+}
+
+.lookup-sbs-routing {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.hc-verdict {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.hc-verdict-over {
+  background: rgba(240, 113, 120, 0.15);
+  color: #f07178;
+}
+
+.hc-verdict-under {
+  background: rgba(62, 207, 142, 0.15);
+  color: #3ecf8e;
+}
+
+.hc-verdict-target {
+  background: rgba(110, 181, 255, 0.15);
+  color: #6eb5ff;
+}
+
+.sbs-opp-cell {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.sbs-opp-yes {
+  color: #3ecf8e;
+  font-weight: 600;
+}
+
 .lookup-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -495,6 +553,57 @@ tr.lookup-row td.sticky-col {
 .market-summary-badge.optimal {
   background: var(--accent);
   color: #0a1420;
+}
+
+.healthy-book-block {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  border-left: 3px solid #3ecf8e;
+}
+
+.healthy-book-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.healthy-book-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.healthy-book-thresholds {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.healthy-book-checklist {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.healthy-book-checklist li {
+  margin-bottom: 4px;
+}
+
+.healthy-book-checklist li:last-child {
+  margin-bottom: 0;
+}
+
+.healthy-book-stat {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  color: var(--text);
 }
 
 .methodology-details {

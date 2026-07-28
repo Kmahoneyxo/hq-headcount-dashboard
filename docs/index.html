@@ -42,8 +42,8 @@
     <section class="lookup-panel" id="lookup-panel">
       <div class="lookup-header">
         <div>
-          <h2>Market lookup — book health → recommendations</h2>
-          <p class="caption">Country × segment → current book health, then actionable next steps (peel, split, hire, grow)</p>
+          <h2>Market lookup</h2>
+          <p class="caption">Country × segment → book health, HC reason, recommendations, SBS routing</p>
         </div>
       </div>
       <div class="lookup-controls">
@@ -131,29 +131,21 @@
 
     <section class="panel">
       <h2>Market detail</h2>
-      <p class="caption">Book health → recommendations narrative, then metrics · scroll → for FY26 &amp; SBS</p>
+      <p class="caption">HC verdict · primary reason · SBS opportunity · key metrics</p>
       <div class="table-wrap">
         <table id="market-table">
           <thead>
             <tr>
               <th class="sticky-col">Market</th>
-              <th class="narrative-col">Book health</th>
-              <th class="narrative-col">Recommendations</th>
+              <th>HC verdict</th>
+              <th class="narrative-col">HC reason</th>
+              <th>SBS opp</th>
               <th class="num highlight-col">Ideal HC</th>
-              <th class="num">Ideal PCID</th>
-              <th class="num">Avg PQR</th>
               <th class="num">Reps</th>
-              <th class="num">Avg PCID</th>
               <th class="num">Gap</th>
               <th>HC rec</th>
-              <th class="num">Too big</th>
-              <th class="num">Too little</th>
-              <th class="num">Split pool</th>
-              <th class="num">New heads</th>
-              <th>Book action</th>
-              <th class="num">FY26 %</th>
-              <th class="num">SBS</th>
-              <th>HC action</th>
+              <th class="num">Avg / ideal PCID</th>
+              <th>Next step</th>
             </tr>
           </thead>
           <tbody id="market-body"></tbody>
@@ -193,6 +185,7 @@
             <p><strong>Impact coverage</strong> — Sum of <code>impact_calls</code> from <code>rep_activity_sales</code> over the trailing 90 days, divided by assigned PCIDs per rep (<code>impact_calls_per_account</code>). The dashboard shows the market median (<code>median_impact_calls_per_account</code>). Coverage peaks at a book size (inflection point); status is <em>Declining</em> when avg book exceeds that size and median coverage falls below 90% of peak.</p>
             <p><strong>SBS whitespace</strong> — Unassigned parent company IDs in a country (team <code>None</code> on JAM). These are assignable accounts reps could grow into. <code>books_buildable_from_sbs</code> = whitespace ÷ ideal PCID. SBS is country-level; all segment rows in a country share the same pool.</p>
             <p><strong>Supporting signals</strong> — Opp pipeline plateau (rev/job peaks at a book size) and coverage inflection (impact calls/account peak) are shown per market when selecting a country × segment.</p>
+            <p><strong>Healthy book</strong> — A rep has a healthy book when they are <em>not</em> flagged too_big or too_little (sql/16–17). Checklist per segment: PCID within ±10% of ideal (and not below ideal), PQR at or above segment benchmark, impact coverage ≥ 90% of segment average, current revenue ≥ prior-quarter PQR. The market lookup shows segment thresholds and % of reps meeting this definition (from rep_book.json).</p>
           </div>
         </details>
         <p class="caption refresh-note" id="refresh-note"></p>
@@ -214,6 +207,6 @@
     <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a></p>
   </footer>
 
-  <script src="app.js?v=20260728c"></script>
+  <script src="app.js?v=20260728d"></script>
 </body>
 </html>
