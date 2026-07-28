@@ -199,16 +199,23 @@ If your team prefers Google access (@indeed.com):
 python3 scripts/dashboard-server.py
 ```
 
-Open http://localhost:8080 and use **Refresh data**.
+Open http://localhost:8080 and use **Refresh data** (local server) or **Reload snapshot** (GitHub Pages).
 
-### Refresh button behavior
+### Reload snapshot vs warehouse refresh
 
-| Hosting | What Refresh does | Toast you should see |
-|---------|-------------------|----------------------|
-| **GitHub Pages** | Re-fetches `headcount.json` + `book_health.json` from the live site (cache-busted). Does **not** query the warehouse. | **Reloaded published data** — success even if the snapshot date is unchanged. **Data updated** if the JSON on disk changed since your last load (e.g. after a push). |
-| **dashboard-server.py** | Calls `POST /api/refresh`, optionally runs `DASHBOARD_REFRESH_CMD`, then reloads JSON from disk | **Data updated** when files change; **Up to date** when warehouse + files are current |
+| Action | Where | What it does |
+|--------|-------|--------------|
+| **Reload snapshot** | GitHub Pages (live URL) | Re-fetches `headcount.json` + `book_health.json` from the published site (cache-busted). Does **not** query Quest or the warehouse. |
+| **Refresh data** | `dashboard-server.py` locally | Calls `POST /api/refresh`, optionally runs `DASHBOARD_REFRESH_CMD`, then reloads JSON from disk. |
 
-On GitHub Pages, Refresh is for picking up a **new push** — not for pulling live Quest data. After you export from Quest, run the scripts, commit, and push; then click Refresh (or hard-reload the page) to see the new snapshot.
+The toast **snapshot date** (`2026-07-27`) comes from `headcount.json` → `updated_at`. The **page reloaded** time is when your browser re-fetched the file — not a warehouse pull timestamp.
+
+| Hosting | Button label | Toast you should see |
+|---------|--------------|----------------------|
+| **GitHub Pages** | **Reload snapshot** | **Snapshot … — no change** (amber) if JSON unchanged; **Snapshot … loaded** (green) after a new git push. Both explain that Quest was not queried and list the export → push workflow. |
+| **dashboard-server.py** | **Refresh data** | **Snapshot … loaded** when files change; **no change** when warehouse + files are current |
+
+On GitHub Pages, **Reload snapshot** is for picking up a **new push** — not for pulling live Quest data. After you export from Quest, run the scripts, commit, and push; then click **Reload snapshot** (or hard-reload the page) to see the new snapshot date.
 
 ### Live warehouse refresh (one-time setup)
 

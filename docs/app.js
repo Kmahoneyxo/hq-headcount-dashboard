@@ -73,25 +73,48 @@ function showToast(message, tone = "ok") {
   window.clearTimeout(showToast._timer);
   showToast._timer = window.setTimeout(() => {
     el.className = "toast hidden";
-  }, 6000);
+  }, 8000);
 }
 
-function setRefreshLoading(loading) {
+function isStaticHosting() {
+  return !config.refresh_api;
+}
+
+function refreshButtonLabel(loading = false) {
+  if (isStaticHosting()) {
+    return loading ? "Reloading…" : "Reload snapshot";
+  }
+  return loading ? "Refreshing…" : "Refresh data";
+}
+
+function formatPageReloadTime(d) {
+  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+function updateRefreshButton(loading = isRefreshing) {
   isRefreshing = loading;
   const btn = document.getElementById("refresh-btn");
   const label = document.getElementById("refresh-label");
   btn.disabled = loading;
   btn.classList.toggle("loading", loading);
-  label.textContent = loading ? "Refreshing…" : "Refresh data";
+  label.textContent = refreshButtonLabel(loading);
+  btn.title = isStaticHosting()
+    ? "Re-fetch published JSON from GitHub Pages (use after git push). Does not run Quest or query the warehouse."
+    : config.live_refresh
+      ? "Run your warehouse refresh command, then reload JSON from disk."
+      : "Reload JSON from disk via local server. Set DASHBOARD_REFRESH_CMD to pull from warehouse.";
 }
+
+const QUEST_REFRESH_STEPS =
+  "For new warehouse data: iDash sql/16 (prod) → export JSON → run scripts → git push → Reload snapshot.";
 
 async function refreshData() {
   if (isRefreshing) return;
-  setRefreshLoading(true);
+  updateRefreshButton(true);
   const previousFingerprint = dataFingerprint();
   try {
     if (config.refresh_api) {
-      showToast("Running query 16 against warehouse…", "warn");
+      showToast("Running warehouse refresh command…", "warn");
       const res = await fetch(config.refresh_api, { method: "POST", cache: "no-store" });
       const body = await res.json();
       if (!res.ok || !body.ok) {
@@ -101,30 +124,36 @@ async function refreshData() {
     await loadData();
     lastReloadedAt = lastLoadedAt;
     renderAll();
-    const reloadedAt = lastReloadedAt.toLocaleTimeString();
+    const pageReloadTime = formatPageReloadTime(lastReloadedAt);
     const dataChanged = dataFingerprint() !== previousFingerprint;
     const snapshot = payload.updated_at;
-    const pulled = payload.refreshed_at ? ` · pulled ${payload.refreshed_at}` : "";
+    const pulled = payload.refreshed_at ? ` (warehouse pull ${payload.refreshed_at})` : "";
 
     if (dataChanged) {
-      showToast(`Data updated · snapshot ${snapshot}${pulled} · reloaded ${reloadedAt}`, "ok");
+      showToast(
+        `Snapshot ${snapshot}${pulled} loaded. Page re-fetched at ${pageReloadTime}.`,
+        "ok",
+      );
     } else if (config.refresh_api && config.live_refresh) {
-      showToast(`Up to date · snapshot ${snapshot} · reloaded ${reloadedAt}`, "ok");
+      showToast(
+        `Snapshot ${snapshot}${pulled} — no change. Page reloaded at ${pageReloadTime}.`,
+        "ok",
+      );
     } else if (config.refresh_api) {
       showToast(
-        `Reloaded local files · snapshot ${snapshot} · ${reloadedAt}. Set DASHBOARD_REFRESH_CMD for warehouse refresh.`,
+        `Snapshot ${snapshot} — no change. Reloaded local files at ${pageReloadTime}. Set DASHBOARD_REFRESH_CMD for warehouse pulls.`,
         "warn",
       );
     } else {
       showToast(
-        `Reloaded published data · snapshot ${snapshot} · ${reloadedAt}. New warehouse data requires Quest export → push to GitHub.`,
-        "ok",
+        `Snapshot ${snapshot} — no change. Re-fetched published JSON at ${pageReloadTime} (does not query Quest). ${QUEST_REFRESH_STEPS}`,
+        "warn",
       );
     }
   } catch (err) {
-    showToast(err.message || "Refresh failed", "err");
+    showToast(err.message || "Reload failed", "err");
   } finally {
-    setRefreshLoading(false);
+    updateRefreshButton(false);
   }
 }
 
@@ -169,17 +198,19 @@ function filteredMarkets() {
 function renderMeta() {
   const el = document.getElementById("meta-line");
   const timing = lastReloadedAt
-    ? ` · Reloaded ${lastReloadedAt.toLocaleTimeString()}`
+    ? ` · Page reloaded ${formatPageReloadTime(lastReloadedAt)}`
     : lastLoadedAt
-      ? ` · Loaded ${lastLoadedAt.toLocaleTimeString()}`
+      ? ` · Page loaded ${formatPageReloadTime(lastLoadedAt)}`
       : "";
   const live = config.live_refresh ? " · Live warehouse refresh on" : "";
   const region = regionFilter === "amer" ? " · AMER focus" : " · Global";
   el.textContent =
-    `Ideal headcount by country × segment · ${payload.window} · Snapshot ${payload.updated_at}${region}${timing}${live} · ${filteredMarkets().length} markets shown`;
+    `Ideal headcount by country × segment · ${payload.window} · Data snapshot ${payload.updated_at}${region}${timing}${live} · ${filteredMarkets().length} markets shown`;
   document.getElementById("refresh-note").textContent = config.refresh_api
-    ? "Refresh runs your local refresh command via dashboard-server.py (set DASHBOARD_REFRESH_CMD for warehouse pulls)."
-    : "On GitHub Pages, Refresh re-fetches the published JSON from this site (use after a git push). Warehouse refresh: export from Quest, update docs/data/, push.";
+    ? "Refresh data runs your local refresh command via dashboard-server.py (set DASHBOARD_REFRESH_CMD for warehouse pulls)."
+    : "Reload snapshot re-fetches the published JSON from GitHub Pages (use after git push). It does not query Quest. " +
+      QUEST_REFRESH_STEPS;
+  updateRefreshButton();
 }
 
 function renderHeadline() {

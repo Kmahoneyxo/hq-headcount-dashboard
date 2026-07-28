@@ -21,8 +21,13 @@
         <a href="./data/headcount-dashboard.xlsx" class="btn btn-secondary" download title="Markets + rep book (all reps) + flagged reps + SBS">Download Excel (full data)</a>
         <a href="./data/headcount-dashboard-rep-book.csv" class="btn btn-secondary" download title="One row per rep — audit trail from market rollup">Download CSV (rep book)</a>
         <a href="./data/headcount-dashboard.csv" class="btn btn-secondary" download>Download CSV (markets)</a>
-        <button type="button" id="refresh-btn" class="btn">
-          <span id="refresh-label">Refresh data</span>
+        <button
+          type="button"
+          id="refresh-btn"
+          class="btn"
+          title="Re-fetch published JSON from GitHub Pages (use after git push). Does not run Quest or query the warehouse."
+        >
+          <span id="refresh-label">Reload snapshot</span>
         </button>
       </div>
     </div>
@@ -195,6 +200,6 @@
     <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a></p>
   </footer>
 
-  <script src="app.js?v=20260727b"></script>
+  <script src="app.js?v=20260728a"></script>
 </body>
 </html>
