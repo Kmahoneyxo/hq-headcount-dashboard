@@ -121,6 +121,105 @@ def _primary_reason(m: dict, status: str) -> str:
     return lead + tail
 
 
+def _fmt_pct(p: float | None) -> str:
+    if p is None:
+        return "—"
+    return f"{p * 100:.0f}%"
+
+
+def _fmt_money(n) -> str:
+    if n is None:
+        return "—"
+    n = float(n)
+    if n >= 1_000_000:
+        return f"${n / 1_000_000:.1f}M"
+    if n >= 1_000:
+        return f"${n / 1_000:.0f}K"
+    return f"${n:,.0f}"
+
+
+def build_optimal_book_rationale(m: dict) -> dict:
+    """Plain-English optimal book rationale from sql/16 perfect_book + segment benchmarks."""
+    ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
+    bucket = m.get("perfect_book_bucket")
+    ceiling = m.get("perfect_book_ceiling")
+    growth = m.get("perfect_book_growth_pct")
+    seg_pqr = m.get("segment_avg_pqr")
+    seg_pcid = m.get("segment_avg_pcid")
+    avg_book = m.get("current_avg_book")
+    opp_max = m.get("opp_plateau_book_max")
+    cov_max = m.get("coverage_inflection_book_max")
+
+    if ideal is None:
+        return {
+            "optimal_book_primary": "",
+            "optimal_book_bullets": [],
+            "optimal_book_rationale": "",
+        }
+
+    ideal_i = int(round(ideal))
+    band = bucket.split(": ", 1)[1] if bucket and ": " in bucket else f"up to {int(ceiling)}"
+    growth_txt = _fmt_pct(growth) if growth is not None else "positive"
+
+    primary = (
+        f"Optimal book for this segment is {ideal_i} accounts/rep ({band} band). "
+        f"We pick the largest book-size bucket where median revenue growth stays within "
+        f"85% of the segment peak ({growth_txt} in that band) and a bigger book no longer "
+        f"adds growth — that plateau is the data-driven target for headcount math."
+    )
+
+    bullets: list[str] = []
+
+    if seg_pqr is not None:
+        bullets.append(
+            f"Segment avg PQR (prior quarter revenue per rep): {_fmt_money(seg_pqr)} — "
+            "the benchmark for whether a rep's book is revenue-heavy vs peers."
+        )
+    if seg_pcid is not None:
+        bullets.append(
+            f"Segment avg PCID: {int(round(seg_pcid))} accounts/rep — "
+            "typical book size today; ideal PCID is the growth-optimal target, not the average."
+        )
+
+    if avg_book is not None and ideal:
+        ratio = avg_book / ideal
+        if ratio > 1.10:
+            bullets.append(
+                f"Current avg book ({int(round(avg_book))}) is above ideal — "
+                "more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID."
+            )
+        elif ratio < 0.90:
+            bullets.append(
+                f"Current avg book ({int(round(avg_book))}) is below ideal — "
+                "room to grow books toward the growth-optimal size before adding headcount."
+            )
+
+    if opp_max is not None:
+        opp_status = m.get("opp_pipeline_status", "").lower()
+        bullets.append(
+            f"Opp pipeline {'plateaus' if opp_status == 'plateaued' else 'still growing'} "
+            f"around {int(opp_max)} accounts/rep — revenue per job peaks near this book size."
+        )
+
+    if cov_max is not None:
+        bullets.append(
+            f"Coverage (impact calls/account) peaks near {int(cov_max)} accounts/rep — "
+            "books larger than this tend to see fewer touches per account."
+        )
+
+    bullets.append(
+        "Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; "
+        "too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
+    )
+
+    rationale = primary + " " + " ".join(bullets)
+    return {
+        "optimal_book_primary": primary,
+        "optimal_book_bullets": bullets,
+        "optimal_book_rationale": rationale,
+    }
+
+
 def _supporting_bullets(m: dict) -> list[str]:
     bullets: list[str] = []
 
@@ -191,10 +290,16 @@ def _supporting_bullets(m: dict) -> list[str]:
 
 
 def build_market_summary(m: dict) -> dict:
-    """Return summary_status, summary_narrative, summary_primary, summary_bullets."""
+    """Return summary + optimal book rationale fields."""
     status = summary_status(m)
     primary = _primary_reason(m, status)
     bullets = _supporting_bullets(m)
+    optimal = build_optimal_book_rationale(m)
+
+    # Lead with optimal book context when we have a perfect-book target
+    if optimal.get("optimal_book_primary"):
+        bullets.insert(0, optimal["optimal_book_primary"])
+
     narrative = primary
     if bullets:
         narrative += " " + " ".join(bullets)
@@ -203,6 +308,7 @@ def build_market_summary(m: dict) -> dict:
         "summary_primary": primary,
         "summary_bullets": bullets,
         "summary_narrative": narrative,
+        **optimal,
     }
 
 

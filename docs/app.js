@@ -240,6 +240,99 @@ function findLookupMarket() {
   );
 }
 
+function fmtPct(p) {
+  if (p == null) return "—";
+  return Math.round(p * 100) + "%";
+}
+
+function buildOptimalBookRationale(m) {
+  if (m.optimal_book_primary) {
+    return {
+      primary: m.optimal_book_primary,
+      bullets: m.optimal_book_bullets || [],
+    };
+  }
+  const ideal = idealPcid(m);
+  if (ideal == null) return { primary: "", bullets: [] };
+  const bucket = m.perfect_book_bucket || "";
+  const band = bucket.includes(": ") ? bucket.split(": ")[1] : `up to ${m.perfect_book_ceiling ?? ideal}`;
+  const growth = m.perfect_book_growth_pct;
+  const primary =
+    `Optimal book for this segment is ${fmtNum(ideal)} accounts/rep (${band} band). ` +
+    `We pick the largest book-size bucket where median revenue growth stays within ` +
+    `85% of the segment peak (${growth != null ? fmtPct(growth) : "positive"} in that band) ` +
+    `and a bigger book no longer adds growth.`;
+  const bullets = [];
+  if (m.segment_avg_pqr != null) {
+    bullets.push(
+      `Segment avg PQR (prior quarter): ${fmtMoney(m.segment_avg_pqr)} — benchmark for revenue-heavy books.`,
+    );
+  }
+  if (m.segment_avg_pcid != null) {
+    bullets.push(
+      `Segment avg PCID: ${fmtNum(Math.round(m.segment_avg_pcid))} — typical size today vs ${fmtNum(ideal)} ideal.`,
+    );
+  }
+  return { primary, bullets };
+}
+
+function renderOptimalBookPanel(m) {
+  const el = document.getElementById("optimal-book-panel");
+  if (!el) return;
+  if (!m) {
+    el.innerHTML = "";
+    el.classList.add("hidden");
+    return;
+  }
+  el.classList.remove("hidden");
+  const ideal = idealPcid(m);
+  const { primary, bullets } = buildOptimalBookRationale(m);
+  const bucket = m.perfect_book_bucket || "—";
+  const growth = m.perfect_book_growth_pct;
+  el.innerHTML = `
+    <h2>Optimal book · ${m.country}-${m.segment}</h2>
+    <p class="caption">Data-derived target accounts/rep from revenue-growth peaks (sql/16 perfect_book)</p>
+    <div class="lookup-grid lookup-grid-primary optimal-book-stats">
+      <div class="lookup-stat primary">
+        <div class="lookup-stat-value">${fmtNum(ideal)}</div>
+        <div class="lookup-stat-label">Ideal / optimal PCID</div>
+      </div>
+      <div class="lookup-stat primary">
+        <div class="lookup-stat-value">${m.segment_avg_pqr != null ? fmtMoney(m.segment_avg_pqr) : "—"}</div>
+        <div class="lookup-stat-label">Segment avg PQR benchmark</div>
+      </div>
+      <div class="lookup-stat">
+        <div class="lookup-stat-value">${bucket}</div>
+        <div class="lookup-stat-label">Growth-optimal band</div>
+      </div>
+      <div class="lookup-stat">
+        <div class="lookup-stat-value">${growth != null ? fmtPct(growth) : "—"}</div>
+        <div class="lookup-stat-label">Median growth in band</div>
+      </div>
+      <div class="lookup-stat">
+        <div class="lookup-stat-value">${m.segment_avg_pcid != null ? fmtNum(Math.round(m.segment_avg_pcid)) : "—"}</div>
+        <div class="lookup-stat-label">Segment avg PCID (today)</div>
+      </div>
+      <div class="lookup-stat">
+        <div class="lookup-stat-value">${fmtNum(m.current_avg_book)}</div>
+        <div class="lookup-stat-label">Current avg PCID</div>
+      </div>
+    </div>
+    <div class="optimal-book-rationale">
+      <div class="market-summary-header">
+        <span class="market-summary-badge optimal">Optimal</span>
+        <span class="market-summary-label">Why this book size?</span>
+      </div>
+      ${primary ? `<p class="market-summary-primary">${primary}</p>` : ""}
+      ${
+        bullets.length
+          ? `<ul class="market-summary-bullets">${bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
+          : ""
+      }
+    </div>
+  `;
+}
+
 function renderLookup() {
   const countries = [...new Set(allMarketsForLookup().map((m) => m.country))].sort();
   const countrySelect = document.getElementById("lookup-country");
@@ -263,6 +356,7 @@ function renderLookup() {
     el.innerHTML =
       `<p class="lookup-missing">No data for <strong>${lookupCountry}-${lookupSegment}</strong> in this snapshot. ` +
       `Try another market or refresh query 16 for full coverage.</p>`;
+    renderOptimalBookPanel(null);
     return;
   }
   const gap = m.headcount_gap;
@@ -337,6 +431,7 @@ function renderLookup() {
     </div>
     <p class="lookup-formula">Ideal HC: ${fmtNum(m.assigned_accounts)} assigned PCIDs ÷ ${fmtNum(idealPcid(m))} ideal PCID = ${fmtNum(m.optimal_headcount)} reps</p>
   `;
+  renderOptimalBookPanel(m);
   renderBookHealthPanel(m);
   renderBookActionPanel(m);
 }

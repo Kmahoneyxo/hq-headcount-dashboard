@@ -59,6 +59,7 @@
       "summary_status": "Under HC",
       "summary_primary": "Under headcount by 93 reps (227 current vs 320 ideal). Avg book 127 vs ideal 90 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
       "summary_bullets": [
+        "Optimal book for this segment is 90 accounts/rep (81-100 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
         "Book health: 77 reps flagged too big, 1 too little (uneven books across the team).",
         "PQR trend: Revenue is 17.6% above prior-quarter PQR (Hire signal from capacity model).",
         "SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~21,209 buildable books at ideal size).",
@@ -67,7 +68,17 @@
         "FY26 book build: 46.3% of policy flags positive \u2014 room to improve book quality.",
         "Recommended next step: Hire + build books from SBS."
       ],
-      "summary_narrative": "Under headcount by 93 reps (227 current vs 320 ideal). Avg book 127 vs ideal 90 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 77 reps flagged too big, 1 too little (uneven books across the team). PQR trend: Revenue is 17.6% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~21,209 buildable books at ideal size). Split-hire: Model suggests 85 new heads from 7,699 pooled PCIDs \u2014 Split-hire 85 new heads (7699 PCIDs pooled) Market signals: opp pipeline plateaued, coverage ok. FY26 book build: 46.3% of policy flags positive \u2014 room to improve book quality. Recommended next step: Hire + build books from SBS."
+      "summary_narrative": "Under headcount by 93 reps (227 current vs 320 ideal). Avg book 127 vs ideal 90 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Optimal book for this segment is 90 accounts/rep (81-100 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Book health: 77 reps flagged too big, 1 too little (uneven books across the team). PQR trend: Revenue is 17.6% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~21,209 buildable books at ideal size). Split-hire: Model suggests 85 new heads from 7,699 pooled PCIDs \u2014 Split-hire 85 new heads (7699 PCIDs pooled) Market signals: opp pipeline plateaued, coverage ok. FY26 book build: 46.3% of policy flags positive \u2014 room to improve book quality. Recommended next step: Hire + build books from SBS.",
+      "optimal_book_primary": "Optimal book for this segment is 90 accounts/rep (81-100 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
+      "optimal_book_bullets": [
+        "Segment avg PQR (prior quarter revenue per rep): $407K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers.",
+        "Segment avg PCID: 125 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average.",
+        "Current avg book (127) is above ideal \u2014 more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID.",
+        "Opp pipeline plateaus around 100 accounts/rep \u2014 revenue per job peaks near this book size.",
+        "Coverage (impact calls/account) peaks near 100 accounts/rep \u2014 books larger than this tend to see fewer touches per account.",
+        "Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
+      ],
+      "optimal_book_rationale": "Optimal book for this segment is 90 accounts/rep (81-100 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Segment avg PQR (prior quarter revenue per rep): $407K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers. Segment avg PCID: 125 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average. Current avg book (127) is above ideal \u2014 more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID. Opp pipeline plateaus around 100 accounts/rep \u2014 revenue per job peaks near this book size. Coverage (impact calls/account) peaks near 100 accounts/rep \u2014 books larger than this tend to see fewer touches per account. Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
     },
     {
       "segment": "L",
@@ -118,6 +129,7 @@
       "summary_status": "Over HC",
       "summary_primary": "Over headcount by 68 reps (212 current vs 144 ideal). Avg book 39 vs ideal 58 \u2014 books are underweight even though we carry more reps than the capacity model needs.",
       "summary_bullets": [
+        "Optimal book for this segment is 58 accounts/rep (51-65 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
         "Book health: 81 reps flagged too big, 204 too little (uneven books across the team).",
         "PQR trend: Revenue is 20.5% above prior-quarter PQR (Optimize signal from capacity model).",
         "SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~32,911 buildable books at ideal size).",
@@ -126,7 +138,17 @@
         "FY26 book build: 49.1% of policy flags positive \u2014 room to improve book quality.",
         "Recommended next step: Optimize HC."
       ],
-      "summary_narrative": "Over headcount by 68 reps (212 current vs 144 ideal). Avg book 39 vs ideal 58 \u2014 books are underweight even though we carry more reps than the capacity model needs. Book health: 81 reps flagged too big, 204 too little (uneven books across the team). PQR trend: Revenue is 20.5% above prior-quarter PQR (Optimize signal from capacity model). SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~32,911 buildable books at ideal size). Book action: Redistribute internally (too big \u2192 too little). Market signals: opp pipeline growing, coverage ok. FY26 book build: 49.1% of policy flags positive \u2014 room to improve book quality. Recommended next step: Optimize HC."
+      "summary_narrative": "Over headcount by 68 reps (212 current vs 144 ideal). Avg book 39 vs ideal 58 \u2014 books are underweight even though we carry more reps than the capacity model needs. Optimal book for this segment is 58 accounts/rep (51-65 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Book health: 81 reps flagged too big, 204 too little (uneven books across the team). PQR trend: Revenue is 20.5% above prior-quarter PQR (Optimize signal from capacity model). SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~32,911 buildable books at ideal size). Book action: Redistribute internally (too big \u2192 too little). Market signals: opp pipeline growing, coverage ok. FY26 book build: 49.1% of policy flags positive \u2014 room to improve book quality. Recommended next step: Optimize HC.",
+      "optimal_book_primary": "Optimal book for this segment is 58 accounts/rep (51-65 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
+      "optimal_book_bullets": [
+        "Segment avg PQR (prior quarter revenue per rep): $415K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers.",
+        "Segment avg PCID: 40 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average.",
+        "Current avg book (39) is below ideal \u2014 room to grow books toward the growth-optimal size before adding headcount.",
+        "Opp pipeline still growing around 50 accounts/rep \u2014 revenue per job peaks near this book size.",
+        "Coverage (impact calls/account) peaks near 65 accounts/rep \u2014 books larger than this tend to see fewer touches per account.",
+        "Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
+      ],
+      "optimal_book_rationale": "Optimal book for this segment is 58 accounts/rep (51-65 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Segment avg PQR (prior quarter revenue per rep): $415K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers. Segment avg PCID: 40 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average. Current avg book (39) is below ideal \u2014 room to grow books toward the growth-optimal size before adding headcount. Opp pipeline still growing around 50 accounts/rep \u2014 revenue per job peaks near this book size. Coverage (impact calls/account) peaks near 65 accounts/rep \u2014 books larger than this tend to see fewer touches per account. Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
     },
     {
       "segment": "NAM",
@@ -177,6 +199,7 @@
       "summary_status": "Under HC",
       "summary_primary": "Under headcount by 520 reps (232 current vs 752 ideal). Avg book 16 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
       "summary_bullets": [
+        "Optimal book for this segment is 5 accounts/rep (1-10 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (23% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
         "Book health: 108 reps flagged too big, 57 too little (uneven books across the team).",
         "PQR trend: Revenue is 29.0% above prior-quarter PQR (Hire signal from capacity model).",
         "SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~381,775 buildable books at ideal size).",
@@ -184,7 +207,17 @@
         "Market signals: opp pipeline growing, coverage ok.",
         "Recommended next step: Hire + build books from SBS."
       ],
-      "summary_narrative": "Under headcount by 520 reps (232 current vs 752 ideal). Avg book 16 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 108 reps flagged too big, 57 too little (uneven books across the team). PQR trend: Revenue is 29.0% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~381,775 buildable books at ideal size). Split-hire: Model suggests 473 new heads from 2,369 pooled PCIDs \u2014 Split-hire 473 new heads (2369 PCIDs pooled) Market signals: opp pipeline growing, coverage ok. Recommended next step: Hire + build books from SBS."
+      "summary_narrative": "Under headcount by 520 reps (232 current vs 752 ideal). Avg book 16 vs ideal 5 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Optimal book for this segment is 5 accounts/rep (1-10 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (23% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Book health: 108 reps flagged too big, 57 too little (uneven books across the team). PQR trend: Revenue is 29.0% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~381,775 buildable books at ideal size). Split-hire: Model suggests 473 new heads from 2,369 pooled PCIDs \u2014 Split-hire 473 new heads (2369 PCIDs pooled) Market signals: opp pipeline growing, coverage ok. Recommended next step: Hire + build books from SBS.",
+      "optimal_book_primary": "Optimal book for this segment is 5 accounts/rep (1-10 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (23% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
+      "optimal_book_bullets": [
+        "Segment avg PQR (prior quarter revenue per rep): $249K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers.",
+        "Segment avg PCID: 16 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average.",
+        "Current avg book (16) is above ideal \u2014 more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID.",
+        "Opp pipeline still growing around 50 accounts/rep \u2014 revenue per job peaks near this book size.",
+        "Coverage (impact calls/account) peaks near 50 accounts/rep \u2014 books larger than this tend to see fewer touches per account.",
+        "Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
+      ],
+      "optimal_book_rationale": "Optimal book for this segment is 5 accounts/rep (1-10 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (23% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Segment avg PQR (prior quarter revenue per rep): $249K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers. Segment avg PCID: 16 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average. Current avg book (16) is above ideal \u2014 more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID. Opp pipeline still growing around 50 accounts/rep \u2014 revenue per job peaks near this book size. Coverage (impact calls/account) peaks near 50 accounts/rep \u2014 books larger than this tend to see fewer touches per account. Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
     },
     {
       "segment": "UMM",
@@ -235,6 +268,7 @@
       "summary_status": "At target",
       "summary_primary": "Near target headcount (134 current vs 141 ideal, gap -7). Avg book 61 vs ideal 58 \u2014 both headcount and book size are close to model.",
       "summary_bullets": [
+        "Optimal book for this segment is 58 accounts/rep (51-65 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
         "Book health: 39 reps flagged too big, 3 too little (uneven books across the team).",
         "PQR trend: Revenue is 17.7% above prior-quarter PQR (Hold signal from capacity model).",
         "SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~32,911 buildable books at ideal size).",
@@ -243,7 +277,16 @@
         "FY26 book build: 47.4% of policy flags positive \u2014 room to improve book quality.",
         "Recommended next step: Improve FY26 book build score."
       ],
-      "summary_narrative": "Near target headcount (134 current vs 141 ideal, gap -7). Avg book 61 vs ideal 58 \u2014 both headcount and book size are close to model. Book health: 39 reps flagged too big, 3 too little (uneven books across the team). PQR trend: Revenue is 17.7% above prior-quarter PQR (Hold signal from capacity model). SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~32,911 buildable books at ideal size). Split-hire: Model suggests 3 new heads from 199 pooled PCIDs \u2014 Split-hire 3 new heads (199 PCIDs pooled) Market signals: opp pipeline growing, coverage ok. FY26 book build: 47.4% of policy flags positive \u2014 room to improve book quality. Recommended next step: Improve FY26 book build score."
+      "summary_narrative": "Near target headcount (134 current vs 141 ideal, gap -7). Avg book 61 vs ideal 58 \u2014 both headcount and book size are close to model. Optimal book for this segment is 58 accounts/rep (51-65 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Book health: 39 reps flagged too big, 3 too little (uneven books across the team). PQR trend: Revenue is 17.7% above prior-quarter PQR (Hold signal from capacity model). SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~32,911 buildable books at ideal size). Split-hire: Model suggests 3 new heads from 199 pooled PCIDs \u2014 Split-hire 3 new heads (199 PCIDs pooled) Market signals: opp pipeline growing, coverage ok. FY26 book build: 47.4% of policy flags positive \u2014 room to improve book quality. Recommended next step: Improve FY26 book build score.",
+      "optimal_book_primary": "Optimal book for this segment is 58 accounts/rep (51-65 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
+      "optimal_book_bullets": [
+        "Segment avg PQR (prior quarter revenue per rep): $387K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers.",
+        "Segment avg PCID: 61 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average.",
+        "Opp pipeline still growing around 65 accounts/rep \u2014 revenue per job peaks near this book size.",
+        "Coverage (impact calls/account) peaks near 65 accounts/rep \u2014 books larger than this tend to see fewer touches per account.",
+        "Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
+      ],
+      "optimal_book_rationale": "Optimal book for this segment is 58 accounts/rep (51-65 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Segment avg PQR (prior quarter revenue per rep): $387K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers. Segment avg PCID: 61 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average. Opp pipeline still growing around 65 accounts/rep \u2014 revenue per job peaks near this book size. Coverage (impact calls/account) peaks near 65 accounts/rep \u2014 books larger than this tend to see fewer touches per account. Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
     },
     {
       "segment": "DCA",
@@ -294,6 +337,7 @@
       "summary_status": "Over HC",
       "summary_primary": "Over headcount by 31 reps (111 current vs 80 ideal). Avg book 99 vs ideal 138 \u2014 books are underweight even though we carry more reps than the capacity model needs.",
       "summary_bullets": [
+        "Optimal book for this segment is 138 accounts/rep (126-150 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
         "Book health: 69 reps flagged too big, 72 too little (uneven books across the team).",
         "PQR trend: Revenue is 16.2% above prior-quarter PQR (Optimize signal from capacity model).",
         "SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~13,832 buildable books at ideal size).",
@@ -302,7 +346,15 @@
         "FY26 book build: 45.0% of policy flags positive \u2014 room to improve book quality.",
         "Recommended next step: Optimize HC."
       ],
-      "summary_narrative": "Over headcount by 31 reps (111 current vs 80 ideal). Avg book 99 vs ideal 138 \u2014 books are underweight even though we carry more reps than the capacity model needs. Book health: 69 reps flagged too big, 72 too little (uneven books across the team). PQR trend: Revenue is 16.2% above prior-quarter PQR (Optimize signal from capacity model). SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~13,832 buildable books at ideal size). Split-hire: Model suggests 2 new heads from 306 pooled PCIDs \u2014 Split-hire 2 new heads (306 PCIDs pooled) Market signals: opp pipeline unknown, coverage ok. FY26 book build: 45.0% of policy flags positive \u2014 room to improve book quality. Recommended next step: Optimize HC."
+      "summary_narrative": "Over headcount by 31 reps (111 current vs 80 ideal). Avg book 99 vs ideal 138 \u2014 books are underweight even though we carry more reps than the capacity model needs. Optimal book for this segment is 138 accounts/rep (126-150 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Book health: 69 reps flagged too big, 72 too little (uneven books across the team). PQR trend: Revenue is 16.2% above prior-quarter PQR (Optimize signal from capacity model). SBS whitespace: 1,908,879 unassigned accounts in this country \u00d7 segment (~13,832 buildable books at ideal size). Split-hire: Model suggests 2 new heads from 306 pooled PCIDs \u2014 Split-hire 2 new heads (306 PCIDs pooled) Market signals: opp pipeline unknown, coverage ok. FY26 book build: 45.0% of policy flags positive \u2014 room to improve book quality. Recommended next step: Optimize HC.",
+      "optimal_book_primary": "Optimal book for this segment is 138 accounts/rep (126-150 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
+      "optimal_book_bullets": [
+        "Segment avg PQR (prior quarter revenue per rep): $413K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers.",
+        "Segment avg PCID: 107 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average.",
+        "Current avg book (99) is below ideal \u2014 room to grow books toward the growth-optimal size before adding headcount.",
+        "Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
+      ],
+      "optimal_book_rationale": "Optimal book for this segment is 138 accounts/rep (126-150 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Segment avg PQR (prior quarter revenue per rep): $413K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers. Segment avg PCID: 107 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average. Current avg book (99) is below ideal \u2014 room to grow books toward the growth-optimal size before adding headcount. Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
     },
     {
       "segment": "M",
@@ -353,6 +405,7 @@
       "summary_status": "Under HC",
       "summary_primary": "Under headcount by 20 reps (72 current vs 92 ideal). Avg book 115 vs ideal 90 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
       "summary_bullets": [
+        "Optimal book for this segment is 90 accounts/rep (81-100 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
         "Book health: 63 reps flagged too big, 11 too little (uneven books across the team).",
         "PQR trend: Revenue is 22.0% above prior-quarter PQR (Hire signal from capacity model).",
         "SBS whitespace: 385,800 unassigned accounts in this country \u00d7 segment (~4,286 buildable books at ideal size).",
@@ -361,7 +414,17 @@
         "FY26 book build: 46.8% of policy flags positive \u2014 room to improve book quality.",
         "Recommended next step: Hire + build books from SBS."
       ],
-      "summary_narrative": "Under headcount by 20 reps (72 current vs 92 ideal). Avg book 115 vs ideal 90 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 63 reps flagged too big, 11 too little (uneven books across the team). PQR trend: Revenue is 22.0% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 385,800 unassigned accounts in this country \u00d7 segment (~4,286 buildable books at ideal size). Split-hire: Model suggests 22 new heads from 1,979 pooled PCIDs \u2014 Split-hire 22 new heads (1979 PCIDs pooled) Market signals: opp pipeline plateaued, coverage ok. FY26 book build: 46.8% of policy flags positive \u2014 room to improve book quality. Recommended next step: Hire + build books from SBS."
+      "summary_narrative": "Under headcount by 20 reps (72 current vs 92 ideal). Avg book 115 vs ideal 90 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Optimal book for this segment is 90 accounts/rep (81-100 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Book health: 63 reps flagged too big, 11 too little (uneven books across the team). PQR trend: Revenue is 22.0% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 385,800 unassigned accounts in this country \u00d7 segment (~4,286 buildable books at ideal size). Split-hire: Model suggests 22 new heads from 1,979 pooled PCIDs \u2014 Split-hire 22 new heads (1979 PCIDs pooled) Market signals: opp pipeline plateaued, coverage ok. FY26 book build: 46.8% of policy flags positive \u2014 room to improve book quality. Recommended next step: Hire + build books from SBS.",
+      "optimal_book_primary": "Optimal book for this segment is 90 accounts/rep (81-100 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
+      "optimal_book_bullets": [
+        "Segment avg PQR (prior quarter revenue per rep): $262K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers.",
+        "Segment avg PCID: 117 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average.",
+        "Current avg book (115) is above ideal \u2014 more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID.",
+        "Opp pipeline plateaus around 100 accounts/rep \u2014 revenue per job peaks near this book size.",
+        "Coverage (impact calls/account) peaks near 150 accounts/rep \u2014 books larger than this tend to see fewer touches per account.",
+        "Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
+      ],
+      "optimal_book_rationale": "Optimal book for this segment is 90 accounts/rep (81-100 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (20% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Segment avg PQR (prior quarter revenue per rep): $262K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers. Segment avg PCID: 117 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average. Current avg book (115) is above ideal \u2014 more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID. Opp pipeline plateaus around 100 accounts/rep \u2014 revenue per job peaks near this book size. Coverage (impact calls/account) peaks near 150 accounts/rep \u2014 books larger than this tend to see fewer touches per account. Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
     },
     {
       "segment": "NAM",
@@ -412,6 +475,7 @@
       "summary_status": "Under HC",
       "summary_primary": "Under headcount by 13 reps (49 current vs 62 ideal). Avg book 19 vs ideal 15 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
       "summary_bullets": [
+        "Optimal book for this segment is 15 accounts/rep (11-20 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (40% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
         "Book health: 19 reps flagged too big, 25 too little (uneven books across the team).",
         "PQR trend: Revenue is 33.2% above prior-quarter PQR (Hire signal from capacity model).",
         "SBS whitespace: 385,800 unassigned accounts in this country \u00d7 segment (~25,720 buildable books at ideal size).",
@@ -419,7 +483,17 @@
         "Market signals: opp pipeline plateaued, coverage ok.",
         "Recommended next step: Hire + build books from SBS."
       ],
-      "summary_narrative": "Under headcount by 13 reps (49 current vs 62 ideal). Avg book 19 vs ideal 15 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 19 reps flagged too big, 25 too little (uneven books across the team). PQR trend: Revenue is 33.2% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 385,800 unassigned accounts in this country \u00d7 segment (~25,720 buildable books at ideal size). Split-hire: Model suggests 20 new heads from 304 pooled PCIDs \u2014 Split-hire 20 new heads (304 PCIDs pooled) Market signals: opp pipeline plateaued, coverage ok. Recommended next step: Hire + build books from SBS."
+      "summary_narrative": "Under headcount by 13 reps (49 current vs 62 ideal). Avg book 19 vs ideal 15 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Optimal book for this segment is 15 accounts/rep (11-20 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (40% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Book health: 19 reps flagged too big, 25 too little (uneven books across the team). PQR trend: Revenue is 33.2% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 385,800 unassigned accounts in this country \u00d7 segment (~25,720 buildable books at ideal size). Split-hire: Model suggests 20 new heads from 304 pooled PCIDs \u2014 Split-hire 20 new heads (304 PCIDs pooled) Market signals: opp pipeline plateaued, coverage ok. Recommended next step: Hire + build books from SBS.",
+      "optimal_book_primary": "Optimal book for this segment is 15 accounts/rep (11-20 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (40% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
+      "optimal_book_bullets": [
+        "Segment avg PQR (prior quarter revenue per rep): $114K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers.",
+        "Segment avg PCID: 19 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average.",
+        "Current avg book (19) is above ideal \u2014 more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID.",
+        "Opp pipeline plateaus around 10 accounts/rep \u2014 revenue per job peaks near this book size.",
+        "Coverage (impact calls/account) peaks near 20 accounts/rep \u2014 books larger than this tend to see fewer touches per account.",
+        "Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
+      ],
+      "optimal_book_rationale": "Optimal book for this segment is 15 accounts/rep (11-20 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (40% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Segment avg PQR (prior quarter revenue per rep): $114K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers. Segment avg PCID: 19 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average. Current avg book (19) is above ideal \u2014 more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID. Opp pipeline plateaus around 10 accounts/rep \u2014 revenue per job peaks near this book size. Coverage (impact calls/account) peaks near 20 accounts/rep \u2014 books larger than this tend to see fewer touches per account. Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
     },
     {
       "segment": "NAM",
@@ -470,6 +544,7 @@
       "summary_status": "Under HC",
       "summary_primary": "Under headcount by 24 reps (59 current vs 83 ideal). Avg book 21 vs ideal 15 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring.",
       "summary_bullets": [
+        "Optimal book for this segment is 15 accounts/rep (11-20 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (40% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
         "Book health: 26 reps flagged too big, 27 too little (uneven books across the team).",
         "PQR trend: Revenue is 32.9% above prior-quarter PQR (Hire signal from capacity model).",
         "SBS whitespace: 157,800 unassigned accounts in this country \u00d7 segment (~10,520 buildable books at ideal size).",
@@ -477,7 +552,17 @@
         "Market signals: opp pipeline plateaued, coverage declining.",
         "Recommended next step: Hire + build books from SBS."
       ],
-      "summary_narrative": "Under headcount by 24 reps (59 current vs 83 ideal). Avg book 21 vs ideal 15 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Book health: 26 reps flagged too big, 27 too little (uneven books across the team). PQR trend: Revenue is 32.9% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 157,800 unassigned accounts in this country \u00d7 segment (~10,520 buildable books at ideal size). Split-hire: Model suggests 26 new heads from 394 pooled PCIDs \u2014 Split-hire 26 new heads (394 PCIDs pooled) Market signals: opp pipeline plateaued, coverage declining. Recommended next step: Hire + build books from SBS."
+      "summary_narrative": "Under headcount by 24 reps (59 current vs 83 ideal). Avg book 21 vs ideal 15 \u2014 headcount is short but existing books are already above ideal; prioritize split/redistribution before pure hiring. Optimal book for this segment is 15 accounts/rep (11-20 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (40% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Book health: 26 reps flagged too big, 27 too little (uneven books across the team). PQR trend: Revenue is 32.9% above prior-quarter PQR (Hire signal from capacity model). SBS whitespace: 157,800 unassigned accounts in this country \u00d7 segment (~10,520 buildable books at ideal size). Split-hire: Model suggests 26 new heads from 394 pooled PCIDs \u2014 Split-hire 26 new heads (394 PCIDs pooled) Market signals: opp pipeline plateaued, coverage declining. Recommended next step: Hire + build books from SBS.",
+      "optimal_book_primary": "Optimal book for this segment is 15 accounts/rep (11-20 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (40% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math.",
+      "optimal_book_bullets": [
+        "Segment avg PQR (prior quarter revenue per rep): $65K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers.",
+        "Segment avg PCID: 20 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average.",
+        "Current avg book (21) is above ideal \u2014 more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID.",
+        "Opp pipeline plateaus around 10 accounts/rep \u2014 revenue per job peaks near this book size.",
+        "Coverage (impact calls/account) peaks near 10 accounts/rep \u2014 books larger than this tend to see fewer touches per account.",
+        "Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
+      ],
+      "optimal_book_rationale": "Optimal book for this segment is 15 accounts/rep (11-20 band). We pick the largest book-size bucket where median revenue growth stays within 85% of the segment peak (40% in that band) and a bigger book no longer adds growth \u2014 that plateau is the data-driven target for headcount math. Segment avg PQR (prior quarter revenue per rep): $65K \u2014 the benchmark for whether a rep's book is revenue-heavy vs peers. Segment avg PCID: 20 accounts/rep \u2014 typical book size today; ideal PCID is the growth-optimal target, not the average. Current avg book (21) is above ideal \u2014 more accounts per rep can dilute coverage and drag growth; peel toward ideal PCID. Opp pipeline plateaus around 10 accounts/rep \u2014 revenue per job peaks near this book size. Coverage (impact calls/account) peaks near 10 accounts/rep \u2014 books larger than this tend to see fewer touches per account. Too big = PCID or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID. Split/peel actions use ideal PCID as the target."
     }
   ],
   "sbs_whitespace": [

@@ -68,6 +68,8 @@
       <div class="lookup-answer" id="lookup-answer"></div>
     </section>
 
+    <section class="panel" id="optimal-book-panel"></section>
+
     <section class="panel" id="book-health-panel"></section>
 
     <section class="panel" id="book-action-panel"></section>
@@ -175,12 +177,24 @@
         <h2>How to read this</h2>
         <ul class="notes">
           <li><strong>Ideal HC</strong> — assigned accounts ÷ ideal book size for that country × segment</li>
+          <li><strong>Ideal / optimal PCID</strong> — accounts per rep at the revenue-growth plateau (perfect book)</li>
+          <li><strong>Segment avg PQR</strong> — prior-quarter revenue per rep; benchmark for book weight</li>
           <li><strong>Hire</strong> — under-staffed vs model with positive growth in ideal book range</li>
           <li><strong>Optimize</strong> — over-staffed; consolidate/redistribute books before net-new hires</li>
           <li><strong>Hold</strong> — within ±10% of ideal HC</li>
           <li><strong>Do Not Hire</strong> — market growth ≤ 0 in ideal book range</li>
-          <li><strong>Segment</strong> — company size (S/M/L/XL), not sales segment (M/UMM/L/NAM); summaries use query 16 fields as-is</li>
+          <li><strong>Segment</strong> — GTM sales segment from team name (M, UMM, ACC, L, NAM, DCA)</li>
         </ul>
+        <details class="methodology-details">
+          <summary>Why these numbers? — PQR vs PCID methodology</summary>
+          <div class="methodology-body">
+            <p><strong>PCID</strong> (parent company IDs per rep) is book size — how many accounts a rep carries.</p>
+            <p><strong>PQR</strong> (prior-quarter revenue) is book weight — how much revenue those accounts generated in the prior 90 days.</p>
+            <p><strong>Optimal / perfect book</strong> — sql/16 buckets reps by PCID (1–10, 11–20, … up to 150). For each bucket we take median revenue growth (current 90d vs prior 90d). The <em>optimal</em> bucket is the largest size where growth stays within 85% of the segment peak and adding accounts no longer improves growth. That midpoint becomes <strong>ideal PCID</strong> for headcount: assigned accounts ÷ ideal PCID = ideal headcount.</p>
+            <p><strong>PQR vs PCID tradeoff</strong> — A rep can be “too big” with high PCID <em>or</em> high PQR vs segment averages if coverage (impact calls/account) drops below 90% of segment norm or current revenue falls below PQR. Larger books spread coverage thin; the model favors the growth-optimal PCID, not simply the highest account count.</p>
+            <p><strong>Supporting signals</strong> — Opp pipeline plateau (rev/job peaks at a book size) and coverage inflection (impact calls/account peak) are shown per market when selecting a country × segment.</p>
+          </div>
+        </details>
         <p class="caption refresh-note" id="refresh-note"></p>
       </div>
       <div class="panel">
@@ -200,6 +214,6 @@
     <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a></p>
   </footer>
 
-  <script src="app.js?v=20260728a"></script>
+  <script src="app.js?v=20260728b"></script>
 </body>
 </html>

@@ -85,6 +85,9 @@ MARKET_FIELD_LABELS: dict[str, str] = {
     "summary_primary": "Summary — why (plain English)",
     "summary_bullets": "Summary — supporting detail",
     "summary_narrative": "Summary — full narrative",
+    "optimal_book_primary": "Optimal book — why (plain English)",
+    "optimal_book_bullets": "Optimal book — supporting detail",
+    "optimal_book_rationale": "Optimal book — full rationale",
 }
 
 SUMMARY_FIELD_LABELS: dict[str, str] = {
@@ -94,6 +97,11 @@ SUMMARY_FIELD_LABELS: dict[str, str] = {
     "summary_status": "Status",
     "summary_primary": "Why (plain English)",
     "summary_bullets": "Supporting detail",
+    "optimal_book_primary": "Optimal book — why",
+    "optimal_book_rationale": "Optimal book — full rationale",
+    "ideal_pcid": "Ideal PCID",
+    "perfect_book_target": "Ideal book size",
+    "segment_avg_pqr": "Segment avg PQR ($)",
     "headcount_gap": "Headcount gap",
     "headcount_recommendation": "HC recommendation",
     "recommended_action": "Recommended action",
@@ -166,6 +174,8 @@ def market_row(market: dict) -> dict:
         enrich_market(row)
     if isinstance(row.get("summary_bullets"), list):
         row["summary_bullets"] = " · ".join(row["summary_bullets"])
+    if isinstance(row.get("optimal_book_bullets"), list):
+        row["optimal_book_bullets"] = " · ".join(row["optimal_book_bullets"])
     return row
 
 

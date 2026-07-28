@@ -407,6 +407,72 @@ tr.lookup-row td.sticky-col {
   color: #c8d8f0;
 }
 
+.optimal-book-stats {
+  margin-bottom: 14px;
+}
+
+.optimal-book-rationale {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+}
+
+.market-summary-badge.optimal {
+  background: var(--accent);
+  color: #0a1420;
+}
+
+.methodology-details {
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  padding: 0;
+}
+
+.methodology-details summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  list-style: none;
+}
+
+.methodology-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.methodology-details summary::before {
+  content: "▸ ";
+  color: var(--accent);
+}
+
+.methodology-details[open] summary::before {
+  content: "▾ ";
+}
+
+.methodology-body {
+  padding: 0 16px 14px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.methodology-body p {
+  margin: 0 0 10px;
+}
+
+.methodology-body p:last-child {
+  margin-bottom: 0;
+}
+
+.methodology-body strong {
+  color: var(--text);
+}
+
 .hidden {
   display: none !important;
 }
