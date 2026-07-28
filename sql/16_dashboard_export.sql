@@ -162,7 +162,7 @@ with_next AS (
   JOIN peak p ON b.segment = p.segment AND b.country = p.country
 ),
 
-perfect_book AS (
+perfect_book_strict AS (
   SELECT segment, country, book_bucket AS perfect_book_bucket,
     bucket_midpoint AS perfect_book_accounts, bucket_upper AS perfect_book_max,
     median_growth_pct AS perfect_book_growth_pct, rep_count AS reps_in_perfect_bucket
@@ -175,6 +175,126 @@ perfect_book AS (
       AND bucket_order <= 10
       AND rep_count >= 20
   ) WHERE rn = 1
+),
+
+peak_relaxed AS (
+  SELECT segment, country, MAX(median_growth_pct) AS peak_growth_pct
+  FROM bucket_growth WHERE bucket_order <= 10 AND rep_count >= 5 GROUP BY 1, 2
+),
+
+with_next_relaxed AS (
+  SELECT b.*, p.peak_growth_pct,
+    LEAD(b.median_growth_pct) OVER (PARTITION BY b.segment, b.country ORDER BY b.bucket_order) AS next_bucket_growth,
+    LEAD(b.bucket_order) OVER (PARTITION BY b.segment, b.country ORDER BY b.bucket_order) AS next_bucket_order
+  FROM bucket_growth b
+  JOIN peak_relaxed p ON b.segment = p.segment AND b.country = p.country
+),
+
+perfect_book_relaxed AS (
+  SELECT segment, country, book_bucket AS perfect_book_bucket,
+    bucket_midpoint AS perfect_book_accounts, bucket_upper AS perfect_book_max,
+    median_growth_pct AS perfect_book_growth_pct, rep_count AS reps_in_perfect_bucket
+  FROM (
+    SELECT *, ROW_NUMBER() OVER (PARTITION BY segment, country ORDER BY bucket_order DESC) AS rn
+    FROM with_next_relaxed
+    WHERE median_growth_pct >= peak_growth_pct * 0.85
+      AND (next_bucket_growth IS NULL OR next_bucket_growth <= median_growth_pct OR next_bucket_order IS NULL)
+      AND median_growth_pct > 0
+      AND bucket_order <= 10
+      AND rep_count >= 5
+  ) WHERE rn = 1
+),
+
+market_accounts AS (
+  SELECT
+    segment,
+    country,
+    SUM(accounts_per_rep) AS assigned_accounts,
+    COUNT(DISTINCT sales_rep_id) AS current_reps,
+    SUM(revenue_current) AS revenue_90d,
+    ROUND(SUM(revenue_prior), 0) AS market_pqr_90d,
+    ROUND(AVG(revenue_prior), 0) AS avg_pqr_per_rep,
+    ROUND(100.0 * (SUM(revenue_current) - SUM(revenue_prior)) / NULLIF(SUM(revenue_prior), 0), 1) AS rev_vs_pqr_pct
+  FROM rep_level
+  GROUP BY 1, 2
+),
+
+curve_combined AS (
+  SELECT
+    COALESCE(s.segment, r.segment) AS segment,
+    COALESCE(s.country, r.country) AS country,
+    COALESCE(s.perfect_book_bucket, r.perfect_book_bucket) AS perfect_book_bucket,
+    COALESCE(s.perfect_book_accounts, r.perfect_book_accounts) AS perfect_book_accounts,
+    COALESCE(s.perfect_book_max, r.perfect_book_max) AS perfect_book_max,
+    COALESCE(s.perfect_book_growth_pct, r.perfect_book_growth_pct) AS perfect_book_growth_pct,
+    COALESCE(s.reps_in_perfect_bucket, r.reps_in_perfect_bucket) AS reps_in_perfect_bucket,
+    CASE WHEN s.segment IS NOT NULL THEN 'curve_strict' ELSE 'curve_relaxed' END AS curve_source
+  FROM perfect_book_strict s
+  FULL OUTER JOIN perfect_book_relaxed r
+    ON s.segment = r.segment AND s.country = r.country
+),
+
+segment_median AS (
+  SELECT segment, country,
+    CAST(ROUND(APPROX_PERCENTILE(accounts_per_rep, 0.5), 0) AS BIGINT) AS median_pcid,
+    COUNT(DISTINCT sales_rep_id) AS rep_count
+  FROM rep_filtered
+  GROUP BY 1, 2
+),
+
+peer_ranked AS (
+  SELECT
+    need.segment,
+    need.country,
+    cc.perfect_book_accounts,
+    cc.perfect_book_bucket,
+    cc.perfect_book_max,
+    cc.perfect_book_growth_pct,
+    cc.reps_in_perfect_bucket,
+    cc.curve_source,
+    peer_ma.country AS peer_country,
+    ROW_NUMBER() OVER (
+      PARTITION BY need.segment, need.country
+      ORDER BY peer_ma.current_reps DESC
+    ) AS rn
+  FROM market_accounts need
+  LEFT JOIN curve_combined local_cc
+    ON need.segment = local_cc.segment AND need.country = local_cc.country
+  JOIN market_accounts peer_ma
+    ON peer_ma.segment = need.segment AND peer_ma.country <> need.country
+  JOIN curve_combined cc
+    ON cc.segment = peer_ma.segment AND cc.country = peer_ma.country
+  WHERE local_cc.segment IS NULL
+),
+
+peer_ideal AS (
+  SELECT segment, country, perfect_book_accounts, perfect_book_bucket, perfect_book_max,
+    perfect_book_growth_pct, reps_in_perfect_bucket, curve_source, peer_country
+  FROM peer_ranked WHERE rn = 1
+),
+
+perfect_book AS (
+  SELECT
+    ma.segment,
+    ma.country,
+    COALESCE(
+      cc.perfect_book_bucket,
+      pi.perfect_book_bucket,
+      CONCAT('median: ', CAST(sm.median_pcid AS VARCHAR))
+    ) AS perfect_book_bucket,
+    COALESCE(cc.perfect_book_accounts, pi.perfect_book_accounts, sm.median_pcid) AS perfect_book_accounts,
+    COALESCE(cc.perfect_book_max, pi.perfect_book_max, sm.median_pcid) AS perfect_book_max,
+    COALESCE(cc.perfect_book_growth_pct, pi.perfect_book_growth_pct, 0.0) AS perfect_book_growth_pct,
+    COALESCE(cc.reps_in_perfect_bucket, pi.reps_in_perfect_bucket, sm.rep_count) AS reps_in_perfect_bucket,
+    CASE
+      WHEN cc.segment IS NOT NULL THEN cc.curve_source
+      WHEN pi.segment IS NOT NULL THEN CONCAT('peer_segment:', pi.peer_country)
+      ELSE 'segment_median'
+    END AS perfect_book_source
+  FROM market_accounts ma
+  LEFT JOIN curve_combined cc ON ma.segment = cc.segment AND ma.country = cc.country
+  LEFT JOIN peer_ideal pi ON ma.segment = pi.segment AND ma.country = pi.country
+  LEFT JOIN segment_median sm ON ma.segment = sm.segment AND ma.country = sm.country
 ),
 
 -- Opp pipeline plateau (sql/13 logic)
@@ -253,20 +373,6 @@ market_coverage AS (
   GROUP BY 1, 2
 ),
 
-market_accounts AS (
-  SELECT
-    segment,
-    country,
-    SUM(accounts_per_rep) AS assigned_accounts,
-    COUNT(DISTINCT sales_rep_id) AS current_reps,
-    SUM(revenue_current) AS revenue_90d,
-    ROUND(SUM(revenue_prior), 0) AS market_pqr_90d,
-    ROUND(AVG(revenue_prior), 0) AS avg_pqr_per_rep,
-    ROUND(100.0 * (SUM(revenue_current) - SUM(revenue_prior)) / NULLIF(SUM(revenue_prior), 0), 1) AS rev_vs_pqr_pct
-  FROM rep_level
-  GROUP BY 1, 2
-),
-
 segment_benchmarks AS (
   SELECT
     segment,
@@ -311,7 +417,7 @@ rep_book_flags AS (
     GREATEST(0, pb.perfect_book_accounts - rf.accounts_per_rep) AS grow_slots
   FROM rep_filtered rf
   JOIN segment_benchmarks sb ON rf.segment = sb.segment AND rf.country = sb.country
-  JOIN perfect_book pb ON rf.segment = pb.segment AND rf.country = pb.country
+  INNER JOIN perfect_book pb ON rf.segment = pb.segment AND rf.country = pb.country
 ),
 
 market_book_health AS (
@@ -384,6 +490,7 @@ base AS (
     pb.perfect_book_accounts AS perfect_book_target,
     pb.perfect_book_max AS perfect_book_ceiling,
     pb.perfect_book_growth_pct,
+    pb.perfect_book_source,
     ma.assigned_accounts,
     ma.current_reps,
     ROUND(ma.assigned_accounts * 1.0 / NULLIF(ma.current_reps, 0), 0) AS current_avg_book,

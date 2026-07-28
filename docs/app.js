@@ -3,7 +3,7 @@ let bookHealth = null;
 let config = { refresh_api: null, live_refresh: false };
 let segmentFilter = "all";
 let recFilter = "all";
-let regionFilter = "amer";
+let regionFilter = "global";
 let hideJapan = true;
 let sortBy = "ideal_hc";
 let lookupCountry = "US";
@@ -227,7 +227,7 @@ function renderMeta() {
       ? ` · Page loaded ${formatPageReloadTime(lastLoadedAt)}`
       : "";
   const live = config.live_refresh ? " · Live warehouse refresh on" : "";
-  const region = regionFilter === "amer" ? " · AMER focus" : " · Global";
+  const region = regionFilter === "amer" ? " · AMER focus" : " · All markets";
   el.textContent =
     `Ideal headcount by country × segment · ${payload.window} · Data snapshot ${payload.updated_at}${region}${timing}${live} · ${filteredMarkets().length} markets shown`;
   document.getElementById("refresh-note").textContent = config.refresh_api
@@ -238,20 +238,20 @@ function renderMeta() {
 }
 
 function renderHeadline() {
+  /* removed — lookup panel is the primary narrative */
+}
+
+function renderKpis() {
   const markets = filteredMarkets();
-  const hire = markets.filter((m) => m.headcount_recommendation === "Hire");
-  const optimize = markets.filter((m) => m.headcount_recommendation === "Optimize");
-  const lookup = findLookupMarket();
-  const lookupLine = lookup
-    ? `<strong>${lookup.country}-${lookup.segment} ideal HC:</strong> ${fmtNum(lookup.optimal_headcount)} reps ` +
-      `(ideal book ${fmtNum(lookup.perfect_book_target)}, current ${fmtNum(lookup.current_reps)}, gap ${lookup.headcount_gap > 0 ? "+" : ""}${fmtNum(lookup.headcount_gap)} ${lookup.headcount_recommendation}). `
-    : "";
-  document.getElementById("headline").innerHTML =
-    lookupLine +
-    `<strong>Filtered view:</strong> ${optimize.length} markets Optimize vs ${hire.length} Hire.` +
-    (hire.length
-      ? ` <strong>Hire:</strong> ${hire.slice(0, 5).map((m) => `${m.country}-${m.segment}`).join(", ")}${hire.length > 5 ? "…" : ""}.`
-      : "");
+  const hire = markets.filter((m) => m.headcount_recommendation === "Hire").length;
+  const optimize = markets.filter((m) => m.headcount_recommendation === "Optimize").length;
+  const idealTotal = markets.reduce((s, m) => s + (m.optimal_headcount || 0), 0);
+  document.getElementById("kpis").innerHTML = `
+    <div class="kpi"><div class="kpi-value">${markets.length}</div><div class="kpi-label">Markets shown</div></div>
+    <div class="kpi hire"><div class="kpi-value">${hire}</div><div class="kpi-label">Hire</div></div>
+    <div class="kpi optimize"><div class="kpi-value">${optimize}</div><div class="kpi-label">Optimize</div></div>
+    <div class="kpi"><div class="kpi-value">${fmtNum(idealTotal)}</div><div class="kpi-label">Ideal HC (filtered)</div></div>
+  `;
 }
 
 function allMarketsForLookup() {
@@ -796,28 +796,12 @@ function renderFlaggedRepsTable(key, bh) {
     .join("");
 }
 
-function renderKpis() {
-  const markets = filteredMarkets();
-  const lookup = findLookupMarket();
-  const hire = markets.filter((m) => m.headcount_recommendation === "Hire");
-  const over = markets.reduce((s, m) => s + Math.max(0, m.headcount_gap), 0);
-  const idealTotal = markets.reduce((s, m) => s + (m.optimal_headcount || 0), 0);
-  const currentTotal = markets.reduce((s, m) => s + (m.current_reps || 0), 0);
-  document.getElementById("kpis").innerHTML = `
-    <div class="kpi primary"><div class="kpi-value">${lookup ? fmtNum(lookup.optimal_headcount) : "—"}</div><div class="kpi-label">${lookup ? `${lookup.country}-${lookup.segment} ideal HC` : "Lookup ideal HC"}</div></div>
-    <div class="kpi"><div class="kpi-value">${fmtNum(idealTotal)}</div><div class="kpi-label">Ideal HC (filtered total)</div></div>
-    <div class="kpi"><div class="kpi-value">${fmtNum(currentTotal)}</div><div class="kpi-label">Current reps (filtered)</div></div>
-    <div class="kpi hire"><div class="kpi-value">${hire.length}</div><div class="kpi-label">Hire markets</div></div>
-    <div class="kpi optimize"><div class="kpi-value">+${fmtNum(over)}</div><div class="kpi-label">Over-staffed reps</div></div>
-  `;
-}
-
 function renderFilters() {
   const segments = ["all", "M", "UMM", "ACC", "L", "NAM", "DCA", "ISDCA", "NAMDCA"];
   const recs = ["all", "Hire", "Hold", "Optimize", "Do Not Hire"];
   const regions = [
+    { id: "global", label: "All markets" },
     { id: "amer", label: "AMER focus" },
-    { id: "global", label: "Global" },
   ];
   document.getElementById("region-filters").innerHTML = regions
     .map(
@@ -895,20 +879,17 @@ function renderTable() {
       const isLookupRow =
         m.country === lookupCountry && m.segment === lookupSegment;
       const hcStatus = m.summary_status || "—";
-      const hcReason = buildHcReason(m);
       const sbsFlag = sbsOppLabel(m);
       const hcClass = hcStatusClass(hcStatus).replace("summary-", "");
       return `<tr${isLookupRow ? ' class="lookup-row"' : ""}>
         <td class="sticky-col">${m.country}-${m.segment}</td>
         <td><span class="hc-verdict hc-verdict-${hcClass}">${hcStatus}</span></td>
-        <td class="narrative-cell" title="${hcReason.primary || ""}">${truncateText(hcReason.primary, 160)}</td>
-        <td class="sbs-opp-cell${buildSbsRouting(m).hasOpp ? " sbs-opp-yes" : ""}">${sbsFlag}</td>
         <td class="num highlight-col"><strong>${fmtNum(m.optimal_headcount)}</strong></td>
         <td class="num">${fmtNum(m.current_reps)}</td>
         <td class="num">${gapStr}</td>
         <td><span class="rec rec-${m.headcount_recommendation.replace(/ /g, "\\ ")}">${m.headcount_recommendation}</span></td>
         <td class="num">${fmtNum(m.current_avg_book)} / ${fmtNum(idealPcid(m))}</td>
-        <td class="action-cell">${truncateText(m.recommendation_primary || m.recommended_action || "—", 80)}</td>
+        <td class="sbs-opp-cell${buildSbsRouting(m).hasOpp ? " sbs-opp-yes" : ""}">${sbsFlag}</td>
       </tr>`;
     })
     .join("");
@@ -1111,13 +1092,20 @@ function bindEvents() {
     recFilter = btn.dataset.rec;
     renderAll();
   });
+  document.querySelectorAll(".dash-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const id = tab.dataset.tab;
+      document.querySelectorAll(".dash-tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === id));
+      document.getElementById("tab-markets").classList.toggle("hidden", id !== "markets");
+      document.getElementById("tab-markets").classList.toggle("active", id === "markets");
+      document.getElementById("tab-methodology").classList.toggle("hidden", id !== "methodology");
+      document.getElementById("tab-methodology").classList.toggle("active", id === "methodology");
+    });
+  });
 }
 
 function renderCharts() {
   renderGapChart();
-  renderBookScoreChart();
-  renderRecChart();
-  renderSbsChart();
   const lookup = findLookupMarket();
   if (lookup) renderGrowthChart(lookup);
 }

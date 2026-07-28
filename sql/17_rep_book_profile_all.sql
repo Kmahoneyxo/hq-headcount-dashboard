@@ -122,7 +122,7 @@ with_next AS (
   JOIN peak p ON b.segment = p.segment AND b.country = p.country
 ),
 
-perfect_book AS (
+perfect_book_strict AS (
   SELECT segment, country, bucket_midpoint AS ideal_pcid
   FROM (
     SELECT *, ROW_NUMBER() OVER (PARTITION BY segment, country ORDER BY bucket_order DESC) AS rn
@@ -131,6 +131,87 @@ perfect_book AS (
       AND (next_bucket_growth IS NULL OR next_bucket_growth <= median_growth_pct OR next_bucket_order IS NULL)
       AND median_growth_pct > 0 AND bucket_order <= 10 AND rep_count >= 20
   ) WHERE rn = 1
+),
+
+peak_relaxed AS (
+  SELECT segment, country, MAX(median_growth_pct) AS peak_growth_pct
+  FROM bucket_growth WHERE bucket_order <= 10 AND rep_count >= 5 GROUP BY 1, 2
+),
+
+with_next_relaxed AS (
+  SELECT b.*, p.peak_growth_pct,
+    LEAD(b.median_growth_pct) OVER (PARTITION BY b.segment, b.country ORDER BY b.bucket_order) AS next_bucket_growth,
+    LEAD(b.bucket_order) OVER (PARTITION BY b.segment, b.country ORDER BY b.bucket_order) AS next_bucket_order
+  FROM bucket_growth b
+  JOIN peak_relaxed p ON b.segment = p.segment AND b.country = p.country
+),
+
+perfect_book_relaxed AS (
+  SELECT segment, country, bucket_midpoint AS ideal_pcid
+  FROM (
+    SELECT *, ROW_NUMBER() OVER (PARTITION BY segment, country ORDER BY bucket_order DESC) AS rn
+    FROM with_next_relaxed
+    WHERE median_growth_pct >= peak_growth_pct * 0.85
+      AND (next_bucket_growth IS NULL OR next_bucket_growth <= median_growth_pct OR next_bucket_order IS NULL)
+      AND median_growth_pct > 0 AND bucket_order <= 10 AND rep_count >= 5
+  ) WHERE rn = 1
+),
+
+market_accounts AS (
+  SELECT segment, country, COUNT(DISTINCT sales_rep_id) AS current_reps
+  FROM rep_level
+  GROUP BY 1, 2
+),
+
+curve_combined AS (
+  SELECT
+    COALESCE(s.segment, r.segment) AS segment,
+    COALESCE(s.country, r.country) AS country,
+    COALESCE(s.ideal_pcid, r.ideal_pcid) AS ideal_pcid
+  FROM perfect_book_strict s
+  FULL OUTER JOIN perfect_book_relaxed r
+    ON s.segment = r.segment AND s.country = r.country
+),
+
+segment_median AS (
+  SELECT segment, country,
+    CAST(ROUND(APPROX_PERCENTILE(pcid_count, 0.5), 0) AS BIGINT) AS ideal_pcid
+  FROM rep_base
+  GROUP BY 1, 2
+),
+
+peer_ranked AS (
+  SELECT
+    need.segment,
+    need.country,
+    cc.ideal_pcid,
+    ROW_NUMBER() OVER (
+      PARTITION BY need.segment, need.country
+      ORDER BY peer_ma.current_reps DESC
+    ) AS rn
+  FROM market_accounts need
+  LEFT JOIN curve_combined local_cc
+    ON need.segment = local_cc.segment AND need.country = local_cc.country
+  JOIN market_accounts peer_ma
+    ON peer_ma.segment = need.segment AND peer_ma.country <> need.country
+  JOIN curve_combined cc
+    ON cc.segment = peer_ma.segment AND cc.country = peer_ma.country
+  WHERE local_cc.segment IS NULL
+),
+
+peer_ideal AS (
+  SELECT segment, country, ideal_pcid FROM peer_ranked WHERE rn = 1
+),
+
+perfect_book AS (
+  SELECT
+    ma.segment,
+    ma.country,
+    COALESCE(cc.ideal_pcid, pi.ideal_pcid, sm.ideal_pcid) AS ideal_pcid
+  FROM market_accounts ma
+  LEFT JOIN curve_combined cc ON ma.segment = cc.segment AND ma.country = cc.country
+  LEFT JOIN peer_ideal pi ON ma.segment = pi.segment AND ma.country = pi.country
+  LEFT JOIN segment_median sm ON ma.segment = sm.segment AND ma.country = sm.country
 ),
 
 rep_book AS (

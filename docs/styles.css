@@ -162,6 +162,62 @@ h2 {
 }
 
 .preview-banner {
+  display: none;
+}
+
+.dash-tabs {
+  display: flex;
+  gap: 4px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dash-tab {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+}
+
+.dash-tab:hover {
+  color: var(--text);
+}
+
+.dash-tab.active {
+  color: var(--text);
+  background: var(--surface-2);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.tab-panel.hidden {
+  display: none;
+}
+
+.methodology-panel {
+  max-width: 900px;
+}
+
+.kpi-grid-compact {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.charts-grid-compact {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 768px) {
+  .kpi-grid-compact {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.preview-banner-legacy {
   background: #2a1f14;
   border: 1px solid var(--optimize);
   border-left: 4px solid var(--optimize);

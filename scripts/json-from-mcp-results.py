@@ -183,6 +183,18 @@ def main() -> None:
     if us_segments:
         print("US segments:", ", ".join(f"{k}={v} reps" for k, v in sorted(us_segments.items())))
 
+    # Add markets present in rep_book/book_health but dropped by perfect_book inner join
+    enrich_script = ROOT / "scripts" / "enrich-missing-markets.py"
+    if enrich_script.is_file():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("enrich_missing", enrich_script)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        added = mod.enrich_missing_markets(payload)
+        if added:
+            OUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+            print(f"Added {added} missing market(s) via enrich-missing-markets.py → {len(payload['markets'])} total")
+
     import subprocess
     export_script = ROOT / "scripts" / "export-dashboard-data.py"
     if export_script.is_file():

@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-27",
+  "updated_at": "2026-07-28",
   "window": "90d ending 2026-07-25 (20260427\u201320260725 vs prior 20260128\u201320260426)",
   "query": "sql/16_dashboard_export.sql",
   "amer_markets": [
@@ -1159,6 +1159,174 @@
         "Optimal book 15 PCIDs \u2014 largest bucket within 85% of peak growth (40%).",
         "Above ~10 accounts/rep, growth tends to fall (from 40% toward 40%).",
         "Coverage inflection at ~10 PCIDs \u2014 avg book (21) exceeds this; impact calls/account drop."
+      ]
+    },
+    {
+      "country": "BNL",
+      "segment": "NAM",
+      "assigned_accounts": 538,
+      "current_reps": 32,
+      "current_avg_book": 17,
+      "revenue_90d": 2666791.6,
+      "market_pqr_90d": 1565889.0,
+      "avg_pqr_per_rep": 48934,
+      "ideal_pcid": 15,
+      "perfect_book_target": 15,
+      "segment_avg_pcid": 16.8,
+      "segment_avg_pqr": 48934,
+      "median_impact_calls_per_account": 0.0,
+      "reps_too_big": 11,
+      "reps_too_little": 22,
+      "splittable_pool": 61,
+      "total_grow_slots": 61,
+      "median_pcid": 13,
+      "perfect_book_ceiling": 15,
+      "perfect_book_source": "rep_book",
+      "optimal_headcount": 36,
+      "optimal_headcount_assigned": 36,
+      "headcount_gap": -4,
+      "headcount_recommendation": "Do Not Hire",
+      "recommended_action": "On track",
+      "books_buildable_from_sbs": 0,
+      "summary_status": "At target",
+      "summary_primary": "HC at target \u2014 32 reps vs 36 ideal (assigned accounts \u00f7 ideal PCID of 15).",
+      "summary_bullets": [
+        "Peel 11 overweight reps toward ideal PCID 15 (61 PCIDs in pool)."
+      ],
+      "summary_narrative": "Avg 17 PCIDs/rep vs ideal 15 (segment avg 17). PQR $49K vs segment $49K. 11 too big (34%), 22 too little (69%). Impact coverage 0 calls/account (\u2014). Books overweight vs ideal. A healthy book in BNL-NAM means a rep's book is near the growth-optimal size (ideal PCID 15), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow. 4 of 32 reps (12.5%) meet this definition in the current snapshot. HC at target \u2014 32 reps vs 36 ideal (assigned accounts \u00f7 ideal PCID of 15). Do Not Hire. No SBS whitespace in this country.",
+      "book_health_status": "Overweight",
+      "health_primary": "Avg 17 PCIDs/rep vs ideal 15 (segment avg 17). PQR $49K vs segment $49K. 11 too big (34%), 22 too little (69%). Impact coverage 0 calls/account (\u2014). Books overweight vs ideal.",
+      "health_bullets": [
+        "Healthy books: 4 of 32 reps (12.5%) not flagged too big or too little."
+      ],
+      "hc_reason_primary": "HC at target \u2014 32 reps vs 36 ideal (assigned accounts \u00f7 ideal PCID of 15).",
+      "hc_reason_driver": "at_target",
+      "sbs_has_opportunity": false,
+      "sbs_opportunity_primary": "No SBS whitespace in this country.",
+      "sbs_opportunity_bullets": [],
+      "sbs_routing_primary": "",
+      "sbs_routing_bullets": [],
+      "recommendation_primary": "Do Not Hire.",
+      "recommendation_bullets": [
+        "Peel 11 overweight reps toward ideal PCID 15 (61 PCIDs in pool)."
+      ],
+      "optimal_book_primary": "Ideal PCID 15 (up to 15 band) \u2014 largest book-size bucket where median revenue growth stays within 85% of segment peak (positive in that band).",
+      "optimal_book_bullets": [],
+      "optimal_book_rationale": "Ideal PCID 15 (up to 15 band) \u2014 largest book-size bucket where median revenue growth stays within 85% of segment peak (positive in that band).",
+      "healthy_book_thresholds": {
+        "ideal_pcid": 15,
+        "pcid_band_low": 14,
+        "pcid_band_high": 16,
+        "segment_avg_pqr": 48934,
+        "coverage_benchmark": 0.0
+      },
+      "healthy_book_criteria": [
+        "PCID within \u00b110% of ideal (14\u201316 at ideal 15) \u2014 and not below ideal (15), which flags too_little",
+        "PQR (prior-quarter revenue) at or above segment benchmark ($49K)",
+        "Impact coverage at or above 90% of segment average (\u2265 0.0 calls/account when segment median is 0)",
+        "Current revenue at or above prior-quarter PQR (no revenue-decline signal)",
+        "Not flagged too_big or too_little (sql/16\u201317 book health flags)",
+        "Too big = PCID (17 segment avg) or PQR above segment avg plus weak coverage or revenue below PQR; too little = below ideal PCID"
+      ],
+      "healthy_book_definition": "A healthy book in BNL-NAM means a rep's book is near the growth-optimal size (ideal PCID 15), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow. 4 of 32 reps (12.5%) meet this definition in the current snapshot.",
+      "healthy_book_primary": "A healthy book in BNL-NAM means a rep's book is near the growth-optimal size (ideal PCID 15), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow.",
+      "reps_scored": 32,
+      "reps_healthy": 4,
+      "pct_reps_healthy": 12.5,
+      "growth_by_bucket": [
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 24,
+          "median_growth_pct": 0.173
+        }
+      ],
+      "growth_peak_accounts": 15,
+      "growth_peak_pct": 0.173,
+      "growth_decline_above_pcid": 15,
+      "growth_decline_median_pct": 0.173,
+      "growth_curve_primary": "Growth peaks at ~15 accounts/rep (17% median quarterly growth); growth declines above ~15 PCIDs (toward 17%); this market averages 17 PCIDs/rep vs ideal 15.",
+      "growth_curve_bullets": [
+        "Peak median growth 17% at ~15 accounts/rep (11-20 band).",
+        "Above ~15 accounts/rep, growth tends to fall (from 17% toward 17%).",
+        "11 reps flagged too big \u2014 PCID/PQR above segment avg plus weak coverage or revenue below PQR."
+      ]
+    },
+    {
+      "country": "US",
+      "segment": "ACC",
+      "reps_too_big": 1,
+      "reps_too_little": 0,
+      "splittable_pool": 772,
+      "ideal_pcid": 90,
+      "perfect_book_target": 90,
+      "segment_avg_pcid": null,
+      "segment_avg_pqr": null,
+      "current_reps": 1,
+      "assigned_accounts": 862,
+      "current_avg_book": 862,
+      "perfect_book_ceiling": 90,
+      "perfect_book_source": "book_health",
+      "revenue_90d": 0,
+      "sbs_whitespace_country": 1908879,
+      "sbs_whitespace": 1908879,
+      "sbs_revenue_90d": 684178605.0,
+      "optimal_headcount": 10,
+      "optimal_headcount_assigned": 10,
+      "headcount_gap": -9,
+      "headcount_recommendation": "Do Not Hire",
+      "recommended_action": "On track",
+      "books_buildable_from_sbs": 21209,
+      "summary_status": "At target",
+      "summary_primary": "HC at target \u2014 1 reps vs 10 ideal (assigned accounts \u00f7 ideal PCID of 90).",
+      "summary_bullets": [
+        "Peel 1 overweight reps toward ideal PCID 90 (772 PCIDs in pool)."
+      ],
+      "summary_narrative": "Avg 862 PCIDs/rep vs ideal 90. 1 too big (100%), 0 too little (0%). Books overweight vs ideal. A healthy book in US-ACC means a rep's book is near the growth-optimal size (ideal PCID 90), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow. HC at target \u2014 1 reps vs 10 ideal (assigned accounts \u00f7 ideal PCID of 90). Do Not Hire. Assign SBS accounts to: Route 1st: L \u2014 underweight books (39 vs ideal 58), 3,891 grow slots, segment PQR $415K, $12/job at opp plateau; Route 2nd: DCA \u2014 underweight books (99 vs ideal 138), 3,511 grow slots, segment PQR $413K; Route 3rd: NAM \u2014 107 grow slots, under HC by 520, segment PQR $249K, $12/job at opp plateau.",
+      "book_health_status": "Overweight",
+      "health_primary": "Avg 862 PCIDs/rep vs ideal 90. 1 too big (100%), 0 too little (0%). Books overweight vs ideal.",
+      "health_bullets": [],
+      "hc_reason_primary": "HC at target \u2014 1 reps vs 10 ideal (assigned accounts \u00f7 ideal PCID of 90).",
+      "hc_reason_driver": "at_target",
+      "sbs_has_opportunity": true,
+      "sbs_opportunity_primary": "SBS opportunity: 1,908,879 unassigned accounts ($684.2M 90d revenue) \u2014 ~21,209 books at ideal PCID (90).",
+      "sbs_opportunity_bullets": [
+        "SBS is country-level (unassigned accounts have no segment); routing uses PQR, ideal PCID, grow slots, HC gap, and rev/job at opp plateau."
+      ],
+      "sbs_routing_primary": "Assign SBS accounts to: Route 1st: L \u2014 underweight books (39 vs ideal 58), 3,891 grow slots, segment PQR $415K, $12/job at opp plateau; Route 2nd: DCA \u2014 underweight books (99 vs ideal 138), 3,511 grow slots, segment PQR $413K; Route 3rd: NAM \u2014 107 grow slots, under HC by 520, segment PQR $249K, $12/job at opp plateau.",
+      "sbs_routing_bullets": [
+        "SBS is country-level (unassigned accounts have no segment); routing uses PQR, ideal PCID, grow slots, HC gap, and rev/job at opp plateau."
+      ],
+      "recommendation_primary": "Do Not Hire.",
+      "recommendation_bullets": [
+        "Peel 1 overweight reps toward ideal PCID 90 (772 PCIDs in pool)."
+      ],
+      "optimal_book_primary": "Ideal PCID 90 (up to 90 band) \u2014 largest book-size bucket where median revenue growth stays within 85% of segment peak (positive in that band).",
+      "optimal_book_bullets": [],
+      "optimal_book_rationale": "Ideal PCID 90 (up to 90 band) \u2014 largest book-size bucket where median revenue growth stays within 85% of segment peak (positive in that band).",
+      "healthy_book_thresholds": {
+        "ideal_pcid": 90,
+        "pcid_band_low": 81,
+        "pcid_band_high": 99
+      },
+      "healthy_book_criteria": [
+        "PCID within \u00b110% of ideal (81\u201399 at ideal 90) \u2014 and not below ideal (90), which flags too_little",
+        "Impact coverage at or above 90% of segment average (impact calls per assigned account, 90d)",
+        "Current revenue at or above prior-quarter PQR (no revenue-decline signal)",
+        "Not flagged too_big or too_little (sql/16\u201317 book health flags)"
+      ],
+      "healthy_book_definition": "A healthy book in US-ACC means a rep's book is near the growth-optimal size (ideal PCID 90), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow.",
+      "healthy_book_primary": "A healthy book in US-ACC means a rep's book is near the growth-optimal size (ideal PCID 90), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow.",
+      "growth_by_bucket": [],
+      "growth_peak_accounts": 90,
+      "growth_peak_pct": null,
+      "growth_decline_above_pcid": 90,
+      "growth_decline_median_pct": null,
+      "growth_curve_primary": "growth declines above ~90 PCIDs (toward lower rates); this market averages 862 PCIDs/rep vs ideal 90.",
+      "growth_curve_bullets": [
+        "1 reps flagged too big \u2014 PCID/PQR above segment avg plus weak coverage or revenue below PQR."
       ]
     }
   ],

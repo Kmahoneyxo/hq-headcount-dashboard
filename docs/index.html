@@ -16,196 +16,152 @@
       <div class="header-actions">
         <label class="toggle">
           <input type="checkbox" id="hide-jp" checked />
-          Hide Japan (out of scope)
+          Hide Japan
         </label>
-        <a href="./data/headcount-dashboard.xlsx" class="btn btn-secondary" download title="Markets + rep book (all reps) + flagged reps + SBS">Download Excel (full data)</a>
-        <a href="./data/headcount-dashboard-rep-book.csv" class="btn btn-secondary" download title="One row per rep — audit trail from market rollup">Download CSV (rep book)</a>
-        <a href="./data/headcount-dashboard.csv" class="btn btn-secondary" download>Download CSV (markets)</a>
-        <button
-          type="button"
-          id="refresh-btn"
-          class="btn"
-          title="Re-fetch published JSON from GitHub Pages (use after git push). Does not run Quest or query the warehouse."
-        >
+        <a href="./data/headcount-dashboard.xlsx" class="btn btn-secondary" download>Excel</a>
+        <a href="./data/headcount-dashboard.csv" class="btn btn-secondary" download>CSV</a>
+        <button type="button" id="refresh-btn" class="btn" title="Re-fetch published JSON (after git push)">
           <span id="refresh-label">Reload snapshot</span>
         </button>
       </div>
     </div>
+    <nav class="dash-tabs" aria-label="Dashboard sections">
+      <button type="button" class="dash-tab active" data-tab="markets">Markets</button>
+      <button type="button" class="dash-tab" data-tab="methodology">Methodology</button>
+    </nav>
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
   </header>
 
   <main class="container">
-    <div class="preview-banner" role="alert">
-      <strong>SQL v2</strong> — segment = GTM sales segment from team name (M, UMM, ACC, L, NAM, DCA). One rep per segment row; safe to sum within a market. SBS is country-level only.
+    <div id="tab-markets" class="tab-panel active">
+      <section class="lookup-panel" id="lookup-panel">
+        <div class="lookup-header">
+          <div>
+            <h2>Market lookup</h2>
+            <p class="caption">Country × segment → book health · HC reason · recommendations · SBS routing</p>
+          </div>
+        </div>
+        <div class="lookup-controls">
+          <label class="lookup-field">
+            <span>Country</span>
+            <select id="lookup-country" class="select"></select>
+          </label>
+          <label class="lookup-field">
+            <span>Segment</span>
+            <select id="lookup-segment" class="select">
+              <option value="M" selected>M</option>
+              <option value="UMM">UMM</option>
+              <option value="ACC">ACC</option>
+              <option value="L">L</option>
+              <option value="NAM">NAM</option>
+              <option value="DCA">DCA</option>
+              <option value="ISDCA">ISDCA</option>
+              <option value="NAMDCA">NAMDCA</option>
+            </select>
+          </label>
+        </div>
+        <div class="lookup-answer" id="lookup-answer"></div>
+      </section>
+
+      <section class="panel hidden" id="flagged-reps-wrap">
+        <h2>Flagged reps</h2>
+        <p class="caption">Too big / too little · top 25 · full rep book in Excel export</p>
+        <div class="table-wrap table-wrap-sm">
+          <table>
+            <thead>
+              <tr>
+                <th>Rep ID</th>
+                <th class="num">PCIDs</th>
+                <th class="num">PQR</th>
+                <th class="num">Ideal</th>
+                <th>Flag</th>
+                <th class="num">Peel</th>
+                <th class="num">Grow</th>
+              </tr>
+            </thead>
+            <tbody id="flagged-reps-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="kpi-grid kpi-grid-compact" id="kpis"></section>
+
+      <section class="filters">
+        <div class="filter-group" id="region-filters"></div>
+        <div class="filter-group" id="segment-filters"></div>
+        <div class="filter-group" id="rec-filters"></div>
+        <select id="sort-by" class="select">
+          <option value="ideal_hc">Sort: ideal HC</option>
+          <option value="gap">Sort: gap</option>
+          <option value="revenue">Sort: revenue</option>
+        </select>
+      </section>
+
+      <section class="panel">
+        <h2>All markets</h2>
+        <p class="caption">HC verdict · gap · recommendation · avg vs ideal PCID</p>
+        <div class="table-wrap">
+          <table id="market-table">
+            <thead>
+              <tr>
+                <th class="sticky-col">Market</th>
+                <th>HC</th>
+                <th class="num highlight-col">Ideal HC</th>
+                <th class="num">Reps</th>
+                <th class="num">Gap</th>
+                <th>Rec</th>
+                <th class="num">Avg / ideal PCID</th>
+                <th>SBS</th>
+              </tr>
+            </thead>
+            <tbody id="market-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="charts-grid charts-grid-compact">
+        <div class="panel">
+          <h2>Headcount gap</h2>
+          <p class="caption">Top markets by |gap| · positive = over-staffed</p>
+          <div class="chart-panel">
+            <canvas id="gap-chart"></canvas>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <section class="lookup-panel" id="lookup-panel">
-      <div class="lookup-header">
-        <div>
-          <h2>Market lookup</h2>
-          <p class="caption">Country × segment → book health, HC reason, recommendations, SBS routing</p>
-        </div>
-      </div>
-      <div class="lookup-controls">
-        <label class="lookup-field">
-          <span>Country</span>
-          <select id="lookup-country" class="select"></select>
-        </label>
-        <label class="lookup-field">
-          <span>Segment</span>
-          <select id="lookup-segment" class="select">
-            <option value="M" selected>M</option>
-            <option value="UMM">UMM</option>
-            <option value="ACC">ACC</option>
-            <option value="L">L</option>
-            <option value="NAM">NAM</option>
-            <option value="DCA">DCA</option>
-            <option value="ISDCA">ISDCA</option>
-            <option value="NAMDCA">NAMDCA</option>
-          </select>
-        </label>
-      </div>
-      <div class="lookup-answer" id="lookup-answer"></div>
-    </section>
-
-    <section class="panel hidden" id="flagged-reps-wrap">
-      <h2>Flagged reps (too big / too little)</h2>
-      <p class="caption">From sql/17 · top 25 by peel/grow slots · full rep book in Excel/CSV export</p>
-      <div class="table-wrap table-wrap-sm">
-        <table>
-          <thead>
-            <tr>
-              <th>Rep ID</th>
-              <th class="num">PCIDs</th>
-              <th class="num">PQR</th>
-              <th class="num">Ideal PCID</th>
-              <th>Flag</th>
-              <th class="num">Peel to ideal</th>
-              <th class="num">Grow slots</th>
-            </tr>
-          </thead>
-          <tbody id="flagged-reps-body"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="callout" id="headline"></section>
-
-    <section class="kpi-grid" id="kpis"></section>
-
-    <section class="filters">
-      <div class="filter-group" id="region-filters"></div>
-      <div class="filter-group" id="segment-filters"></div>
-      <div class="filter-group" id="rec-filters"></div>
-      <select id="sort-by" class="select">
-        <option value="ideal_hc">Sort: ideal HC</option>
-        <option value="gap">Sort: headcount gap</option>
-        <option value="revenue">Sort: revenue</option>
-        <option value="reps">Sort: current reps</option>
-      </select>
-    </section>
-
-    <section class="charts-grid">
-      <div class="panel">
-        <h2>Headcount gap vs ideal HC</h2>
-        <p class="caption">Current reps minus ideal headcount. Positive = over-staffed.</p>
-        <div class="chart-panel">
-          <canvas id="gap-chart"></canvas>
-        </div>
-      </div>
-      <div class="panel">
-        <h2>Book Building FY26 vs data perfect book</h2>
-        <p class="caption">FY26 score from sales_book_summary_v2 (Book Building FY26 flags). Compare policy book build % to data-derived perfect book target.</p>
-        <div class="chart-panel chart-panel-sm">
-          <canvas id="book-score-chart"></canvas>
-        </div>
-      </div>
-      <div class="panel panel-narrow">
-        <h2>Recommendations</h2>
-        <p class="caption">Filtered market count by action</p>
-        <div class="chart-panel chart-panel-sm">
-          <canvas id="rec-chart"></canvas>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2>Market detail</h2>
-      <p class="caption">HC verdict · primary reason · SBS opportunity · key metrics</p>
-      <div class="table-wrap">
-        <table id="market-table">
-          <thead>
-            <tr>
-              <th class="sticky-col">Market</th>
-              <th>HC verdict</th>
-              <th class="narrative-col">HC reason</th>
-              <th>SBS opp</th>
-              <th class="num highlight-col">Ideal HC</th>
-              <th class="num">Reps</th>
-              <th class="num">Gap</th>
-              <th>HC rec</th>
-              <th class="num">Avg / ideal PCID</th>
-              <th>Next step</th>
-            </tr>
-          </thead>
-          <tbody id="market-body"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="charts-grid">
-      <div class="panel">
-        <h2>SBS whitespace by country × segment</h2>
-        <p class="caption">Unassigned accounts (team None) · hq_country mapped to market</p>
-        <div class="chart-panel chart-panel-sm">
-          <canvas id="sbs-chart"></canvas>
-        </div>
-      </div>
-      <div class="panel">
-        <h2>How to read this</h2>
-        <ul class="notes">
-          <li><strong>Ideal HC</strong> — assigned accounts ÷ ideal book size for that country × segment</li>
-          <li><strong>Ideal / optimal PCID</strong> — accounts per rep at the revenue-growth plateau (perfect book)</li>
-          <li><strong>Segment avg PQR</strong> — prior-quarter revenue per rep; benchmark for book weight</li>
-          <li><strong>Hire</strong> — under-staffed vs model with positive growth in ideal book range</li>
-          <li><strong>Optimize</strong> — over-staffed; consolidate/redistribute books before net-new hires</li>
-          <li><strong>Hold</strong> — within ±10% of ideal HC</li>
-          <li><strong>Do Not Hire</strong> — market growth ≤ 0 in ideal book range</li>
-          <li><strong>Impact coverage</strong> — median impact calls per assigned account (90d); shown in market lookup</li>
-          <li><strong>SBS whitespace</strong> — unassigned accounts in country (assignable to reps); books_buildable = whitespace ÷ ideal PCID</li>
-          <li><strong>Segment</strong> — GTM sales segment from team name (M, UMM, ACC, L, NAM, DCA)</li>
-        </ul>
+    <div id="tab-methodology" class="tab-panel hidden">
+      <section class="panel methodology-panel">
+        <h2>HQ methodology</h2>
         <p class="methodology-reference">
-          <strong>Official HQ reference (Indeed SSO):</strong>
+          <strong>Official reference (Indeed SSO):</strong>
           <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">Connect PTD — book &amp; headcount methodology</a>
         </p>
-        <details class="methodology-details">
-          <summary>HQ methodology — two layers (Layer 1 → Layer 2)</summary>
-          <div class="methodology-body">
-            <p>This dashboard implements the HQ capacity model in two layers. <strong>Layer 1 (book health)</strong> confirms ideal book size and rep-level health before any staffing action. <strong>Layer 2 (headcount)</strong> applies that book size to total assigned accounts to derive optimal headcount and Hire / Hold / Optimize recommendations.</p>
-            <table class="methodology-table">
-              <thead>
-                <tr><th>Layer</th><th>Question</th><th>Dashboard signals</th><th>sql/16 fields</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><strong>1 — Book health</strong></td>
-                  <td>What is the ideal book? Is each rep's book healthy?</td>
-                  <td>Perfect book, PQR, impact coverage, FY26 score, too big / too little</td>
-                  <td><code>ideal_pcid</code>, <code>median_impact_calls_per_account</code>, <code>fy26_pct_book_built</code>, <code>reps_too_big</code>, <code>reps_too_little</code>, <code>reps_healthy</code></td>
-                </tr>
-                <tr>
-                  <td><strong>2 — Headcount</strong></td>
-                  <td>How many reps should this market carry?</td>
-                  <td>Optimal HC, gap, recommendation, SBS routing</td>
-                  <td><code>ideal_headcount</code>, <code>headcount_gap</code>, <code>recommended_action</code>, <code>sbs_whitespace</code>, <code>books_buildable_from_sbs</code></td>
-                </tr>
-              </tbody>
-            </table>
-            <p><strong>Build sequence:</strong> validate ideal book size (Layer 1) → compute optimal headcount (Layer 2) → split / grow books only after Layer 1 is trusted. Do not act on HC recommendations where growth curve is flat or sample size is too small.</p>
-          </div>
-        </details>
-        <details class="methodology-details">
+        <p>This dashboard implements the HQ capacity model in two layers. <strong>Layer 1 (book health)</strong> confirms ideal book size and rep-level health before any staffing action. <strong>Layer 2 (headcount)</strong> applies that book size to total assigned accounts to derive optimal headcount and Hire / Hold / Optimize recommendations.</p>
+
+        <table class="methodology-table">
+          <thead>
+            <tr><th>Layer</th><th>Question</th><th>Dashboard signals</th><th>sql/16 fields</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1 — Book health</strong></td>
+              <td>What is the ideal book? Is each rep's book healthy?</td>
+              <td>Perfect book, PQR, impact coverage, FY26 score, too big / too little</td>
+              <td><code>ideal_pcid</code>, <code>reps_too_big</code>, <code>reps_too_little</code>, <code>perfect_book_source</code></td>
+            </tr>
+            <tr>
+              <td><strong>2 — Headcount</strong></td>
+              <td>How many reps should this market carry?</td>
+              <td>Optimal HC, gap, recommendation, SBS routing</td>
+              <td><code>ideal_headcount</code>, <code>headcount_gap</code>, <code>recommended_action</code>, <code>sbs_whitespace</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><strong>Build sequence:</strong> validate ideal book size (Layer 1) → compute optimal headcount (Layer 2) → split / grow books only after Layer 1 is trusted. Small segments use relaxed curve (≥5 reps/bucket), peer-segment ideal, or segment median when strict curve (≥20 reps/bucket) cannot compute — see <code>perfect_book_source</code>.</p>
+
+        <details class="methodology-details" open>
           <summary>Terminology — HQ definitions ↔ dashboard fields</summary>
           <div class="methodology-body">
             <table class="methodology-table">
@@ -215,18 +171,18 @@
               <tbody>
                 <tr>
                   <td><strong>PCID</strong></td>
-                  <td>Parent company IDs per rep — book size (account count)</td>
+                  <td>Parent company IDs per rep — book size</td>
                   <td><code>avg_pcid_per_rep</code>, <code>ideal_pcid</code></td>
                 </tr>
                 <tr>
                   <td><strong>PQR</strong></td>
-                  <td>Prior-quarter revenue — book weight (prior 90d window)</td>
+                  <td>Prior-quarter revenue — book weight</td>
                   <td><code>avg_pqr_per_rep</code>, <code>segment_avg_pqr</code></td>
                 </tr>
                 <tr>
                   <td><strong>Perfect / ideal book</strong></td>
-                  <td>Accounts per rep at revenue-growth plateau (diminishing returns)</td>
-                  <td><code>ideal_pcid</code>, <code>perfect_book_bucket</code></td>
+                  <td>Accounts per rep at revenue-growth plateau</td>
+                  <td><code>ideal_pcid</code>, <code>perfect_book_bucket</code>, <code>perfect_book_source</code></td>
                 </tr>
                 <tr>
                   <td><strong>Optimal headcount</strong></td>
@@ -234,69 +190,51 @@
                   <td><code>ideal_headcount</code></td>
                 </tr>
                 <tr>
-                  <td><strong>Impact coverage</strong></td>
-                  <td>Impact calls per assigned account (trailing 90d)</td>
-                  <td><code>median_impact_calls_per_account</code>, <code>coverage_status</code></td>
-                </tr>
-                <tr>
                   <td><strong>Healthy book</strong></td>
-                  <td>Not too big or too little; PCID near ideal, PQR ≥ segment avg, coverage ≥ 90% of segment norm, revenue ≥ PQR</td>
-                  <td><code>reps_healthy</code>, <code>pct_reps_healthy</code>, rep book export</td>
-                </tr>
-                <tr>
-                  <td><strong>Too big / too little</strong></td>
-                  <td>PCID and/or PQR above segment avg with weak coverage or revenue decline; or below ideal PCID</td>
-                  <td><code>reps_too_big</code>, <code>reps_too_little</code> (sql/17)</td>
+                  <td>Not too big or too little; PCID near ideal, PQR ≥ segment avg</td>
+                  <td><code>reps_healthy</code>, <code>pct_reps_healthy</code></td>
                 </tr>
                 <tr>
                   <td><strong>SBS whitespace</strong></td>
-                  <td>Unassigned accounts in country (team None) — assignable pool</td>
+                  <td>Unassigned accounts in country — assignable pool</td>
                   <td><code>sbs_whitespace</code>, <code>books_buildable_from_sbs</code></td>
-                </tr>
-                <tr>
-                  <td><strong>FY26 book score</strong></td>
-                  <td>Policy book-build flags from <code>sales_book_summary_v2</code></td>
-                  <td><code>fy26_pct_book_built</code>, <code>fy26_book_score</code></td>
                 </tr>
               </tbody>
             </table>
-            <p class="caption">Terminology aligned with HQ capacity model. See <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">Connect PTD</a> for full methodology (Indeed SSO).</p>
           </div>
         </details>
+
         <details class="methodology-details">
-          <summary>Why these numbers? — PQR vs PCID methodology</summary>
+          <summary>Why these numbers? — growth curve &amp; perfect book</summary>
           <div class="methodology-body">
-            <p><strong>PCID</strong> (parent company IDs per rep) is book size — how many accounts a rep carries.</p>
-            <p><strong>PQR</strong> (prior-quarter revenue) is book weight — how much revenue those accounts generated in the prior 90 days.</p>
-            <p><strong>Optimal / perfect book</strong> — sql/16 buckets reps by PCID (1–10, 11–20, … up to 150). For each bucket we take median revenue growth (current 90d vs prior 90d). The <em>optimal</em> bucket is the largest size where growth stays within 85% of the segment peak and adding accounts no longer improves growth. That midpoint becomes <strong>ideal PCID</strong> for headcount: assigned accounts ÷ ideal PCID = ideal headcount.</p>
-            <p><strong>Revenue growth</strong> — <code>(current 90d revenue − prior 90d PQR) ÷ prior PQR</code>, per rep then aggregated by PCID bucket. Comparison windows: <strong>current</strong> 20260427–20260725 vs <strong>prior PQR</strong> 20260128–20260426 (quarterly business rule). Reps with prior PQR &lt; $5K are excluded. Growth is capped at −50% to +100%. The market lookup shows median growth by bucket and when growth falls as books exceed the coverage inflection (~100 PCIDs for many segments).</p>
-            <p><strong>Too big</strong> — When avg book exceeds the coverage inflection point and median impact calls/account drop below 90% of peak, or when individual reps exceed segment avg PCID/PQR with weak coverage or revenue below PQR. Growth curve + coverage inflection together define when books are too large.</p>
-            <p><strong>PQR vs PCID tradeoff</strong> — A rep can be “too big” with high PCID <em>or</em> high PQR vs segment averages if coverage (impact calls/account) drops below 90% of segment norm or current revenue falls below PQR. Larger books spread coverage thin; the model favors the growth-optimal PCID, not simply the highest account count.</p>
-            <p><strong>Impact coverage</strong> — Sum of <code>impact_calls</code> from <code>rep_activity_sales</code> over the trailing 90 days, divided by assigned PCIDs per rep (<code>impact_calls_per_account</code>). The dashboard shows the market median (<code>median_impact_calls_per_account</code>). Coverage peaks at a book size (inflection point); status is <em>Declining</em> when avg book exceeds that size and median coverage falls below 90% of peak.</p>
-            <p><strong>SBS whitespace</strong> — Unassigned parent company IDs in a country (team <code>None</code> on JAM). These are assignable accounts reps could grow into. <code>books_buildable_from_sbs</code> = whitespace ÷ ideal PCID. SBS is country-level; all segment rows in a country share the same pool.</p>
-            <p><strong>Supporting signals</strong> — Opp pipeline plateau (rev/job peaks at a book size) and coverage inflection (impact calls/account peak) are shown per market when selecting a country × segment.</p>
-            <p><strong>Healthy book</strong> — A rep has a healthy book when they are <em>not</em> flagged too_big or too_little (sql/16–17). Checklist per segment: PCID within ±10% of ideal (and not below ideal), PQR at or above segment benchmark, impact coverage ≥ 90% of segment average, current revenue ≥ prior-quarter PQR. The market lookup shows segment thresholds and % of reps meeting this definition (from rep_book.json).</p>
+            <p><strong>Optimal / perfect book</strong> — sql/16 buckets reps by PCID (1–10, 11–20, … up to 150). For each bucket we take median revenue growth (current 90d vs prior 90d). The optimal bucket is the largest size where growth stays within 85% of the segment peak. That midpoint becomes <strong>ideal PCID</strong>.</p>
+            <p><strong>Small segments</strong> — when no bucket has ≥20 reps, we fall back to relaxed curve (≥5), peer-segment ideal from another country, or segment median PCID. Check <code>perfect_book_source</code> per market.</p>
+            <p><strong>Revenue windows:</strong> current 20260427–20260725 vs prior PQR 20260128–20260426. Reps with prior PQR &lt; $5K excluded from growth curve.</p>
+            <p><strong>Too big / too little</strong> — PCID or PQR above segment avg plus weak coverage or revenue below PQR; or below ideal PCID.</p>
           </div>
         </details>
+
+        <details class="methodology-details">
+          <summary>FY26 book score</summary>
+          <div class="methodology-body">
+            <ul class="notes">
+              <li><strong>Source:</strong> <code>sales_book_summary_v2</code> (Book Building FY26)</li>
+              <li><strong>Rep score:</strong> AVG of account flags per parent × rep (−1 to +1)</li>
+              <li><strong>% book built:</strong> share of flags with value &gt; 0</li>
+              <li>Independent signal from data-derived perfect book — compare in exports, not a HC gate.</li>
+            </ul>
+          </div>
+        </details>
+
         <p class="caption refresh-note" id="refresh-note"></p>
-      </div>
-      <div class="panel">
-        <h2>FY26 score methodology</h2>
-        <ul class="notes" id="score-methodology">
-          <li><strong>Source:</strong> <code>sales_book_summary_v2</code> (Book Building FY26) — same flags as Tableau workbook</li>
-          <li><strong>Rep score:</strong> AVG of 10 account flags per parent × rep; range −1 to +1</li>
-          <li><strong>% book built:</strong> share of flags with value &gt; 0 (shown in table)</li>
-          <li><strong>In this dash:</strong> market-level average across reps in segment (sql/11, joined in query 16)</li>
-          <li><strong>Status:</strong> methodology implemented; policy target % still TBD (Addy). Chart compares FY26 % built vs current book as % of data-derived ideal book — they are independent signals.</li>
-        </ul>
-      </div>
-    </section>
+      </section>
+    </div>
   </main>
 
   <footer class="footer">
-    <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a> · <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">HQ methodology (Connect PTD)</a></p>
+    <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a> · <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">Connect PTD</a></p>
   </footer>
 
-  <script src="app.js?v=20260728e"></script>
+  <script src="app.js?v=20260728f"></script>
 </body>
 </html>
