@@ -103,6 +103,13 @@ MARKET_FIELD_LABELS: dict[str, str] = {
     "optimal_book_primary": "Optimal book — why (plain English)",
     "optimal_book_bullets": "Optimal book — supporting detail",
     "optimal_book_rationale": "Optimal book — full rationale",
+    "growth_curve_primary": "Growth curve — narrative",
+    "growth_curve_bullets": "Growth curve — detail",
+    "growth_peak_accounts": "Growth peak (accounts/rep)",
+    "growth_peak_pct": "Growth peak %",
+    "growth_decline_above_pcid": "Growth decline above PCIDs",
+    "growth_decline_median_pct": "Growth above inflection %",
+    "growth_by_bucket": "Growth by PCID bucket (JSON)",
 }
 
 SUMMARY_FIELD_LABELS: dict[str, str] = {
@@ -193,6 +200,8 @@ def market_row(market: dict) -> dict:
         row["sbs_whitespace_country"] = row["sbs_whitespace"]
     if not row.get("summary_status"):
         enrich_market(row)
+    if isinstance(row.get("growth_by_bucket"), list):
+        row["growth_by_bucket"] = json.dumps(row["growth_by_bucket"], separators=(",", ":"))
     for list_field in (
         "summary_bullets",
         "health_bullets",
@@ -201,6 +210,7 @@ def market_row(market: dict) -> dict:
         "sbs_opportunity_bullets",
         "sbs_routing_bullets",
         "impact_coverage_bullets",
+        "growth_curve_bullets",
         "healthy_book_criteria",
     ):
         if isinstance(row.get(list_field), list):

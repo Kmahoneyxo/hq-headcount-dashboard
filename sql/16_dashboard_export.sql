@@ -3,6 +3,7 @@
 -- Segment = GTM sales segment from current_sales_team_name (see sql/_sales_segment_v2.sql)
 -- Run this (or Quest schedule) to refresh docs/data/headcount.json
 -- See sql/16_dashboard_export.sql — supersedes sql/12 for full dashboard fields
+-- Bucket-level growth curve: sql/16_growth_by_bucket_export.sql (or computed from rep_book.json)
 
 WITH rep_meta AS (
   SELECT

@@ -13,6 +13,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import statistics
 import sys
 from pathlib import Path
 
@@ -23,6 +24,26 @@ DEFAULT_REP_BOOK = ROOT / "docs" / "data" / "rep_book.json"
 # Healthy book thresholds (aligned with sql/16–17 rep_book_flags)
 PCID_TOLERANCE_PCT = 10  # document ±10% band around ideal PCID
 COVERAGE_FLOOR_RATIO = 0.90  # too_big uses segment_avg_coverage * 0.90
+GROWTH_PEAK_FLOOR_RATIO = 0.85  # perfect book stays within 85% of segment peak (sql/16)
+MIN_REPS_PER_BUCKET = 5
+MIN_REPS_PERFECT_BUCKET = 20
+MIN_PQR_FOR_GROWTH = 5000  # sql/16 rep_filtered
+
+
+# PCID buckets aligned with sql/16_dashboard_export.sql
+PCID_BUCKETS: list[tuple[int, str, int, int, int]] = [
+    (1, "01: 1-10", 5, 10, 10),
+    (2, "02: 11-20", 15, 20, 20),
+    (3, "03: 21-30", 25, 30, 30),
+    (4, "04: 31-40", 35, 40, 40),
+    (5, "05: 41-50", 45, 50, 50),
+    (6, "06: 51-65", 58, 65, 65),
+    (7, "07: 66-80", 73, 80, 80),
+    (8, "08: 81-100", 90, 100, 100),
+    (9, "09: 101-125", 113, 125, 125),
+    (10, "10: 126-150", 138, 150, 150),
+    (11, "11: 150+", 175, 999, 999),
+]
 
 
 def _num(v, default=0):
@@ -579,6 +600,176 @@ def build_healthy_book_definition(m: dict, market_reps: list[dict] | None = None
     }
 
 
+def _pcid_bucket(pcid: float | int) -> tuple[int, str, int, int, int]:
+    pcid_i = int(pcid or 0)
+    for order, label, midpoint, upper, ceiling in PCID_BUCKETS:
+        if order == 11 or pcid_i <= ceiling:
+            return order, label, midpoint, upper, ceiling
+    return PCID_BUCKETS[-1]
+
+
+def _rep_revenue_growth_pct(rep: dict) -> float | None:
+    prior = rep.get("pqr_90d")
+    current = rep.get("revenue_90d")
+    if prior is None or current is None or prior < MIN_PQR_FOR_GROWTH:
+        return None
+    raw = (float(current) - float(prior)) / float(prior)
+    return max(-0.5, min(1.0, raw))
+
+
+def compute_growth_by_bucket(reps: list[dict]) -> list[dict]:
+    """Median quarterly rev growth per PCID bucket (sql/16 logic, from rep_book.json)."""
+    grouped: dict[int, dict] = {}
+    for rep in reps:
+        growth = _rep_revenue_growth_pct(rep)
+        if growth is None:
+            continue
+        order, label, midpoint, upper, ceiling = _pcid_bucket(rep.get("pcid_count") or 0)
+        bucket = grouped.setdefault(
+            order,
+            {
+                "bucket_order": order,
+                "book_bucket": label,
+                "bucket_midpoint": midpoint,
+                "bucket_upper": upper,
+                "growths": [],
+            },
+        )
+        bucket["growths"].append(growth)
+
+    rows: list[dict] = []
+    for order in sorted(grouped):
+        b = grouped[order]
+        if len(b["growths"]) < MIN_REPS_PER_BUCKET:
+            continue
+        rows.append(
+            {
+                "bucket_order": b["bucket_order"],
+                "book_bucket": b["book_bucket"],
+                "bucket_midpoint": b["bucket_midpoint"],
+                "bucket_upper": b["bucket_upper"],
+                "rep_count": len(b["growths"]),
+                "median_growth_pct": round(statistics.median(b["growths"]), 3),
+            }
+        )
+    return rows
+
+
+def _growth_above_book(buckets: list[dict], book_max: float | int) -> float | None:
+    above = [b["median_growth_pct"] for b in buckets if b["bucket_upper"] > book_max]
+    if not above:
+        return None
+    return round(statistics.median(above), 3)
+
+
+def build_growth_curve(m: dict, market_reps: list[dict] | None = None) -> dict:
+    """Revenue growth vs book size narrative + bucket table (computed or from export)."""
+    buckets = m.get("growth_by_bucket")
+    if buckets is None and market_reps:
+        buckets = compute_growth_by_bucket(market_reps)
+
+    ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
+    perfect_growth = m.get("perfect_book_growth_pct")
+    perfect_ceiling = m.get("perfect_book_ceiling")
+    inflection = m.get("coverage_inflection_book_max")
+    avg_book = m.get("current_avg_book")
+    reps_too_big = _num(m.get("reps_too_big"))
+    cov_status = m.get("coverage_status")
+
+    peak_bucket = None
+    peak_growth = None
+    if buckets:
+        eligible = [
+            b for b in buckets
+            if b.get("bucket_order", 99) <= 10
+            and b.get("rep_count", 0) >= MIN_REPS_PER_BUCKET
+        ]
+        peak_candidates = [b for b in eligible if b.get("rep_count", 0) >= MIN_REPS_PERFECT_BUCKET]
+        search = peak_candidates or eligible
+        if search:
+            peak_bucket = max(search, key=lambda b: b.get("median_growth_pct") or -999)
+            peak_growth = peak_bucket.get("median_growth_pct")
+
+    peak_accounts = (
+        m.get("perfect_book_target")
+        or (peak_bucket or {}).get("bucket_midpoint")
+        or ideal
+    )
+    peak_growth_val = m.get("perfect_book_growth_pct")
+    if peak_growth_val is None:
+        peak_growth_val = peak_growth
+    elif peak_growth is not None and peak_bucket:
+        # Prefer SQL perfect-book growth; use bucket peak only when SQL missing
+        pass
+
+    decline_book = inflection or perfect_ceiling
+    decline_growth = None
+    if buckets and decline_book is not None:
+        decline_growth = _growth_above_book(buckets, decline_book)
+    if decline_growth is None and perfect_growth is not None and peak_growth_val is not None:
+        if peak_growth_val > perfect_growth:
+            decline_growth = perfect_growth
+
+    bullets: list[str] = []
+    if peak_accounts is not None and peak_growth_val is not None:
+        bullets.append(
+            f"Peak median growth {_fmt_pct(peak_growth_val)} at ~{int(peak_accounts)} accounts/rep "
+            f"({(peak_bucket or {}).get('book_bucket', m.get('perfect_book_bucket', '')).split(': ', 1)[-1]} band)."
+        )
+    if ideal is not None and perfect_growth is not None:
+        bullets.append(
+            f"Optimal book {int(round(ideal))} PCIDs — largest bucket within 85% of peak growth "
+            f"({_fmt_pct(perfect_growth)})."
+        )
+    if decline_book is not None and peak_growth_val is not None:
+        decline_txt = _fmt_pct(decline_growth) if decline_growth is not None else "lower levels"
+        bullets.append(
+            f"Above ~{int(decline_book)} accounts/rep, growth tends to fall "
+            f"(from {_fmt_pct(peak_growth_val)} toward {decline_txt})."
+        )
+    if inflection is not None and cov_status == "Declining":
+        bullets.append(
+            f"Coverage inflection at ~{int(inflection)} PCIDs — avg book "
+            f"({int(round(avg_book)) if avg_book else '—'}) exceeds this; impact calls/account drop."
+        )
+    elif inflection is not None:
+        bullets.append(
+            f"Coverage peaks near ~{int(inflection)} accounts/rep "
+            f"(median {m.get('coverage_at_inflection')} calls/account at inflection)."
+        )
+    if reps_too_big:
+        bullets.append(
+            f"{reps_too_big:,} reps flagged too big — PCID/PQR above segment avg plus weak coverage or revenue below PQR."
+        )
+
+    primary_parts: list[str] = []
+    if peak_accounts is not None and peak_growth_val is not None:
+        primary_parts.append(
+            f"Growth peaks at ~{int(peak_accounts)} accounts/rep ({_fmt_pct(peak_growth_val)} median quarterly growth)"
+        )
+    if decline_book is not None:
+        decline_txt = _fmt_pct(decline_growth) if decline_growth is not None else "lower rates"
+        primary_parts.append(
+            f"growth declines above ~{int(decline_book)} PCIDs (toward {decline_txt})"
+        )
+    if avg_book and ideal and avg_book > (decline_book or ideal):
+        primary_parts.append(
+            f"this market averages {int(round(avg_book))} PCIDs/rep vs ideal {int(round(ideal))}"
+        )
+
+    primary = "; ".join(primary_parts) + "." if primary_parts else ""
+
+    return {
+        "growth_by_bucket": buckets or [],
+        "growth_peak_accounts": int(peak_accounts) if peak_accounts is not None else None,
+        "growth_peak_pct": peak_growth_val,
+        "growth_decline_above_pcid": int(decline_book) if decline_book is not None else None,
+        "growth_decline_median_pct": decline_growth,
+        "growth_curve_primary": primary,
+        "growth_curve_bullets": bullets[:4],
+    }
+
+
 def build_optimal_book_rationale(m: dict) -> dict:
     """Plain-English optimal book rationale (collapsed in UI — detail only)."""
     ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
@@ -622,6 +813,7 @@ def build_market_summary(
     recs = build_recommendations(m)
     optimal = build_optimal_book_rationale(m)
     healthy = build_healthy_book_definition(m, market_reps)
+    growth = build_growth_curve(m, market_reps)
 
     health_bullets: list[str] = []
     if healthy.get("pct_reps_healthy") is not None:
@@ -654,6 +846,7 @@ def build_market_summary(
         **recs,
         **optimal,
         **healthy,
+        **growth,
     }
 
 

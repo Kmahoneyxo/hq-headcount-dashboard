@@ -12,6 +12,7 @@ let gapChart = null;
 let recChart = null;
 let sbsChart = null;
 let bookScoreChart = null;
+let growthChart = null;
 let lastLoadedAt = null;
 let lastReloadedAt = null;
 let isRefreshing = false;
@@ -41,6 +42,12 @@ const HEALTHY_BOOK_DEFINITION =
   "Too big = PCID or PQR above segment average plus weak impact coverage (<90% of segment avg) or current revenue below PQR. " +
   "Too little = PCID below ideal (growth-optimal target). " +
   "Healthy reps are near ideal PCID, at or above segment PQR benchmark, and maintain adequate impact coverage.";
+
+const REV_GROWTH_DEFINITION =
+  "Revenue growth = (current 90d revenue − prior 90d PQR) ÷ prior PQR, capped at −50% to +100%. " +
+  "Current window: 20260427–20260725 vs prior 20260128–20260426 (quarterly PQR comparison). " +
+  "Reps bucketed by PCID count (1–10, 11–20, … 150+); each bucket shows median growth across reps with PQR ≥ $5K. " +
+  "Optimal book = largest bucket within 85% of segment peak growth where bigger books no longer add growth.";
 
 async function loadConfig() {
   try {
@@ -454,6 +461,142 @@ function renderHealthyBookBlock(m, healthy) {
   </div>`;
 }
 
+function buildGrowthCurve(m) {
+  const buckets = m.growth_by_bucket || [];
+  if (m.growth_curve_primary) {
+    return {
+      primary: m.growth_curve_primary,
+      bullets: m.growth_curve_bullets || [],
+      buckets,
+      peakAccounts: m.growth_peak_accounts,
+      peakPct: m.growth_peak_pct,
+      declineAbove: m.growth_decline_above_pcid,
+      declinePct: m.growth_decline_median_pct,
+    };
+  }
+  const ideal = idealPcid(m);
+  const growth = m.perfect_book_growth_pct;
+  const inflection = m.coverage_inflection_book_max ?? m.perfect_book_ceiling;
+  const primary =
+    ideal != null && growth != null
+      ? `Growth peaks near ideal ${fmtNum(ideal)} accounts/rep (${fmtPct(growth)} median quarterly growth)` +
+        (inflection ? `; declines above ~${fmtNum(inflection)} PCIDs.` : ".")
+      : "";
+  return { primary, bullets: [], buckets, peakAccounts: ideal, peakPct: growth, declineAbove: inflection, declinePct: null };
+}
+
+function renderGrowthBucketTable(buckets, m) {
+  if (!buckets.length) {
+    return `<p class="growth-curve-empty">Bucket-level growth not available — using summary stats (ideal PCID ${fmtNum(idealPcid(m))}, ${m.perfect_book_growth_pct != null ? fmtPct(m.perfect_book_growth_pct) : "—"} at optimal).</p>`;
+  }
+  const ideal = idealPcid(m);
+  const inflection = m.coverage_inflection_book_max ?? m.perfect_book_ceiling;
+  const rows = buckets
+    .map((b) => {
+      const band = b.book_bucket?.includes(": ") ? b.book_bucket.split(": ")[1] : b.book_bucket;
+      const isIdeal = ideal != null && b.bucket_midpoint === ideal;
+      const isInflection = inflection != null && b.bucket_upper === inflection;
+      const rowClass = isIdeal ? "growth-row-ideal" : isInflection ? "growth-row-inflection" : "";
+      return `<tr class="${rowClass}">
+        <td>${band || "—"}</td>
+        <td class="num">${fmtNum(b.rep_count)}</td>
+        <td class="num">${b.median_growth_pct != null ? fmtPct(b.median_growth_pct) : "—"}</td>
+        <td>${isIdeal ? "Optimal" : isInflection ? "Coverage inflection" : ""}</td>
+      </tr>`;
+    })
+    .join("");
+  return `<div class="table-wrap table-wrap-sm growth-bucket-table">
+    <table>
+      <thead><tr><th>PCID bucket</th><th class="num">Reps</th><th class="num">Median rev growth</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function renderGrowthCurveBlock(m, growth) {
+  if (!growth.primary && !growth.buckets.length) return "";
+  const bullets =
+    growth.bullets.length > 0
+      ? `<ul class="market-summary-bullets growth-curve-bullets">${growth.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
+      : "";
+  const chartBlock =
+    growth.buckets.length > 0
+      ? `<div class="growth-chart-wrap"><canvas id="growth-curve-chart" aria-label="Median revenue growth by PCID bucket"></canvas></div>`
+      : "";
+  return `<div class="growth-curve-block">
+    <div class="growth-curve-header">
+      <span class="growth-curve-title">Revenue growth vs book size</span>
+      <span class="metric-tip" title="${REV_GROWTH_DEFINITION}">?</span>
+    </div>
+    <p class="growth-curve-primary">${growth.primary}</p>
+    ${bullets}
+    ${chartBlock}
+    ${renderGrowthBucketTable(growth.buckets, m)}
+  </div>`;
+}
+
+function renderGrowthChart(m) {
+  if (!chartsAvailable()) return;
+  const ctx = document.getElementById("growth-curve-chart");
+  if (!ctx) return;
+  const buckets = m.growth_by_bucket || [];
+  if (growthChart) {
+    growthChart.destroy();
+    growthChart = null;
+  }
+  if (!buckets.length) return;
+
+  const ideal = idealPcid(m);
+  const inflection = m.coverage_inflection_book_max ?? m.perfect_book_ceiling;
+  const labels = buckets.map((b) => (b.book_bucket?.includes(": ") ? b.book_bucket.split(": ")[1] : b.book_bucket));
+  const data = buckets.map((b) => (b.median_growth_pct != null ? b.median_growth_pct * 100 : null));
+  const colors = buckets.map((b) => {
+    if (ideal != null && b.bucket_midpoint === ideal) return "#3ecf8e";
+    if (inflection != null && b.bucket_upper === inflection) return "#f5a623";
+    return "#4c8bf5";
+  });
+
+  growthChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Median rev growth % (90d vs prior PQR)",
+          data,
+          backgroundColor: colors,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.parsed.y?.toFixed(1)}% median growth (${buckets[ctx.dataIndex]?.rep_count ?? "—"} reps)`,
+          },
+        },
+      },
+      scales: {
+        y: {
+          title: { display: true, text: "Median growth %", color: "#9aa3b5" },
+          ticks: {
+            color: "#9aa3b5",
+            callback: (v) => `${v}%`,
+          },
+          grid: { color: "#2a3040" },
+        },
+        x: {
+          ticks: { color: "#9aa3b5", font: { size: 10 }, maxRotation: 45 },
+          grid: { display: false },
+        },
+      },
+    },
+  });
+}
+
 function buildOptimalBookRationale(m) {
   if (m.optimal_book_primary) {
     return {
@@ -527,6 +670,7 @@ function renderLookup() {
   const ideal = idealPcid(m);
   const { primary: optimalPrimary } = buildOptimalBookRationale(m);
   const healthy = buildHealthyBook(m);
+  const growth = buildGrowthCurve(m);
   const key = marketKey(m);
   const bh = bookHealth?.markets?.[key];
 
@@ -561,6 +705,7 @@ function renderLookup() {
         </div>
       </div>
       ${renderHealthyBookBlock(m, healthy)}
+      ${renderGrowthCurveBlock(m, growth)}
     </div>
 
     <div class="lookup-section lookup-hc-reason">
@@ -608,7 +753,7 @@ function renderLookup() {
       optimalPrimary
         ? `<details class="methodology-details lookup-optimal-details">
             <summary>Methodology — ideal PCID ${fmtNum(ideal)} (sql/16)</summary>
-            <div class="methodology-body"><p>${optimalPrimary}</p></div>
+            <div class="methodology-body"><p>${optimalPrimary}</p><p class="caption">Revenue growth windows: current 20260427–20260725 vs prior PQR 20260128–20260426. Growth curve chart uses median rep growth per PCID bucket.</p></div>
           </details>`
         : ""
     }
@@ -973,6 +1118,8 @@ function renderCharts() {
   renderBookScoreChart();
   renderRecChart();
   renderSbsChart();
+  const lookup = findLookupMarket();
+  if (lookup) renderGrowthChart(lookup);
 }
 
 async function init() {

@@ -116,7 +116,36 @@
       "healthy_book_primary": "A healthy book in US-M means a rep's book is near the growth-optimal size (ideal PCID 90), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow.",
       "reps_scored": 226,
       "reps_healthy": 186,
-      "pct_reps_healthy": 82.3
+      "pct_reps_healthy": 82.3,
+      "growth_by_bucket": [
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 210,
+          "median_growth_pct": 0.18
+        },
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 14,
+          "median_growth_pct": 0.192
+        }
+      ],
+      "growth_peak_accounts": 90,
+      "growth_peak_pct": 0.2,
+      "growth_decline_above_pcid": 100,
+      "growth_decline_median_pct": 0.192,
+      "growth_curve_primary": "Growth peaks at ~90 accounts/rep (20% median quarterly growth); growth declines above ~100 PCIDs (toward 19%); this market averages 127 PCIDs/rep vs ideal 90.",
+      "growth_curve_bullets": [
+        "Peak median growth 20% at ~90 accounts/rep (81-100 band).",
+        "Optimal book 90 PCIDs \u2014 largest bucket within 85% of peak growth (20%).",
+        "Above ~100 accounts/rep, growth tends to fall (from 20% toward 19%).",
+        "Coverage peaks near ~100 accounts/rep (median 1 calls/account at inflection)."
+      ]
     },
     {
       "segment": "L",
@@ -224,7 +253,44 @@
       "healthy_book_primary": "A healthy book in US-L means a rep's book is near the growth-optimal size (ideal PCID 58), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow.",
       "reps_scored": 211,
       "reps_healthy": 5,
-      "pct_reps_healthy": 2.4
+      "pct_reps_healthy": 2.4,
+      "growth_by_bucket": [
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 140,
+          "median_growth_pct": 0.212
+        },
+        {
+          "bucket_order": 5,
+          "book_bucket": "05: 41-50",
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 41,
+          "median_growth_pct": 0.172
+        },
+        {
+          "bucket_order": 6,
+          "book_bucket": "06: 51-65",
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 26,
+          "median_growth_pct": 0.234
+        }
+      ],
+      "growth_peak_accounts": 58,
+      "growth_peak_pct": 0.2,
+      "growth_decline_above_pcid": 65,
+      "growth_decline_median_pct": null,
+      "growth_curve_primary": "Growth peaks at ~58 accounts/rep (20% median quarterly growth); growth declines above ~65 PCIDs (toward lower rates).",
+      "growth_curve_bullets": [
+        "Peak median growth 20% at ~58 accounts/rep (51-65 band).",
+        "Optimal book 58 PCIDs \u2014 largest bucket within 85% of peak growth (20%).",
+        "Above ~65 accounts/rep, growth tends to fall (from 20% toward lower levels).",
+        "Coverage peaks near ~65 accounts/rep (median 2 calls/account at inflection)."
+      ]
     },
     {
       "segment": "NAM",
@@ -332,7 +398,68 @@
       "healthy_book_primary": "A healthy book in US-NAM means a rep's book is near the growth-optimal size (ideal PCID 5), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow.",
       "reps_scored": 229,
       "reps_healthy": 86,
-      "pct_reps_healthy": 37.6
+      "pct_reps_healthy": 37.6,
+      "growth_by_bucket": [
+        {
+          "bucket_order": 1,
+          "book_bucket": "01: 1-10",
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 161,
+          "median_growth_pct": 0.234
+        },
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 31,
+          "median_growth_pct": 0.168
+        },
+        {
+          "bucket_order": 3,
+          "book_bucket": "03: 21-30",
+          "bucket_midpoint": 25,
+          "bucket_upper": 30,
+          "rep_count": 14,
+          "median_growth_pct": 0.264
+        },
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 12,
+          "median_growth_pct": 0.131
+        },
+        {
+          "bucket_order": 5,
+          "book_bucket": "05: 41-50",
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 6,
+          "median_growth_pct": 0.1
+        },
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 5,
+          "median_growth_pct": 0.941
+        }
+      ],
+      "growth_peak_accounts": 5,
+      "growth_peak_pct": 0.234,
+      "growth_decline_above_pcid": 50,
+      "growth_decline_median_pct": 0.941,
+      "growth_curve_primary": "Growth peaks at ~5 accounts/rep (23% median quarterly growth); growth declines above ~50 PCIDs (toward 94%).",
+      "growth_curve_bullets": [
+        "Peak median growth 23% at ~5 accounts/rep (1-10 band).",
+        "Optimal book 5 PCIDs \u2014 largest bucket within 85% of peak growth (23%).",
+        "Above ~50 accounts/rep, growth tends to fall (from 23% toward 94%).",
+        "Coverage peaks near ~50 accounts/rep (median 1 calls/account at inflection)."
+      ]
     },
     {
       "segment": "UMM",
@@ -440,7 +567,28 @@
       "healthy_book_primary": "A healthy book in US-UMM means a rep's book is near the growth-optimal size (ideal PCID 58), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow.",
       "reps_scored": 134,
       "reps_healthy": 92,
-      "pct_reps_healthy": 68.7
+      "pct_reps_healthy": 68.7,
+      "growth_by_bucket": [
+        {
+          "bucket_order": 6,
+          "book_bucket": "06: 51-65",
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 130,
+          "median_growth_pct": 0.152
+        }
+      ],
+      "growth_peak_accounts": 58,
+      "growth_peak_pct": 0.2,
+      "growth_decline_above_pcid": 65,
+      "growth_decline_median_pct": null,
+      "growth_curve_primary": "Growth peaks at ~58 accounts/rep (20% median quarterly growth); growth declines above ~65 PCIDs (toward lower rates).",
+      "growth_curve_bullets": [
+        "Peak median growth 20% at ~58 accounts/rep (51-65 band).",
+        "Optimal book 58 PCIDs \u2014 largest bucket within 85% of peak growth (20%).",
+        "Above ~65 accounts/rep, growth tends to fall (from 20% toward lower levels).",
+        "Coverage peaks near ~65 accounts/rep (median 1 calls/account at inflection)."
+      ]
     },
     {
       "segment": "DCA",
@@ -547,7 +695,60 @@
       "healthy_book_primary": "A healthy book in US-DCA means a rep's book is near the growth-optimal size (ideal PCID 138), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow.",
       "reps_scored": 103,
       "reps_healthy": 2,
-      "pct_reps_healthy": 1.9
+      "pct_reps_healthy": 1.9,
+      "growth_by_bucket": [
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 13,
+          "median_growth_pct": 0.227
+        },
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 9,
+          "median_growth_pct": 0.12
+        },
+        {
+          "bucket_order": 9,
+          "book_bucket": "09: 101-125",
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 24,
+          "median_growth_pct": 0.123
+        },
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 35,
+          "median_growth_pct": 0.16
+        },
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 10,
+          "median_growth_pct": 0.124
+        }
+      ],
+      "growth_peak_accounts": 138,
+      "growth_peak_pct": 0.2,
+      "growth_decline_above_pcid": 150,
+      "growth_decline_median_pct": 0.124,
+      "growth_curve_primary": "Growth peaks at ~138 accounts/rep (20% median quarterly growth); growth declines above ~150 PCIDs (toward 12%).",
+      "growth_curve_bullets": [
+        "Peak median growth 20% at ~138 accounts/rep (126-150 band).",
+        "Optimal book 138 PCIDs \u2014 largest bucket within 85% of peak growth (20%).",
+        "Above ~150 accounts/rep, growth tends to fall (from 20% toward 12%).",
+        "69 reps flagged too big \u2014 PCID/PQR above segment avg plus weak coverage or revenue below PQR."
+      ]
     },
     {
       "segment": "M",
@@ -655,7 +856,36 @@
       "healthy_book_primary": "A healthy book in UK-M means a rep's book is near the growth-optimal size (ideal PCID 90), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow.",
       "reps_scored": 55,
       "reps_healthy": 5,
-      "pct_reps_healthy": 9.1
+      "pct_reps_healthy": 9.1,
+      "growth_by_bucket": [
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 41,
+          "median_growth_pct": 0.181
+        },
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 5,
+          "median_growth_pct": 0.214
+        }
+      ],
+      "growth_peak_accounts": 90,
+      "growth_peak_pct": 0.2,
+      "growth_decline_above_pcid": 150,
+      "growth_decline_median_pct": null,
+      "growth_curve_primary": "Growth peaks at ~90 accounts/rep (20% median quarterly growth); growth declines above ~150 PCIDs (toward lower rates).",
+      "growth_curve_bullets": [
+        "Peak median growth 20% at ~90 accounts/rep (81-100 band).",
+        "Optimal book 90 PCIDs \u2014 largest bucket within 85% of peak growth (20%).",
+        "Above ~150 accounts/rep, growth tends to fall (from 20% toward lower levels).",
+        "Coverage peaks near ~150 accounts/rep (median 1 calls/account at inflection)."
+      ]
     },
     {
       "segment": "NAM",
@@ -763,7 +993,36 @@
       "healthy_book_primary": "A healthy book in UK-NAM means a rep's book is near the growth-optimal size (ideal PCID 15), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow.",
       "reps_scored": 44,
       "reps_healthy": 3,
-      "pct_reps_healthy": 6.8
+      "pct_reps_healthy": 6.8,
+      "growth_by_bucket": [
+        {
+          "bucket_order": 1,
+          "book_bucket": "01: 1-10",
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 10,
+          "median_growth_pct": 0.605
+        },
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 29,
+          "median_growth_pct": 0.385
+        }
+      ],
+      "growth_peak_accounts": 15,
+      "growth_peak_pct": 0.4,
+      "growth_decline_above_pcid": 20,
+      "growth_decline_median_pct": null,
+      "growth_curve_primary": "Growth peaks at ~15 accounts/rep (40% median quarterly growth); growth declines above ~20 PCIDs (toward lower rates).",
+      "growth_curve_bullets": [
+        "Peak median growth 40% at ~15 accounts/rep (11-20 band).",
+        "Optimal book 15 PCIDs \u2014 largest bucket within 85% of peak growth (40%).",
+        "Above ~20 accounts/rep, growth tends to fall (from 40% toward lower levels).",
+        "Coverage peaks near ~20 accounts/rep (median 1 calls/account at inflection)."
+      ]
     },
     {
       "segment": "NAM",
@@ -871,7 +1130,36 @@
       "healthy_book_primary": "A healthy book in DACH-NAM means a rep's book is near the growth-optimal size (ideal PCID 15), carries adequate revenue weight and rep touch rate, and is not flagged for peel or grow.",
       "reps_scored": 45,
       "reps_healthy": 3,
-      "pct_reps_healthy": 6.7
+      "pct_reps_healthy": 6.7,
+      "growth_by_bucket": [
+        {
+          "bucket_order": 1,
+          "book_bucket": "01: 1-10",
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 11,
+          "median_growth_pct": 0.326
+        },
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 28,
+          "median_growth_pct": 0.399
+        }
+      ],
+      "growth_peak_accounts": 15,
+      "growth_peak_pct": 0.4,
+      "growth_decline_above_pcid": 10,
+      "growth_decline_median_pct": 0.399,
+      "growth_curve_primary": "Growth peaks at ~15 accounts/rep (40% median quarterly growth); growth declines above ~10 PCIDs (toward 40%); this market averages 21 PCIDs/rep vs ideal 15.",
+      "growth_curve_bullets": [
+        "Peak median growth 40% at ~15 accounts/rep (11-20 band).",
+        "Optimal book 15 PCIDs \u2014 largest bucket within 85% of peak growth (40%).",
+        "Above ~10 accounts/rep, growth tends to fall (from 40% toward 40%).",
+        "Coverage inflection at ~10 PCIDs \u2014 avg book (21) exceeds this; impact calls/account drop."
+      ]
     }
   ],
   "sbs_whitespace": [
