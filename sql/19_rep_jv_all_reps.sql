@@ -26,6 +26,7 @@ rep_level AS (
       ELSE COALESCE(m.market, REGEXP_EXTRACT(j.current_sales_team_name, '^([A-Z]{2})-', 1))
     END AS country,
     j.current_sales_rep_id AS sales_rep_id,
+    MAX(j.current_sales_team_name) AS sales_team_name,
     COUNT(DISTINCT CASE WHEN j.dl__yyyymmdd_cst BETWEEN '20260427' AND '20260725'
       THEN j.agg_job_id END) AS jobs_90d,
     SUM(CASE WHEN j.dl__yyyymmdd_cst BETWEEN '20260427' AND '20260725'
@@ -52,6 +53,7 @@ SELECT
   country,
   segment,
   sales_rep_id,
+  sales_team_name,
   jobs_90d,
   ROUND(revenue_current / NULLIF(jobs_90d, 0), 2) AS rev_per_job,
   ROUND(revenue_current, 1) AS revenue_90d,

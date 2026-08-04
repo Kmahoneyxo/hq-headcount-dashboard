@@ -72,12 +72,34 @@ The live dashboard header links to the Excel workbook (full data), rep-book CSV,
 
 **Include in weekly refresh:** run export script after updating `headcount.json`, `rep_book.json`, `book_health.json`, and `impact_coverage_all_reps.json`, then commit JSON + xlsx + all CSVs.
 
-### Google Sheet (manual import)
+### Google Sheet (manual import — dp-mcp does not export to Sheets)
 
-1. In Google Drive: **New → File upload** → `headcount-dashboard.xlsx`, or **Import** the CSV.
-2. Or: open a blank Sheet → **File → Import → Upload** → choose the xlsx/csv.
-3. Share the Sheet with Sales Ops (@indeed.com) with view or comment access.
-4. Re-import weekly after Quest refresh (or use a scheduled Apps Script if you automate Quest export later).
+**dp-mcp Google Sheets tools** (`create_swift_google_sheets_job_draft`, etc.) are **ingestion only** (Google Sheet → data lake). There is no MCP path to push Quest query results directly into a new Google Sheet. Use one of the workflows below.
+
+#### Impact coverage only (sql/18, all reps from data lake)
+
+**Fastest — use the published CSV:**
+
+1. Open [Impact coverage CSV on GitHub Pages](https://kmahoneyxo.github.io/hq-headcount-dashboard/data/impact_coverage_all_reps.csv) (or download from the dashboard **Impact coverage** button).
+2. In Google Drive: **New → Google Sheets → Blank spreadsheet**.
+3. **File → Import → Upload** → select `impact_coverage_all_reps.csv`.
+4. Import settings: **Replace current sheet**, separator **Comma**, convert text to numbers **Yes**.
+5. Rename the tab **Impact coverage**; share with Sales Ops (@indeed.com).
+
+**Fresh from Quest prod (recommended weekly):**
+
+1. In Cursor with **dp-mcp**: run `sql/18_impact_coverage_all_reps.sql` on Quest **prod** (Trino).
+2. When complete, call `export_csv` with the `executionId` (paginate if >2000 rows) and save to `docs/data/impact_coverage_all_reps.csv`.
+3. Import that CSV into Google Sheets (steps 2–5 above), or upload the CSV to Drive and open with Google Sheets.
+
+**From iDash:** run saved query **HQ Impact Coverage All Reps (sql/18)** on prod → **Export → CSV** → import into Sheets (same import settings).
+
+#### Full dashboard workbook (markets + rep book + impact coverage)
+
+1. Run `python3 scripts/export-dashboard-data.py` (requires `headcount.json`, `rep_book.json`, `book_health.json`, `impact_coverage_all_reps.json`).
+2. Upload `docs/data/headcount-dashboard.xlsx` to Drive, or import individual CSVs into one Sheet (one tab per file).
+3. Share with Sales Ops (@indeed.com) with view or comment access.
+4. Re-import weekly after Quest refresh.
 
 For a persistent Looker Studio report, connect it to the Google Sheet as the data source.
 
@@ -202,6 +224,18 @@ git push
 ```
 
 Dashboard header **Impact coverage** button downloads the CSV directly.
+
+**Live download URLs (GitHub Pages):**
+
+| File | URL |
+|------|-----|
+| Impact coverage CSV | https://kmahoneyxo.github.io/hq-headcount-dashboard/data/impact_coverage_all_reps.csv |
+| JV by segment (JAM) | https://kmahoneyxo.github.io/hq-headcount-dashboard/data/jv_all_segments.xlsx |
+| Impact coverage + JV | https://kmahoneyxo.github.io/hq-headcount-dashboard/data/impact_coverage_jv.xlsx |
+| Full Excel workbook | https://kmahoneyxo.github.io/hq-headcount-dashboard/data/headcount-dashboard.xlsx |
+| Dashboard | https://kmahoneyxo.github.io/hq-headcount-dashboard/ |
+
+**Google Sheet:** dp-mcp cannot create or populate a Sheet automatically. See [Google Sheet (manual import)](#google-sheet-manual-import--dp-mcp-does-not-export-to-sheets) above — import the CSV or run Quest prod → `export_csv` → import.
 
 #### Troubleshooting
 
