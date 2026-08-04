@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_HC_IN = ROOT / "docs" / "data" / "headcount.json"
 DEFAULT_BH_IN = ROOT / "docs" / "data" / "book_health.json"
 DEFAULT_RB_IN = ROOT / "docs" / "data" / "rep_book.json"
+DEFAULT_IC_IN = ROOT / "docs" / "data" / "impact_coverage_all_reps.json"
 OUT_DIR = ROOT / "docs" / "data"
 MARKETS_CSV_OUT = OUT_DIR / "headcount-dashboard.csv"
 REP_BOOK_CSV_OUT = OUT_DIR / "headcount-dashboard-rep-book.csv"
@@ -192,6 +193,24 @@ SBS_FIELD_LABELS: dict[str, str] = {
 
 SBS_KEY_ORDER = list(SBS_FIELD_LABELS.keys())
 
+IMPACT_COVERAGE_FIELD_LABELS: dict[str, str] = {
+    "country": "Country",
+    "segment": "Segment",
+    "sales_rep_id": "Sales rep ID",
+    "sales_team_name": "Sales team",
+    "pcid_count": "PCID count",
+    "impact_calls_90d": "Impact calls 90d",
+    "impact_calls_per_account": "Impact calls / account",
+    "segment_avg_coverage": "Segment avg coverage",
+    "segment_avg_pcid": "Segment avg PCID",
+    "segment_avg_pqr": "Segment avg PQR ($)",
+    "pqr_90d": "PQR 90d ($)",
+    "revenue_90d": "Revenue 90d ($)",
+    "too_big_coverage_signal": "Too big (coverage signal)",
+}
+
+IMPACT_COVERAGE_KEY_ORDER = list(IMPACT_COVERAGE_FIELD_LABELS.keys())
+
 
 def market_row(market: dict) -> dict:
     row = dict(market)
@@ -266,6 +285,16 @@ def flatten_book_health(payload: dict) -> list[dict]:
     for market_key, market_data in sorted(payload.get("markets", {}).items()):
         for rep in market_data.get("reps", []):
             rows.append(enrich_rep_row(rep, market_key))
+    return rows
+
+
+def flatten_impact_coverage(payload: dict) -> list[dict]:
+    reps = payload.get("reps", [])
+    rows: list[dict] = []
+    for rep in reps:
+        row = dict(rep)
+        row["market"] = f"{row.get('country', '')}-{row.get('segment', '')}"
+        rows.append(row)
     return rows
 
 
@@ -365,7 +394,13 @@ def append_sheet(wb, title: str, keys: list[str], labels: dict[str, str], rows: 
     return ws
 
 
-def write_xlsx(payload: dict, book_health: dict, rep_book: dict, path: Path) -> bool:
+def write_xlsx(
+    payload: dict,
+    book_health: dict,
+    rep_book: dict,
+    impact_coverage: dict,
+    path: Path,
+) -> bool:
     try:
         from openpyxl import Workbook
         from openpyxl.styles import Font
@@ -398,6 +433,11 @@ def write_xlsx(payload: dict, book_health: dict, rep_book: dict, path: Path) -> 
     ws_rep = append_sheet(wb, "Rep book", rep_keys, REP_BOOK_FIELD_LABELS, rep_rows, bold)
     ws_rep.column_dimensions["E"].width = 28
 
+    ic_rows = flatten_impact_coverage(impact_coverage)
+    ic_keys = column_keys(ic_rows, IMPACT_COVERAGE_KEY_ORDER)
+    ws_ic = append_sheet(wb, "Impact coverage", ic_keys, IMPACT_COVERAGE_FIELD_LABELS, ic_rows, bold)
+    ws_ic.column_dimensions["D"].width = 28
+
     book_rows = flatten_book_health(book_health)
     book_keys = book_health_column_keys(book_rows)
     append_sheet(wb, "Book health (flagged reps)", book_keys, BOOK_HEALTH_FIELD_LABELS, book_rows, bold)
@@ -427,9 +467,15 @@ def write_xlsx(payload: dict, book_health: dict, rep_book: dict, path: Path) -> 
         ("Rep book data as of", rep_book.get("updated_at", "")),
         ("Rep book source query", rep_book.get("query", "")),
         ("Rep book note", rep_book.get("note", "")),
+        ("Impact coverage data as of", impact_coverage.get("updated_at", "")),
+        ("Impact coverage source query", impact_coverage.get("query", "")),
+        ("Impact coverage execution ID", impact_coverage.get("execution_id", "")),
+        ("Impact coverage source tables", ", ".join(impact_coverage.get("source_tables", []))),
+        ("Impact coverage note", impact_coverage.get("note", "")),
         ("Export generated", exported_at),
         ("Markets in export", len(markets)),
         ("Reps in export (Rep book tab)", len(rep_rows)),
+        ("Reps in export (Impact coverage tab)", len(ic_rows)),
         ("Flagged reps in export", len(book_rows)),
         ("SBS whitespace rows", len(sbs_rows)),
     ]
@@ -464,20 +510,24 @@ def main() -> None:
     hc_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_HC_IN
     bh_path = DEFAULT_BH_IN
     rb_path = DEFAULT_RB_IN
+    ic_path = DEFAULT_IC_IN
     if len(sys.argv) > 2:
         bh_path = Path(sys.argv[2])
     if len(sys.argv) > 3:
         rb_path = Path(sys.argv[3])
+    if len(sys.argv) > 4:
+        ic_path = Path(sys.argv[4])
 
     payload = load_json(hc_path)
     book_health = load_json(bh_path)
     rep_book = load_json_optional(rb_path)
+    impact_coverage = load_json_optional(ic_path)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     write_markets_csv(payload, MARKETS_CSV_OUT)
     write_rep_book_csv(rep_book, book_health, REP_BOOK_CSV_OUT)
     write_book_health_csv(book_health, BOOK_HEALTH_CSV_OUT)
-    write_xlsx(payload, book_health, rep_book, XLSX_OUT)
+    write_xlsx(payload, book_health, rep_book, impact_coverage, XLSX_OUT)
 
 
 if __name__ == "__main__":

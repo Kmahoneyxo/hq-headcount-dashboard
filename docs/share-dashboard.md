@@ -61,14 +61,16 @@ This writes:
 
 | File | Use |
 |------|-----|
-| `docs/data/headcount-dashboard.xlsx` | **Full download** — 6 sheets: **Markets**, **Rep book** (all reps — audit trail), **Book health (flagged reps)**, **SBS whitespace**, **Market summaries**, **About** |
+| `docs/data/headcount-dashboard.xlsx` | **Full download** — 7 sheets: **Markets**, **Rep book** (all reps — audit trail), **Impact coverage** (all reps — data lake), **Book health (flagged reps)**, **SBS whitespace**, **Market summaries**, **About** |
 | `docs/data/headcount-dashboard.csv` | Markets only — all columns from `headcount.json` |
 | `docs/data/headcount-dashboard-rep-book.csv` | All reps — one row per rep from `rep_book.json` (segment, team, PCIDs, ideal, flags) |
 | `docs/data/headcount-dashboard-book-health.csv` | Flagged reps only — flattened from `book_health.json` |
+| `docs/data/impact_coverage_all_reps.csv` | All reps — impact coverage from data lake (`sql/18`) |
+| `docs/data/impact_coverage_all_reps.json` | Same data as JSON (Quest prod export) |
 
-The live dashboard header links to the Excel workbook (full data), rep-book CSV, and markets CSV. Use Excel **Rep book** tab to reconcile market rollup → individual reps.
+The live dashboard header links to the Excel workbook (full data), rep-book CSV, markets CSV, and **Impact coverage** CSV. Use Excel **Rep book** tab to reconcile market rollup → individual reps; **Impact coverage** tab for per-rep `impact_calls_per_account` from the data lake.
 
-**Include in weekly refresh:** run export script after updating `headcount.json`, `rep_book.json`, and `book_health.json`, then commit JSON + xlsx + all CSVs.
+**Include in weekly refresh:** run export script after updating `headcount.json`, `rep_book.json`, `book_health.json`, and `impact_coverage_all_reps.json`, then commit JSON + xlsx + all CSVs.
 
 ### Google Sheet (manual import)
 
@@ -150,6 +152,56 @@ GitHub Pages redeploys in ~1–2 min.
 1. **Add query** → paste `sql/17_rep_book_profile_all.sql`.
 2. Name it `HQ Rep Book All (sql/17a)` · Trino · prod.
 3. Run on prod → export → `merge-rep-book.py` → `export-dashboard-data.py`.
+
+#### Impact coverage — all reps (sql/18, data lake)
+
+Per-rep impact coverage from the **Indeed data lake** (Quest prod / Trino). Not computed locally.
+
+| | |
+|---|---|
+| **Source file** | `sql/18_impact_coverage_all_reps.sql` |
+| **Data lake tables** | `datalake.sales_data_strategy_dsa.rep_activity_sales` (impact_calls), `datalake.sales_data_strategy_dsa.current_parent_rep_assignment`, `datalake.imhotep_iceberg.jobactivitymetrics` (PCID count) |
+| **Metric** | `impact_calls_per_account` = `impact_calls_90d` ÷ `pcid_count` (90d window aligned with sql/16) |
+
+**Refresh from Cursor (dp-mcp):**
+
+> Run `sql/18_impact_coverage_all_reps.sql` on Quest **prod** (Trino). Use `export_csv` if >1000 rows. Save to `docs/data/impact_coverage_all_reps.json` and `.csv`, then run `export-dashboard-data.py`.
+
+**Refresh from iDash:**
+
+1. **Add query** → paste `sql/18_impact_coverage_all_reps.sql`.
+2. Name it `HQ Impact Coverage All Reps (sql/18)` · Trino · **prod**.
+3. Run on prod (~2–5 min) → Export → CSV.
+4. Save CSV as `docs/data/impact_coverage_all_reps.csv` and wrap rows in JSON:
+
+```bash
+# If you exported CSV only, build JSON wrapper (or re-export JSON from Quest):
+python3 - <<'PY'
+import csv, json
+from datetime import date
+from pathlib import Path
+rows = list(csv.DictReader(Path("docs/data/impact_coverage_all_reps.csv").open()))
+Path("docs/data/impact_coverage_all_reps.json").write_text(json.dumps({
+    "updated_at": date.today().isoformat(),
+    "query": "sql/18_impact_coverage_all_reps.sql",
+    "source_tables": [
+        "datalake.sales_data_strategy_dsa.rep_activity_sales",
+        "datalake.sales_data_strategy_dsa.current_parent_rep_assignment",
+        "datalake.imhotep_iceberg.jobactivitymetrics",
+    ],
+    "note": "impact_calls_per_account = impact_calls_90d / pcid_count. Quest prod / Trino data lake.",
+    "row_count": len(rows),
+    "reps": rows,
+}, indent=2))
+PY
+
+python3 scripts/export-dashboard-data.py
+git add docs/data/impact_coverage_all_reps.* docs/data/headcount-dashboard.xlsx docs/index.html
+git commit -m "Refresh impact coverage from data lake (sql/18)"
+git push
+```
+
+Dashboard header **Impact coverage** button downloads the CSV directly.
 
 #### Troubleshooting
 
