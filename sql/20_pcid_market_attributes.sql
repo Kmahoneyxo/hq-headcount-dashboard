@@ -1,7 +1,9 @@
 -- PCID market attributes — raw export from data lake
 -- All columns from client_attributes_dim_parent_attributes_current
 -- Scoped to PCIDs on HQ rep books (same rep universe as sql/18; excludes JP)
--- Run on Quest prod; output → docs/data/pcid_market_attributes.json
+-- Run on Quest prod; output → docs/data/pcid_market_attributes.csv
+-- Quest export_csv caps at 5k rows/page — run 3 partitions and combine:
+--   AND MOD(p.parent_company_id, 3) = <part>   (part 0, 1, 2)
 
 WITH hq_reps AS (
   SELECT DISTINCT j.current_sales_rep_id AS sales_rep_id
@@ -64,4 +66,5 @@ SELECT
   p.sales_business_unit_segment
 FROM datalake.scss.client_attributes_dim_parent_attributes_current p
 WHERE p.sales_rep_id IN (SELECT sales_rep_id FROM hq_reps)
+  AND MOD(p.parent_company_id, 3) = 0  -- change to 0, 1, or 2 for each export partition
 ORDER BY p.billing_country, p.company_size_segment, p.parent_company_id
