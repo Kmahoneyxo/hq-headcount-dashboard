@@ -364,10 +364,16 @@ h2 {
   margin-top: 8px;
 }
 
-.growth-curve-block {
+.growth-curve-block,
+.jv-curve-block {
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid var(--border);
+}
+
+.jv-vs-plateau {
+  margin: 0 0 8px;
+  color: var(--muted);
 }
 
 .growth-curve-header {

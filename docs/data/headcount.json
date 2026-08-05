@@ -145,6 +145,39 @@
         "Optimal book 90 PCIDs \u2014 largest bucket within 85% of peak growth (20%).",
         "Above ~100 accounts/rep, growth tends to fall (from 20% toward 19%).",
         "Coverage peaks near ~100 accounts/rep (median 1 calls/account at inflection)."
+      ],
+      "jv_by_bucket": [
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 208,
+          "median_rev_per_job": 46.4
+        },
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 14,
+          "median_rev_per_job": 18.45
+        }
+      ],
+      "segment_avg_jv": 45.8,
+      "jv_plateau_book_max": 100,
+      "jv_plateau_rev_per_job": 45.72,
+      "jv_peak_rev_per_job": 46.4,
+      "jv_peak_accounts": 90,
+      "jv_decline_above_pcid": 100,
+      "jv_decline_median_rev_per_job": 18.45,
+      "jv_vs_plateau_pct": 0.2,
+      "jv_curve_primary": "JV peaks at ~100 accounts/rep ($45.72/job); $/job declines above ~100 PCIDs (toward $18.45/job); segment median $45.80/job is at plateau; this market averages 127 PCIDs/rep vs ideal 90.",
+      "jv_curve_bullets": [
+        "Peak median JV $45.72/job at ~90 accounts/rep (81-100 band).",
+        "Segment peak $46.40/job \u2014 plateau uses largest bucket within 90% of peak where bigger books no longer add $/job.",
+        "Above ~100 accounts/rep, $/job tends to fall (from $45.72/job toward $18.45/job).",
+        "Segment median JV today: $45.80/job across scored reps."
       ]
     },
     {
@@ -290,6 +323,46 @@
         "Optimal book 58 PCIDs \u2014 largest bucket within 85% of peak growth (20%).",
         "Above ~65 accounts/rep, growth tends to fall (from 20% toward lower levels).",
         "Coverage peaks near ~65 accounts/rep (median 2 calls/account at inflection)."
+      ],
+      "jv_by_bucket": [
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 138,
+          "median_rev_per_job": 11.35
+        },
+        {
+          "bucket_order": 5,
+          "book_bucket": "05: 41-50",
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 40,
+          "median_rev_per_job": 11.5
+        },
+        {
+          "bucket_order": 6,
+          "book_bucket": "06: 51-65",
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 26,
+          "median_rev_per_job": 6.45
+        }
+      ],
+      "segment_avg_jv": 10.45,
+      "jv_plateau_book_max": 50,
+      "jv_plateau_rev_per_job": 11.7,
+      "jv_peak_rev_per_job": 11.5,
+      "jv_peak_accounts": 45,
+      "jv_decline_above_pcid": 50,
+      "jv_decline_median_rev_per_job": 6.45,
+      "jv_vs_plateau_pct": -10.7,
+      "jv_curve_primary": "JV peaks at ~50 accounts/rep ($11.70/job); $/job declines above ~50 PCIDs (toward $6.45/job); segment median $10.45/job below plateau $11.70/job.",
+      "jv_curve_bullets": [
+        "Peak median JV $11.70/job at ~45 accounts/rep (41-50 band).",
+        "Above ~50 accounts/rep, $/job tends to fall (from $11.70/job toward $6.45/job).",
+        "Segment median JV today: $10.45/job across scored reps."
       ]
     },
     {
@@ -459,6 +532,70 @@
         "Optimal book 5 PCIDs \u2014 largest bucket within 85% of peak growth (23%).",
         "Above ~50 accounts/rep, growth tends to fall (from 23% toward 94%).",
         "Coverage peaks near ~50 accounts/rep (median 1 calls/account at inflection)."
+      ],
+      "jv_by_bucket": [
+        {
+          "bucket_order": 1,
+          "book_bucket": "01: 1-10",
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 161,
+          "median_rev_per_job": 2.3
+        },
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 29,
+          "median_rev_per_job": 1.2
+        },
+        {
+          "bucket_order": 3,
+          "book_bucket": "03: 21-30",
+          "bucket_midpoint": 25,
+          "bucket_upper": 30,
+          "rep_count": 14,
+          "median_rev_per_job": 2.15
+        },
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 12,
+          "median_rev_per_job": 5.2
+        },
+        {
+          "bucket_order": 5,
+          "book_bucket": "05: 41-50",
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 6,
+          "median_rev_per_job": 11.55
+        },
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 5,
+          "median_rev_per_job": 1.9
+        }
+      ],
+      "segment_avg_jv": 2.2,
+      "jv_plateau_book_max": 50,
+      "jv_plateau_rev_per_job": 12.5,
+      "jv_peak_rev_per_job": 11.55,
+      "jv_peak_accounts": 45,
+      "jv_decline_above_pcid": 50,
+      "jv_decline_median_rev_per_job": 1.9,
+      "jv_vs_plateau_pct": -82.4,
+      "jv_curve_primary": "JV peaks at ~50 accounts/rep ($12.50/job); $/job declines above ~50 PCIDs (toward $1.90/job); segment median $2.20/job below plateau $12.50/job.",
+      "jv_curve_bullets": [
+        "Peak median JV $12.50/job at ~45 accounts/rep (41-50 band).",
+        "Above ~50 accounts/rep, $/job tends to fall (from $12.50/job toward $1.90/job).",
+        "Segment median JV today: $2.20/job across scored reps."
       ]
     },
     {
@@ -588,6 +725,30 @@
         "Optimal book 58 PCIDs \u2014 largest bucket within 85% of peak growth (20%).",
         "Above ~65 accounts/rep, growth tends to fall (from 20% toward lower levels).",
         "Coverage peaks near ~65 accounts/rep (median 1 calls/account at inflection)."
+      ],
+      "jv_by_bucket": [
+        {
+          "bucket_order": 6,
+          "book_bucket": "06: 51-65",
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 130,
+          "median_rev_per_job": 25.9
+        }
+      ],
+      "segment_avg_jv": 26.05,
+      "jv_plateau_book_max": 65,
+      "jv_plateau_rev_per_job": 25.9,
+      "jv_peak_rev_per_job": 25.9,
+      "jv_peak_accounts": 58,
+      "jv_decline_above_pcid": 65,
+      "jv_decline_median_rev_per_job": null,
+      "jv_vs_plateau_pct": 0.6,
+      "jv_curve_primary": "JV peaks at ~65 accounts/rep ($25.90/job); little marginal $/job growth above ~65 PCIDs; segment median $26.05/job is at plateau.",
+      "jv_curve_bullets": [
+        "Peak median JV $25.90/job at ~58 accounts/rep (51-65 band).",
+        "Above ~65 accounts/rep, $/job tends to fall (from $25.90/job toward lower levels).",
+        "Segment median JV today: $26.05/job across scored reps."
       ]
     },
     {
@@ -748,6 +909,62 @@
         "Optimal book 138 PCIDs \u2014 largest bucket within 85% of peak growth (20%).",
         "Above ~150 accounts/rep, growth tends to fall (from 20% toward 12%).",
         "69 reps flagged too big \u2014 PCID/PQR above segment avg plus weak coverage or revenue below PQR."
+      ],
+      "jv_by_bucket": [
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 13,
+          "median_rev_per_job": 13.3
+        },
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 9,
+          "median_rev_per_job": 16.7
+        },
+        {
+          "bucket_order": 9,
+          "book_bucket": "09: 101-125",
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 23,
+          "median_rev_per_job": 35.9
+        },
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 35,
+          "median_rev_per_job": 38.8
+        },
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 10,
+          "median_rev_per_job": 73.1
+        }
+      ],
+      "segment_avg_jv": 32.2,
+      "jv_plateau_book_max": 150,
+      "jv_plateau_rev_per_job": 38.8,
+      "jv_peak_rev_per_job": 38.8,
+      "jv_peak_accounts": 138,
+      "jv_decline_above_pcid": 150,
+      "jv_decline_median_rev_per_job": 73.1,
+      "jv_vs_plateau_pct": -17.0,
+      "jv_curve_primary": "JV peaks at ~150 accounts/rep ($38.80/job); $/job declines above ~150 PCIDs (toward $73.10/job); segment median $32.20/job below plateau $38.80/job.",
+      "jv_curve_bullets": [
+        "Peak median JV $38.80/job at ~138 accounts/rep (126-150 band).",
+        "Above ~150 accounts/rep, $/job tends to fall (from $38.80/job toward $73.10/job).",
+        "Segment median JV today: $32.20/job across scored reps."
       ]
     },
     {
@@ -885,6 +1102,39 @@
         "Optimal book 90 PCIDs \u2014 largest bucket within 85% of peak growth (20%).",
         "Above ~150 accounts/rep, growth tends to fall (from 20% toward lower levels).",
         "Coverage peaks near ~150 accounts/rep (median 1 calls/account at inflection)."
+      ],
+      "jv_by_bucket": [
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 41,
+          "median_rev_per_job": 35.7
+        },
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 5,
+          "median_rev_per_job": 7.5
+        }
+      ],
+      "segment_avg_jv": 29.55,
+      "jv_plateau_book_max": 100,
+      "jv_plateau_rev_per_job": 34.9,
+      "jv_peak_rev_per_job": 35.7,
+      "jv_peak_accounts": 90,
+      "jv_decline_above_pcid": 100,
+      "jv_decline_median_rev_per_job": 7.5,
+      "jv_vs_plateau_pct": -15.3,
+      "jv_curve_primary": "JV peaks at ~100 accounts/rep ($34.90/job); $/job declines above ~100 PCIDs (toward $7.50/job); segment median $29.55/job below plateau $34.90/job; this market averages 115 PCIDs/rep vs ideal 90.",
+      "jv_curve_bullets": [
+        "Peak median JV $34.90/job at ~90 accounts/rep (81-100 band).",
+        "Segment peak $35.70/job \u2014 plateau uses largest bucket within 90% of peak where bigger books no longer add $/job.",
+        "Above ~100 accounts/rep, $/job tends to fall (from $34.90/job toward $7.50/job).",
+        "Segment median JV today: $29.55/job across scored reps."
       ]
     },
     {
@@ -1022,6 +1272,39 @@
         "Optimal book 15 PCIDs \u2014 largest bucket within 85% of peak growth (40%).",
         "Above ~20 accounts/rep, growth tends to fall (from 40% toward lower levels).",
         "Coverage peaks near ~20 accounts/rep (median 1 calls/account at inflection)."
+      ],
+      "jv_by_bucket": [
+        {
+          "bucket_order": 1,
+          "book_bucket": "01: 1-10",
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 10,
+          "median_rev_per_job": 4.85
+        },
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 29,
+          "median_rev_per_job": 1.4
+        }
+      ],
+      "segment_avg_jv": 1.7,
+      "jv_plateau_book_max": 10,
+      "jv_plateau_rev_per_job": 6.1,
+      "jv_peak_rev_per_job": 4.85,
+      "jv_peak_accounts": 5,
+      "jv_decline_above_pcid": 10,
+      "jv_decline_median_rev_per_job": 1.4,
+      "jv_vs_plateau_pct": -72.1,
+      "jv_curve_primary": "JV peaks at ~10 accounts/rep ($6.10/job); $/job declines above ~10 PCIDs (toward $1.40/job); segment median $1.70/job below plateau $6.10/job; this market averages 19 PCIDs/rep vs ideal 15.",
+      "jv_curve_bullets": [
+        "Peak median JV $6.10/job at ~5 accounts/rep (1-10 band).",
+        "Above ~10 accounts/rep, $/job tends to fall (from $6.10/job toward $1.40/job).",
+        "Segment median JV today: $1.70/job across scored reps.",
+        "Avg book 19 PCIDs/rep exceeds JV plateau (~10) \u2014 opp pipeline status plateaued."
       ]
     },
     {
@@ -1159,6 +1442,39 @@
         "Optimal book 15 PCIDs \u2014 largest bucket within 85% of peak growth (40%).",
         "Above ~10 accounts/rep, growth tends to fall (from 40% toward 40%).",
         "Coverage inflection at ~10 PCIDs \u2014 avg book (21) exceeds this; impact calls/account drop."
+      ],
+      "jv_by_bucket": [
+        {
+          "bucket_order": 1,
+          "book_bucket": "01: 1-10",
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 11,
+          "median_rev_per_job": 2.5
+        },
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 28,
+          "median_rev_per_job": 1.95
+        }
+      ],
+      "segment_avg_jv": 1.9,
+      "jv_plateau_book_max": 10,
+      "jv_plateau_rev_per_job": 2.5,
+      "jv_peak_rev_per_job": 2.5,
+      "jv_peak_accounts": 5,
+      "jv_decline_above_pcid": 10,
+      "jv_decline_median_rev_per_job": 1.95,
+      "jv_vs_plateau_pct": -24.0,
+      "jv_curve_primary": "JV peaks at ~10 accounts/rep ($2.50/job); $/job declines above ~10 PCIDs (toward $1.95/job); segment median $1.90/job below plateau $2.50/job; this market averages 21 PCIDs/rep vs ideal 15.",
+      "jv_curve_bullets": [
+        "Peak median JV $2.50/job at ~5 accounts/rep (1-10 band).",
+        "Above ~10 accounts/rep, $/job tends to fall (from $2.50/job toward $1.95/job).",
+        "Segment median JV today: $1.90/job across scored reps.",
+        "Avg book 21 PCIDs/rep exceeds JV plateau (~10) \u2014 opp pipeline status plateaued."
       ]
     },
     {
@@ -1252,6 +1568,30 @@
         "Peak median growth 17% at ~15 accounts/rep (11-20 band).",
         "Above ~15 accounts/rep, growth tends to fall (from 17% toward 17%).",
         "11 reps flagged too big \u2014 PCID/PQR above segment avg plus weak coverage or revenue below PQR."
+      ],
+      "jv_by_bucket": [
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 24,
+          "median_rev_per_job": 1.1
+        }
+      ],
+      "segment_avg_jv": 0.95,
+      "jv_plateau_book_max": 20,
+      "jv_plateau_rev_per_job": 1.1,
+      "jv_peak_rev_per_job": 1.1,
+      "jv_peak_accounts": 15,
+      "jv_decline_above_pcid": 20,
+      "jv_decline_median_rev_per_job": null,
+      "jv_vs_plateau_pct": -13.6,
+      "jv_curve_primary": "JV peaks at ~20 accounts/rep ($1.10/job); little marginal $/job growth above ~20 PCIDs; segment median $0.95/job below plateau $1.10/job.",
+      "jv_curve_bullets": [
+        "Peak median JV $1.10/job at ~15 accounts/rep (11-20 band).",
+        "Above ~20 accounts/rep, $/job tends to fall (from $1.10/job toward lower levels).",
+        "Segment median JV today: $0.95/job across scored reps."
       ]
     },
     {
@@ -1327,7 +1667,18 @@
       "growth_curve_primary": "growth declines above ~90 PCIDs (toward lower rates); this market averages 862 PCIDs/rep vs ideal 90.",
       "growth_curve_bullets": [
         "1 reps flagged too big \u2014 PCID/PQR above segment avg plus weak coverage or revenue below PQR."
-      ]
+      ],
+      "jv_by_bucket": [],
+      "segment_avg_jv": null,
+      "jv_plateau_book_max": null,
+      "jv_plateau_rev_per_job": null,
+      "jv_peak_rev_per_job": null,
+      "jv_peak_accounts": null,
+      "jv_decline_above_pcid": null,
+      "jv_decline_median_rev_per_job": null,
+      "jv_vs_plateau_pct": null,
+      "jv_curve_primary": "this market averages 862 PCIDs/rep vs ideal 90.",
+      "jv_curve_bullets": []
     }
   ],
   "sbs_whitespace": [

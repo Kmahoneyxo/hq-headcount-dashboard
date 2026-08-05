@@ -15,7 +15,10 @@ OUT = ROOT / "docs" / "data" / "headcount.json"
 AMER = ["US", "CA", "UK", "DACH", "BNL"]
 
 sys.path.insert(0, str(ROOT / "scripts"))
-from build_market_summary import enrich_market  # noqa: E402
+from build_market_summary import enrich_market, load_rep_book_by_market, load_rep_jv_by_id  # noqa: E402
+
+REP_BOOK = ROOT / "docs" / "data" / "rep_book.json"
+REP_JV = ROOT / "docs" / "data" / "rep_jv_all_reps.json"
 
 ENRICHMENT_KEYS = [
     "sbs_whitespace_country",
@@ -136,6 +139,11 @@ def main() -> None:
 
     markets = [normalize_market(r) for r in rows]
     merge_prior_enrichment(markets)
+    rep_book_by_market = load_rep_book_by_market(REP_BOOK)
+    jv_by_id = load_rep_jv_by_id(REP_JV)
+    by_country: dict[str, list[dict]] = {}
+    for m in markets:
+        by_country.setdefault(m.get("country", ""), []).append(m)
     for m in markets:
         if not m.get("headcount_recommendation"):
             m["headcount_recommendation"] = headcount_recommendation(m)
@@ -152,7 +160,7 @@ def main() -> None:
             m["books_buildable_from_sbs"] = int(sbs // target)
         if m.get("sbs_whitespace_country") is not None:
             m["sbs_whitespace"] = m["sbs_whitespace_country"]
-        enrich_market(m)
+        enrich_market(m, by_country.get(m.get("country", ""), []), rep_book_by_market, jv_by_id)
     sbs = [
         {
             "country": m["country"],

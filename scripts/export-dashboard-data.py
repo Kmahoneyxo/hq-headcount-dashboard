@@ -111,6 +111,14 @@ MARKET_FIELD_LABELS: dict[str, str] = {
     "growth_decline_above_pcid": "Growth decline above PCIDs",
     "growth_decline_median_pct": "Growth above inflection %",
     "growth_by_bucket": "Growth by PCID bucket (JSON)",
+    "segment_avg_jv": "Segment avg JV ($/job)",
+    "jv_plateau_book_max": "JV plateau book max",
+    "jv_plateau_rev_per_job": "JV plateau $/job",
+    "jv_peak_rev_per_job": "JV peak $/job",
+    "jv_vs_plateau_pct": "JV vs plateau %",
+    "jv_curve_primary": "JV curve — narrative",
+    "jv_curve_bullets": "JV curve — detail",
+    "jv_by_bucket": "JV by PCID bucket (JSON)",
 }
 
 SUMMARY_FIELD_LABELS: dict[str, str] = {
@@ -221,6 +229,8 @@ def market_row(market: dict) -> dict:
         enrich_market(row)
     if isinstance(row.get("growth_by_bucket"), list):
         row["growth_by_bucket"] = json.dumps(row["growth_by_bucket"], separators=(",", ":"))
+    if isinstance(row.get("jv_by_bucket"), list):
+        row["jv_by_bucket"] = json.dumps(row["jv_by_bucket"], separators=(",", ":"))
     for list_field in (
         "summary_bullets",
         "health_bullets",
@@ -230,6 +240,7 @@ def market_row(market: dict) -> dict:
         "sbs_routing_bullets",
         "impact_coverage_bullets",
         "growth_curve_bullets",
+        "jv_curve_bullets",
         "healthy_book_criteria",
     ):
         if isinstance(row.get(list_field), list):

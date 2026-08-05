@@ -27,6 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 IC_PATH = ROOT / "docs" / "data" / "impact_coverage_all_reps.json"
 JV_PATH = ROOT / "docs" / "data" / "rep_jv_all_reps.json"
+REP_BOOK_PATH = ROOT / "docs" / "data" / "rep_book.json"
 PCID_JSON_PATH = ROOT / "docs" / "data" / "pcid_market_attributes.json"
 PCID_CSV_PATH = ROOT / "docs" / "data" / "pcid_market_attributes.csv"
 OUT_PATH = ROOT / "docs" / "data" / "hq_raw_data.xlsx"
@@ -148,6 +149,36 @@ def about_rows(
     ]
 
 
+def jv_by_bucket_rows() -> list[dict]:
+    """Market × PCID bucket median $/job from rep_book + rep_jv (sql/21 logic)."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from build_market_summary import (
+        compute_jv_by_bucket,
+        load_rep_book_by_market,
+        load_rep_jv_by_id,
+        merge_reps_with_jv,
+    )
+
+    rep_book_by_market = load_rep_book_by_market(REP_BOOK_PATH)
+    jv_by_id = load_rep_jv_by_id(JV_PATH)
+    rows: list[dict] = []
+    for market_key, reps in sorted(rep_book_by_market.items()):
+        merged = merge_reps_with_jv(reps, jv_by_id)
+        if not merged:
+            continue
+        country, segment = market_key.split("-", 1) if "-" in market_key else ("", market_key)
+        for bucket in compute_jv_by_bucket(merged):
+            rows.append(
+                {
+                    "market": market_key,
+                    "country": country,
+                    "segment": segment,
+                    **bucket,
+                }
+            )
+    return rows
+
+
 def write_xlsx(ic: dict, jv: dict, pcid: dict, path: Path) -> dict[str, int]:
     try:
         from openpyxl import Workbook
@@ -168,6 +199,10 @@ def write_xlsx(ic: dict, jv: dict, pcid: dict, path: Path) -> dict[str, int]:
     ws_jv = wb.create_sheet("JV JAM")
     write_sheet(ws_jv, jv_rows)
 
+    jv_bucket_rows = jv_by_bucket_rows()
+    ws_jv_bucket = wb.create_sheet("JV by bucket")
+    write_sheet(ws_jv_bucket, jv_bucket_rows)
+
     ws_pcid = wb.create_sheet("PCID Market")
     write_sheet(ws_pcid, pcid_rows)
 
@@ -187,6 +222,7 @@ def write_xlsx(ic: dict, jv: dict, pcid: dict, path: Path) -> dict[str, int]:
     counts = {
         "Impact coverage": len(ic_rows),
         "JV JAM": len(jv_rows),
+        "JV by bucket": len(jv_bucket_rows),
         "PCID Market": len(pcid_rows),
     }
     print(f"Wrote {path}")

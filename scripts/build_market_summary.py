@@ -20,11 +20,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_IN = ROOT / "docs" / "data" / "headcount.json"
 DEFAULT_REP_BOOK = ROOT / "docs" / "data" / "rep_book.json"
+DEFAULT_REP_JV = ROOT / "docs" / "data" / "rep_jv_all_reps.json"
 
 # Healthy book thresholds (aligned with sql/16–17 rep_book_flags)
 PCID_TOLERANCE_PCT = 10  # document ±10% band around ideal PCID
 COVERAGE_FLOOR_RATIO = 0.90  # too_big uses segment_avg_coverage * 0.90
 GROWTH_PEAK_FLOOR_RATIO = 0.85  # perfect book stays within 85% of segment peak (sql/16)
+JV_PEAK_FLOOR_RATIO = 0.90  # JV plateau stays within 90% of segment peak (sql/16 opp_plateau)
 MIN_REPS_PER_BUCKET = 5
 MIN_REPS_PERFECT_BUCKET = 20
 MIN_PQR_FOR_GROWTH = 5000  # sql/16 rep_filtered
@@ -121,6 +123,12 @@ def _fmt_money(n) -> str:
     return f"${n:,.0f}"
 
 
+def _fmt_jv(n) -> str:
+    if n is None:
+        return "—"
+    return f"${float(n):.2f}/job"
+
+
 def _flag_pct(count, total) -> str:
     if not total:
         return ""
@@ -211,6 +219,33 @@ def build_hc_reason(m: dict) -> dict:
                     "impact coverage is adequate but revenue growth has plateaued — over-staffed vs book capacity",
                 )
             )
+
+    jv_plateau_book = m.get("jv_plateau_book_max") or m.get("opp_plateau_book_max")
+    jv_plateau_val = m.get("jv_plateau_rev_per_job") or m.get("opp_plateau_rev_per_job")
+    seg_jv = m.get("segment_avg_jv")
+    jv_plateaued = (
+        m.get("opp_pipeline_status") == "Plateaued"
+        or (
+            jv_plateau_book is not None
+            and avg_book is not None
+            and avg_book >= jv_plateau_book * 0.95
+        )
+    )
+    if jv_plateaued and jv_plateau_book is not None and jv_plateau_val is not None:
+        jv_detail = (
+            f"JV ($/job) peaks at ~{int(jv_plateau_book)} accounts/rep ({_fmt_jv(jv_plateau_val)})"
+        )
+        if seg_jv is not None:
+            jv_detail += f"; segment median {_fmt_jv(seg_jv)}"
+        jv_detail += f" — little marginal gain above {int(jv_plateau_book)} PCIDs"
+        if status == "Over HC":
+            drivers.append(
+                ("jv_plateau", 87, jv_detail + " — over-staffed vs JV capacity"),
+            )
+        elif book_label == "overweight":
+            drivers.append(("jv_plateau", 82, jv_detail))
+        elif status == "Under HC" and jv_plateaued:
+            drivers.append(("jv_plateau", 70, jv_detail))
 
     if book_label == "overweight":
         book_detail = (
@@ -495,6 +530,41 @@ def load_rep_book_by_market(rep_book_path: Path | None = None) -> dict[str, list
     return by_market
 
 
+def load_rep_jv_by_id(jv_path: Path | None = None) -> dict[int, dict]:
+    """Index rep_jv_all_reps.json by sales_rep_id."""
+    path = jv_path or DEFAULT_REP_JV
+    if not path.is_file():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return {r["sales_rep_id"]: r for r in payload.get("reps", [])}
+
+
+def merge_reps_with_jv(reps: list[dict], jv_by_id: dict[int, dict]) -> list[dict]:
+    """Join rep book PCIDs with sql/19 rev_per_job for bucket JV curves."""
+    merged: list[dict] = []
+    for rep in reps:
+        jv = jv_by_id.get(rep.get("sales_rep_id"))
+        if not jv:
+            continue
+        jobs = jv.get("jobs_90d") or 0
+        rev_per_job = jv.get("rev_per_job")
+        if jobs <= 0 or rev_per_job is None:
+            continue
+        prior = jv.get("pqr_90d")
+        if prior is None:
+            prior = rep.get("pqr_90d")
+        if prior is not None and prior < MIN_PQR_FOR_GROWTH:
+            continue
+        merged.append(
+            {
+                "pcid_count": rep.get("pcid_count") or 0,
+                "rev_per_job": float(rev_per_job),
+                "jobs_90d": jobs,
+            }
+        )
+    return merged
+
+
 def compute_healthy_rep_stats(reps: list[dict]) -> dict:
     total = len(reps)
     healthy = sum(1 for r in reps if is_rep_healthy(r))
@@ -770,6 +840,202 @@ def build_growth_curve(m: dict, market_reps: list[dict] | None = None) -> dict:
     }
 
 
+def compute_jv_by_bucket(merged_reps: list[dict]) -> list[dict]:
+    """Median rev_per_job ($/job) per PCID bucket — sql/16 opp_plateau bucket logic."""
+    grouped: dict[int, dict] = {}
+    for rep in merged_reps:
+        order, label, midpoint, upper, ceiling = _pcid_bucket(rep.get("pcid_count") or 0)
+        bucket = grouped.setdefault(
+            order,
+            {
+                "bucket_order": order,
+                "book_bucket": label,
+                "bucket_midpoint": midpoint,
+                "bucket_upper": upper,
+                "jv_values": [],
+            },
+        )
+        bucket["jv_values"].append(rep["rev_per_job"])
+
+    rows: list[dict] = []
+    for order in sorted(grouped):
+        b = grouped[order]
+        if len(b["jv_values"]) < MIN_REPS_PER_BUCKET:
+            continue
+        rows.append(
+            {
+                "bucket_order": b["bucket_order"],
+                "book_bucket": b["book_bucket"],
+                "bucket_midpoint": b["bucket_midpoint"],
+                "bucket_upper": b["bucket_upper"],
+                "rep_count": len(b["jv_values"]),
+                "median_rev_per_job": round(statistics.median(b["jv_values"]), 2),
+            }
+        )
+    return rows
+
+
+def _jv_above_book(buckets: list[dict], book_max: float | int) -> float | None:
+    above = [b["median_rev_per_job"] for b in buckets if b["bucket_upper"] > book_max]
+    if not above:
+        return None
+    return round(statistics.median(above), 2)
+
+
+def compute_jv_plateau_from_buckets(
+    buckets: list[dict],
+) -> tuple[int | None, float | None, float | None, dict | None]:
+    """Largest bucket within 90% of peak JV where next bucket declines (sql/16 opp_plateau)."""
+    eligible = [
+        b
+        for b in buckets
+        if b.get("bucket_order", 99) <= 10
+        and b.get("rep_count", 0) >= MIN_REPS_PER_BUCKET
+    ]
+    if not eligible:
+        return None, None, None, None
+
+    peak_bucket = max(eligible, key=lambda b: b.get("median_rev_per_job") or -999)
+    peak_jv = peak_bucket.get("median_rev_per_job")
+    if peak_jv is None:
+        return None, None, None, None
+
+    floor = peak_jv * JV_PEAK_FLOOR_RATIO
+    sorted_buckets = sorted(eligible, key=lambda b: b["bucket_order"])
+    plateau_bucket = None
+    for b in reversed(sorted_buckets):
+        jv = b.get("median_rev_per_job")
+        if jv is None or jv < floor:
+            continue
+        idx = sorted_buckets.index(b)
+        next_jv = (
+            sorted_buckets[idx + 1].get("median_rev_per_job")
+            if idx + 1 < len(sorted_buckets)
+            else None
+        )
+        if next_jv is None or next_jv < jv:
+            plateau_bucket = b
+            break
+
+    if plateau_bucket is None:
+        return None, None, peak_jv, peak_bucket
+    return (
+        plateau_bucket["bucket_upper"],
+        plateau_bucket["median_rev_per_job"],
+        peak_jv,
+        peak_bucket,
+    )
+
+
+def build_jv_curve(
+    m: dict,
+    market_reps: list[dict] | None = None,
+    jv_by_id: dict[int, dict] | None = None,
+) -> dict:
+    """JV ($/job) vs book size narrative + bucket table (sql/19 + sql/16 opp_plateau)."""
+    merged = merge_reps_with_jv(market_reps or [], jv_by_id or {})
+    buckets = m.get("jv_by_bucket")
+    if buckets is None and merged:
+        buckets = compute_jv_by_bucket(merged)
+
+    segment_avg_jv = (
+        round(statistics.median([r["rev_per_job"] for r in merged]), 2) if merged else None
+    )
+
+    computed_plateau_book, computed_plateau_jv, peak_jv, peak_bucket = (
+        compute_jv_plateau_from_buckets(buckets or [])
+    )
+    plateau_book = (
+        m.get("jv_plateau_book_max")
+        or m.get("opp_plateau_book_max")
+        or computed_plateau_book
+    )
+    plateau_jv = (
+        m.get("jv_plateau_rev_per_job")
+        or m.get("opp_plateau_rev_per_job")
+        or computed_plateau_jv
+    )
+    peak_accounts = (peak_bucket or {}).get("bucket_midpoint") or plateau_book
+    decline_jv = _jv_above_book(buckets or [], plateau_book) if plateau_book else None
+    avg_book = m.get("current_avg_book")
+    ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
+
+    jv_vs_plateau_pct = None
+    if segment_avg_jv is not None and plateau_jv:
+        jv_vs_plateau_pct = round((segment_avg_jv - plateau_jv) / plateau_jv * 100, 1)
+
+    bullets: list[str] = []
+    if plateau_book is not None and plateau_jv is not None:
+        band = (peak_bucket or {}).get("book_bucket", "")
+        band_label = band.split(": ", 1)[-1] if ": " in band else ""
+        bullets.append(
+            f"Peak median JV {_fmt_jv(plateau_jv)} at ~{int(peak_accounts or plateau_book)} accounts/rep"
+            + (f" ({band_label} band)." if band_label else ".")
+        )
+    if peak_jv is not None and plateau_jv is not None and peak_jv > plateau_jv:
+        bullets.append(
+            f"Segment peak {_fmt_jv(peak_jv)} — plateau uses largest bucket within 90% of peak "
+            f"where bigger books no longer add $/job."
+        )
+    if plateau_book is not None and plateau_jv is not None:
+        decline_txt = _fmt_jv(decline_jv) if decline_jv is not None else "lower levels"
+        bullets.append(
+            f"Above ~{int(plateau_book)} accounts/rep, $/job tends to fall "
+            f"(from {_fmt_jv(plateau_jv)} toward {decline_txt})."
+        )
+    if segment_avg_jv is not None:
+        bullets.append(f"Segment median JV today: {_fmt_jv(segment_avg_jv)} across scored reps.")
+    if avg_book and plateau_book and avg_book >= plateau_book * 0.95:
+        bullets.append(
+            f"Avg book {int(round(avg_book))} PCIDs/rep exceeds JV plateau (~{int(plateau_book)}) — "
+            "opp pipeline status "
+            f"{m.get('opp_pipeline_status', '—').lower()}."
+        )
+
+    primary_parts: list[str] = []
+    if plateau_book is not None and plateau_jv is not None:
+        primary_parts.append(
+            f"JV peaks at ~{int(plateau_book)} accounts/rep ({_fmt_jv(plateau_jv)})"
+        )
+    if decline_jv is not None and plateau_jv is not None:
+        primary_parts.append(
+            f"$/job declines above ~{int(plateau_book)} PCIDs (toward {_fmt_jv(decline_jv)})"
+        )
+    elif plateau_book is not None:
+        primary_parts.append(f"little marginal $/job growth above ~{int(plateau_book)} PCIDs")
+    if segment_avg_jv is not None and plateau_jv is not None:
+        if jv_vs_plateau_pct is not None and abs(jv_vs_plateau_pct) <= 5:
+            primary_parts.append(f"segment median {_fmt_jv(segment_avg_jv)} is at plateau")
+        elif jv_vs_plateau_pct is not None and jv_vs_plateau_pct > 0:
+            primary_parts.append(
+                f"segment median {_fmt_jv(segment_avg_jv)} vs {_fmt_jv(plateau_jv)} at plateau"
+            )
+        else:
+            primary_parts.append(
+                f"segment median {_fmt_jv(segment_avg_jv)} below plateau {_fmt_jv(plateau_jv)}"
+            )
+    if avg_book and ideal and avg_book > (plateau_book or ideal):
+        primary_parts.append(
+            f"this market averages {int(round(avg_book))} PCIDs/rep vs ideal {int(round(ideal))}"
+        )
+
+    primary = "; ".join(primary_parts) + "." if primary_parts else ""
+
+    return {
+        "jv_by_bucket": buckets or [],
+        "segment_avg_jv": segment_avg_jv,
+        "jv_plateau_book_max": int(plateau_book) if plateau_book is not None else None,
+        "jv_plateau_rev_per_job": plateau_jv,
+        "jv_peak_rev_per_job": peak_jv,
+        "jv_peak_accounts": int(peak_accounts) if peak_accounts is not None else None,
+        "jv_decline_above_pcid": int(plateau_book) if plateau_book is not None else None,
+        "jv_decline_median_rev_per_job": decline_jv,
+        "jv_vs_plateau_pct": jv_vs_plateau_pct,
+        "jv_curve_primary": primary,
+        "jv_curve_bullets": bullets[:4],
+    }
+
+
 def build_optimal_book_rationale(m: dict) -> dict:
     """Plain-English optimal book rationale (collapsed in UI — detail only)."""
     ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
@@ -804,8 +1070,12 @@ def build_market_summary(
     m: dict,
     country_markets: list[dict] | None = None,
     market_reps: list[dict] | None = None,
+    jv_by_id: dict[int, dict] | None = None,
 ) -> dict:
     """Return compact health → HC reason → recommendations → SBS routing + healthy book."""
+    jv_fields = build_jv_curve(m, market_reps, jv_by_id)
+    m.update(jv_fields)
+
     status = summary_status(m)
     health = build_book_health(m)
     hc = build_hc_reason(m)
@@ -847,6 +1117,7 @@ def build_market_summary(
         **optimal,
         **healthy,
         **growth,
+        **jv_fields,
     }
 
 
@@ -854,24 +1125,30 @@ def enrich_market(
     m: dict,
     country_markets: list[dict] | None = None,
     rep_book_by_market: dict[str, list[dict]] | None = None,
+    jv_by_id: dict[int, dict] | None = None,
 ) -> dict:
     """Add summary fields to a market dict (in place + return)."""
     reps = None
     if rep_book_by_market is not None:
         reps = rep_book_by_market.get(_market_key(m))
-    summary = build_market_summary(m, country_markets, reps)
+    summary = build_market_summary(m, country_markets, reps, jv_by_id)
     m.update(summary)
     return m
 
 
-def enrich_payload(payload: dict, rep_book_path: Path | None = None) -> dict:
+def enrich_payload(
+    payload: dict,
+    rep_book_path: Path | None = None,
+    jv_path: Path | None = None,
+) -> dict:
     markets = payload.get("markets", [])
     by_country: dict[str, list[dict]] = {}
     for m in markets:
         by_country.setdefault(m.get("country", ""), []).append(m)
     rep_book_by_market = load_rep_book_by_market(rep_book_path)
+    jv_by_id = load_rep_jv_by_id(jv_path)
     for m in markets:
-        enrich_market(m, by_country.get(m.get("country", ""), []), rep_book_by_market)
+        enrich_market(m, by_country.get(m.get("country", ""), []), rep_book_by_market, jv_by_id)
     return payload
 
 
@@ -882,7 +1159,7 @@ def main() -> None:
         sys.exit(1)
 
     payload = json.loads(in_path.read_text(encoding="utf-8"))
-    enrich_payload(payload, DEFAULT_REP_BOOK)
+    enrich_payload(payload, DEFAULT_REP_BOOK, DEFAULT_REP_JV)
 
     for country, segment in [("US", "M"), ("US", "UMM")]:
         market = next(
@@ -900,6 +1177,10 @@ def main() -> None:
             print(
                 f"  → {market.get('reps_healthy')} / {market.get('reps_scored')} reps healthy ({pct}%)"
             )
+        print(f"\n=== {country}-{segment} JV curve ===")
+        print(market.get("jv_curve_primary", ""))
+        for b in market.get("jv_curve_bullets", []):
+            print(f"  • {b}")
 
     in_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(f"\nWrote summaries for {len(payload.get('markets', []))} markets to {in_path}")

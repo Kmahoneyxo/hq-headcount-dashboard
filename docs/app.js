@@ -13,6 +13,7 @@ let recChart = null;
 let sbsChart = null;
 let bookScoreChart = null;
 let growthChart = null;
+let jvChart = null;
 let lastLoadedAt = null;
 let lastReloadedAt = null;
 let isRefreshing = false;
@@ -48,6 +49,12 @@ const REV_GROWTH_DEFINITION =
   "Current window: 20260427–20260725 vs prior 20260128–20260426 (quarterly PQR comparison). " +
   "Reps bucketed by PCID count (1–10, 11–20, … 150+); each bucket shows median growth across reps with PQR ≥ $5K. " +
   "Optimal book = largest bucket within 85% of segment peak growth where bigger books no longer add growth.";
+
+const JV_DEFINITION =
+  "Job value (JV) = current 90d revenue ÷ jobs (agg_job_id count) per rep — $/job from JAM (sql/19). " +
+  "Reps bucketed by PCID count (same bands as revenue growth curve); each bucket shows median $/job across reps with PQR ≥ $5K and jobs > 0. " +
+  "JV plateau = largest bucket within 90% of segment peak $/job where bigger books no longer add $/job (sql/16 opp_plateau). " +
+  "Compare segment median JV to plateau $/job when avg book exceeds the plateau book size.";
 
 async function loadConfig() {
   try {
@@ -267,6 +274,11 @@ function findLookupMarket() {
 function fmtPct(p) {
   if (p == null) return "—";
   return Math.round(p * 100) + "%";
+}
+
+function fmtJv(n) {
+  if (n == null) return "—";
+  return "$" + Number(n).toFixed(2) + "/job";
 }
 
 function flagPct(count, total) {
@@ -597,6 +609,156 @@ function renderGrowthChart(m) {
   });
 }
 
+function buildJvCurve(m) {
+  const buckets = m.jv_by_bucket || [];
+  if (m.jv_curve_primary) {
+    return {
+      primary: m.jv_curve_primary,
+      bullets: m.jv_curve_bullets || [],
+      buckets,
+      segmentAvg: m.segment_avg_jv,
+      plateauBook: m.jv_plateau_book_max ?? m.opp_plateau_book_max,
+      plateauJv: m.jv_plateau_rev_per_job ?? m.opp_plateau_rev_per_job,
+      vsPlateauPct: m.jv_vs_plateau_pct,
+      declineAbove: m.jv_decline_above_pcid ?? m.jv_plateau_book_max ?? m.opp_plateau_book_max,
+      declineJv: m.jv_decline_median_rev_per_job,
+    };
+  }
+  const plateauBook = m.jv_plateau_book_max ?? m.opp_plateau_book_max;
+  const plateauJv = m.jv_plateau_rev_per_job ?? m.opp_plateau_rev_per_job;
+  const primary =
+    plateauBook != null && plateauJv != null
+      ? `JV peaks near ~${fmtNum(plateauBook)} accounts/rep (${fmtJv(plateauJv)})` +
+        (m.segment_avg_jv != null ? `; segment median ${fmtJv(m.segment_avg_jv)}.` : ".")
+      : "";
+  return {
+    primary,
+    bullets: [],
+    buckets,
+    segmentAvg: m.segment_avg_jv,
+    plateauBook,
+    plateauJv,
+    vsPlateauPct: m.jv_vs_plateau_pct,
+    declineAbove: plateauBook,
+    declineJv: null,
+  };
+}
+
+function renderJvBucketTable(buckets, m) {
+  if (!buckets.length) {
+    const plateauJv = m.jv_plateau_rev_per_job ?? m.opp_plateau_rev_per_job;
+    return `<p class="growth-curve-empty">Bucket-level JV not available — using summary stats (plateau ${fmtJv(plateauJv)} at ~${fmtNum(m.jv_plateau_book_max ?? m.opp_plateau_book_max)} PCIDs).</p>`;
+  }
+  const plateauBook = m.jv_plateau_book_max ?? m.opp_plateau_book_max;
+  const rows = buckets
+    .map((b) => {
+      const band = b.book_bucket?.includes(": ") ? b.book_bucket.split(": ")[1] : b.book_bucket;
+      const isPlateau = plateauBook != null && b.bucket_upper === plateauBook;
+      const rowClass = isPlateau ? "growth-row-ideal" : "";
+      return `<tr class="${rowClass}">
+        <td>${band || "—"}</td>
+        <td class="num">${fmtNum(b.rep_count)}</td>
+        <td class="num">${b.median_rev_per_job != null ? fmtJv(b.median_rev_per_job) : "—"}</td>
+        <td>${isPlateau ? "JV plateau" : ""}</td>
+      </tr>`;
+    })
+    .join("");
+  return `<div class="table-wrap table-wrap-sm growth-bucket-table">
+    <table>
+      <thead><tr><th>PCID bucket</th><th class="num">Reps</th><th class="num">Median $/job</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function renderJvCurveBlock(m, jv) {
+  if (!jv.primary && !jv.buckets.length && jv.plateauJv == null) return "";
+  const bullets =
+    jv.bullets.length > 0
+      ? `<ul class="market-summary-bullets growth-curve-bullets">${jv.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
+      : "";
+  const chartBlock =
+    jv.buckets.length > 0
+      ? `<div class="growth-chart-wrap"><canvas id="jv-curve-chart" aria-label="Median job value by PCID bucket"></canvas></div>`
+      : "";
+  const vsPlateau =
+    jv.vsPlateauPct != null && jv.segmentAvg != null && jv.plateauJv != null
+      ? `<p class="jv-vs-plateau caption">${fmtJv(jv.segmentAvg)} segment median vs ${fmtJv(jv.plateauJv)} at plateau (${jv.vsPlateauPct >= 0 ? "+" : ""}${jv.vsPlateauPct}%)</p>`
+      : "";
+  return `<div class="growth-curve-block jv-curve-block">
+    <div class="growth-curve-header">
+      <span class="growth-curve-title">JV ($/job) vs book size</span>
+      <span class="metric-tip" title="${JV_DEFINITION}">?</span>
+    </div>
+    <p class="growth-curve-primary">${jv.primary}</p>
+    ${vsPlateau}
+    ${bullets}
+    ${chartBlock}
+    ${renderJvBucketTable(jv.buckets, m)}
+  </div>`;
+}
+
+function renderJvChart(m) {
+  if (!chartsAvailable()) return;
+  const ctx = document.getElementById("jv-curve-chart");
+  if (!ctx) return;
+  const buckets = m.jv_by_bucket || [];
+  if (jvChart) {
+    jvChart.destroy();
+    jvChart = null;
+  }
+  if (!buckets.length) return;
+
+  const plateauBook = m.jv_plateau_book_max ?? m.opp_plateau_book_max;
+  const labels = buckets.map((b) => (b.book_bucket?.includes(": ") ? b.book_bucket.split(": ")[1] : b.book_bucket));
+  const data = buckets.map((b) => b.median_rev_per_job);
+  const colors = buckets.map((b) => {
+    if (plateauBook != null && b.bucket_upper === plateauBook) return "#3ecf8e";
+    return "#a78bfa";
+  });
+
+  jvChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Median $/job (90d revenue ÷ jobs)",
+          data,
+          backgroundColor: colors,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) =>
+              `${fmtJv(ctx.parsed.y)} (${buckets[ctx.dataIndex]?.rep_count ?? "—"} reps)`,
+          },
+        },
+      },
+      scales: {
+        y: {
+          title: { display: true, text: "$/job", color: "#9aa3b5" },
+          ticks: {
+            color: "#9aa3b5",
+            callback: (v) => "$" + v,
+          },
+          grid: { color: "#2a3040" },
+        },
+        x: {
+          ticks: { color: "#9aa3b5", font: { size: 10 }, maxRotation: 45 },
+          grid: { display: false },
+        },
+      },
+    },
+  });
+}
+
 function buildOptimalBookRationale(m) {
   if (m.optimal_book_primary) {
     return {
@@ -671,6 +833,7 @@ function renderLookup() {
   const { primary: optimalPrimary } = buildOptimalBookRationale(m);
   const healthy = buildHealthyBook(m);
   const growth = buildGrowthCurve(m);
+  const jv = buildJvCurve(m);
   const key = marketKey(m);
   const bh = bookHealth?.markets?.[key];
 
@@ -703,9 +866,22 @@ function renderLookup() {
           <div class="lookup-stat-value">${m.median_impact_calls_per_account != null ? m.median_impact_calls_per_account : "—"}</div>
           <div class="lookup-stat-label">Impact calls / acct <span class="metric-tip" title="${IMPACT_COVERAGE_DEFINITION}">?</span></div>
         </div>
+        <div class="lookup-stat primary">
+          <div class="lookup-stat-value">${jv.segmentAvg != null ? fmtJv(jv.segmentAvg) : "—"}</div>
+          <div class="lookup-stat-label">Segment avg JV <span class="metric-tip" title="${JV_DEFINITION}">?</span></div>
+        </div>
+        <div class="lookup-stat primary">
+          <div class="lookup-stat-value">${jv.plateauJv != null ? fmtJv(jv.plateauJv) : "—"}</div>
+          <div class="lookup-stat-label">JV at plateau (~${fmtNum(jv.plateauBook)} PCIDs)</div>
+        </div>
+        <div class="lookup-stat">
+          <div class="lookup-stat-value">${jv.vsPlateauPct != null ? (jv.vsPlateauPct >= 0 ? "+" : "") + jv.vsPlateauPct + "%" : "—"}</div>
+          <div class="lookup-stat-label">Segment JV vs plateau</div>
+        </div>
       </div>
       ${renderHealthyBookBlock(m, healthy)}
       ${renderGrowthCurveBlock(m, growth)}
+      ${renderJvCurveBlock(m, jv)}
     </div>
 
     <div class="lookup-section lookup-hc-reason">
@@ -1107,7 +1283,10 @@ function bindEvents() {
 function renderCharts() {
   renderGapChart();
   const lookup = findLookupMarket();
-  if (lookup) renderGrowthChart(lookup);
+  if (lookup) {
+    renderGrowthChart(lookup);
+    renderJvChart(lookup);
+  }
 }
 
 async function init() {

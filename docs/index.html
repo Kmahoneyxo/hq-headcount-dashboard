@@ -197,12 +197,27 @@
                   <td><code>reps_healthy</code>, <code>pct_reps_healthy</code></td>
                 </tr>
                 <tr>
+                  <td><strong>JV ($/job)</strong></td>
+                  <td>Revenue per job — opp pipeline efficiency by book size</td>
+                  <td><code>segment_avg_jv</code>, <code>jv_plateau_rev_per_job</code>, <code>jv_by_bucket</code></td>
+                </tr>
+                <tr>
                   <td><strong>SBS whitespace</strong></td>
                   <td>Unassigned accounts in country — assignable pool</td>
                   <td><code>sbs_whitespace</code>, <code>books_buildable_from_sbs</code></td>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </details>
+
+        <details class="methodology-details">
+          <summary>JV ($/job) vs book size — job value plateau</summary>
+          <div class="methodology-body">
+            <p><strong>Job value (JV)</strong> — current 90d revenue ÷ job count (<code>agg_job_id</code> from JAM, sql/19). Reps are bucketed by PCID using the same bands as the revenue growth curve (1–10, 11–20, … 150+). Each bucket shows median $/job across reps with prior PQR ≥ $5K and jobs &gt; 0.</p>
+            <p><strong>JV plateau</strong> — largest book-size bucket where median $/job stays within 90% of the segment peak and the next larger bucket shows lower $/job (sql/16 <code>opp_plateau</code>). Fields: <code>jv_plateau_book_max</code>, <code>jv_plateau_rev_per_job</code>. When avg book exceeds the plateau (~95%), opp pipeline status is <strong>Plateaued</strong> — little marginal $/job gain from bigger books.</p>
+            <p><strong>Leadership signals:</strong> segment median JV vs plateau $/job; JV curve alongside impact coverage and revenue growth. HC reason may cite JV plateau when books exceed the inflection and $/job has peaked.</p>
+            <p><strong>Revenue window:</strong> current 20260427–20260725 (same as growth curve). Bucket export: <code>sql/21_jv_by_bucket.sql</code>.</p>
           </div>
         </details>
 
@@ -237,6 +252,6 @@
     <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a> · <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">Connect PTD</a></p>
   </footer>
 
-  <script src="app.js?v=20260728f"></script>
+  <script src="app.js?v=20260805a"></script>
 </body>
 </html>

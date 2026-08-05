@@ -23,7 +23,9 @@ DEFAULT_REP = ROOT / "docs" / "data" / "rep_book.json"
 DEFAULT_BH = ROOT / "docs" / "data" / "book_health.json"
 
 sys.path.insert(0, str(ROOT / "scripts"))
-from build_market_summary import enrich_market  # noqa: E402
+from build_market_summary import enrich_market, load_rep_jv_by_id  # noqa: E402
+
+DEFAULT_JV = ROOT / "docs" / "data" / "rep_jv_all_reps.json"
 
 import importlib.util
 
@@ -179,6 +181,7 @@ def enrich_missing_markets(
     existing_keys = {market_key(m["country"], m["segment"]) for m in markets}
 
     rep_by_market: dict[str, list[dict]] = {}
+    jv_by_id = load_rep_jv_by_id(DEFAULT_JV)
     if rep_book_path.is_file():
         rb = json.loads(rep_book_path.read_text(encoding="utf-8"))
         for rep in rb.get("reps", []):
@@ -230,8 +233,8 @@ def enrich_missing_markets(
 
         copy_country_sbs(m, markets)
         fill_hc_fields(m)
-        rep_map = {key: reps} if reps else None
-        enrich_market(m, [x for x in markets if x.get("country") == country], rep_map)
+        rep_map = rep_by_market if reps else None
+        enrich_market(m, [x for x in markets if x.get("country") == country], rep_map, jv_by_id)
         markets.append(m)
         existing_keys.add(key)
         added += 1
