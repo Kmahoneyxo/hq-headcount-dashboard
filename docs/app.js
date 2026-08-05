@@ -933,6 +933,17 @@ function renderLookup() {
           </details>`
         : ""
     }
+    ${
+      m.threshold_analysis?.narrative
+        ? `<details class="methodology-details lookup-threshold-details">
+            <summary>Threshold analysis — 85% of peak (sql/22)</summary>
+            <div class="methodology-body">
+              <p>${m.threshold_analysis.narrative}</p>
+              <p class="caption"><a href="./data/book_size_threshold_analysis.xlsx" download>Download full analysis</a> — PCID buckets, std-dev bands, rev quartiles.</p>
+            </div>
+          </details>`
+        : ""
+    }
   `;
   renderFlaggedRepsTable(key, bh);
 }
