@@ -180,11 +180,11 @@
         "Segment median JV today: $45.80/job across scored reps."
       ],
       "threshold_analysis": {
-        "narrative": "Rev growth peaks at 81-100 PCIDs (20%); JV peaks at ~90 ($46.15/job); impact coverage peaks at 90. Binding threshold ~90\u2013138 accounts \u2014 above 85% drop: JV falls to $17.80/job, coverage declining.",
-        "growth_peak_bucket": "08: 81-100",
-        "growth_peak_pct": 0.2,
-        "jv_peak": 46.15,
-        "jv_decline": 17.8,
+        "narrative": "Rev growth peaks at 150+ PCIDs (100%); JV peaks at ~175 ($56.00/job); impact coverage peaks at 90. Binding threshold ~90\u2013138 accounts \u2014 above 85% drop: coverage declining.",
+        "growth_peak_bucket": "11: 150+",
+        "growth_peak_pct": 1.0,
+        "jv_peak": 56.0,
+        "jv_decline": null,
         "binding_threshold_low": 90,
         "binding_threshold_high": 138
       }
@@ -621,7 +621,7 @@
         "growth_peak_pct": 0.9,
         "jv_peak": 11.55,
         "jv_decline": 1.9,
-        "binding_threshold_low": 175,
+        "binding_threshold_low": 45,
         "binding_threshold_high": 175
       }
     },
@@ -778,12 +778,12 @@
         "Segment median JV today: $26.05/job across scored reps."
       ],
       "threshold_analysis": {
-        "narrative": "Rev growth peaks at 51-65 PCIDs (20%); JV peaks at ~58 ($25.90/job); impact coverage peaks at 58.",
+        "narrative": "Rev growth peaks at 51-65 PCIDs (20%); JV peaks at ~58 ($25.80/job); impact coverage peaks at 58.",
         "growth_peak_bucket": "06: 51-65",
         "growth_peak_pct": 0.2,
-        "jv_peak": 25.9,
+        "jv_peak": 25.8,
         "jv_decline": null,
-        "binding_threshold_low": 58,
+        "binding_threshold_low": null,
         "binding_threshold_high": null
       }
     },
@@ -1003,10 +1003,10 @@
         "Segment median JV today: $32.20/job across scored reps."
       ],
       "threshold_analysis": {
-        "narrative": "Rev growth peaks at 31-40 PCIDs (25%); JV peaks at ~175 ($65.00/job); impact coverage peaks at 35. Binding threshold ~35\u201390 accounts \u2014 above 85% drop: growth 10%.",
+        "narrative": "Rev growth peaks at 31-40 PCIDs (25%); JV peaks at ~175 ($65.10/job); impact coverage peaks at 35. Binding threshold ~35\u201390 accounts \u2014 above 85% drop: growth 10%.",
         "growth_peak_bucket": "04: 31-40",
         "growth_peak_pct": 0.25,
-        "jv_peak": 65.0,
+        "jv_peak": 65.1,
         "jv_decline": null,
         "binding_threshold_low": 35,
         "binding_threshold_high": 90
@@ -1187,7 +1187,7 @@
         "growth_peak_pct": 0.3,
         "jv_peak": 35.7,
         "jv_decline": 9.4,
-        "binding_threshold_low": 113,
+        "binding_threshold_low": 90,
         "binding_threshold_high": 113
       }
     },
@@ -1361,10 +1361,10 @@
         "Avg book 19 PCIDs/rep exceeds JV plateau (~10) \u2014 opp pipeline status plateaued."
       ],
       "threshold_analysis": {
-        "narrative": "Rev growth peaks at 1-10 PCIDs (60%); JV peaks at ~5 ($5.15/job); impact coverage peaks at 5. Binding threshold ~5\u201315 accounts \u2014 above 85% drop: JV falls to $1.25/job, growth 40%.",
+        "narrative": "Rev growth peaks at 1-10 PCIDs (60%); JV peaks at ~5 ($3.80/job); impact coverage peaks at 5. Binding threshold ~5\u201315 accounts \u2014 above 85% drop: JV falls to $1.25/job, growth 40%.",
         "growth_peak_bucket": "01: 1-10",
         "growth_peak_pct": 0.6,
-        "jv_peak": 5.15,
+        "jv_peak": 3.8,
         "jv_decline": 1.25,
         "binding_threshold_low": 5,
         "binding_threshold_high": 15
@@ -1545,7 +1545,7 @@
         "growth_peak_pct": 0.4,
         "jv_peak": 2.35,
         "jv_decline": 1.9,
-        "binding_threshold_low": 15,
+        "binding_threshold_low": 5,
         "binding_threshold_high": 15
       }
     },
@@ -1671,7 +1671,7 @@
         "growth_peak_pct": 0.2,
         "jv_peak": 1.1,
         "jv_decline": null,
-        "binding_threshold_low": 15,
+        "binding_threshold_low": null,
         "binding_threshold_high": null
       }
     },
@@ -1761,12 +1761,12 @@
       "jv_curve_primary": "this market averages 862 PCIDs/rep vs ideal 90.",
       "jv_curve_bullets": [],
       "threshold_analysis": {
-        "narrative": "Rev growth peaks at 150+ PCIDs (100%); JV peaks at ~175 ($1.05/job); impact coverage peaks at 175.",
+        "narrative": "Rev growth peaks at 150+ PCIDs (100%); JV peaks at ~175 ($1.00/job); impact coverage peaks at 175.",
         "growth_peak_bucket": "11: 150+",
         "growth_peak_pct": 1.0,
-        "jv_peak": 1.05,
+        "jv_peak": 1.0,
         "jv_decline": null,
-        "binding_threshold_low": 175,
+        "binding_threshold_low": null,
         "binding_threshold_high": null
       }
     }

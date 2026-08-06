@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-08-05",
+  "updated_at": "2026-08-06",
   "query": "sql/22_book_threshold_analysis.sql",
-  "execution_id": "59c3971e-4df2-4e40-b55b-b349830d6c7f",
+  "execution_id": "2ae917bf-5448-438e-abf1-736ee14937ae",
   "threshold_ratio": 0.85,
   "row_count": 1664,
   "segment_count": 53,
@@ -56,7 +56,7 @@
       "coverage_peak_bucket": "11: 150+",
       "coverage_peak": 0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 175,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -88,7 +88,7 @@
       "segment": "ACC",
       "rep_count": 24,
       "segment_median_pcid": 98,
-      "segment_pcid_stddev": 65.2,
+      "segment_pcid_stddev": 65.3,
       "pcid_buckets": [
         {
           "bucket_order": 4,
@@ -96,8 +96,8 @@
           "bucket_type": "pcid",
           "rep_count": 5,
           "median_pcid": 35,
-          "median_rev_growth_pct": 0.7,
-          "median_jv": 2.2,
+          "median_rev_growth_pct": 0.4,
+          "median_jv": 0.95,
           "median_impact_coverage": 0,
           "bucket_midpoint": 35,
           "peak_growth": true
@@ -107,12 +107,11 @@
           "bucket_label": "11: 150+",
           "bucket_type": "pcid",
           "rep_count": 9,
-          "median_pcid": 177,
+          "median_pcid": 178,
           "median_rev_growth_pct": 0.4,
           "median_jv": 5.8,
           "median_impact_coverage": 1,
           "bucket_midpoint": 175,
-          "decline_growth_85": true,
           "peak_jv": true,
           "peak_coverage": true
         }
@@ -124,10 +123,9 @@
           "bucket_type": "stddev",
           "rep_count": 5,
           "median_pcid": 28,
-          "median_rev_growth_pct": 0.7,
-          "median_jv": 7.6,
+          "median_rev_growth_pct": 0.4,
+          "median_jv": 11.3,
           "median_impact_coverage": 0,
-          "peak_growth": true,
           "peak_jv": true
         },
         {
@@ -139,6 +137,7 @@
           "median_rev_growth_pct": 0.6,
           "median_jv": 2.2,
           "median_impact_coverage": 0,
+          "peak_growth": true,
           "decline_jv_85": true
         },
         {
@@ -146,7 +145,7 @@
           "bucket_label": "> median+1\u03c3 (> 163)",
           "bucket_type": "stddev",
           "rep_count": 9,
-          "median_pcid": 177,
+          "median_pcid": 178,
           "median_rev_growth_pct": 0.4,
           "median_jv": 5.8,
           "median_impact_coverage": 1,
@@ -160,9 +159,9 @@
           "bucket_label": "Q1 (lowest rev)",
           "bucket_type": "rev_quartile",
           "rep_count": 6,
-          "median_pcid": 40,
+          "median_pcid": 38,
           "median_rev_growth_pct": 0.45,
-          "median_jv": 1.5,
+          "median_jv": 1.2,
           "median_impact_coverage": 0.0
         },
         {
@@ -170,9 +169,9 @@
           "bucket_label": "Q2",
           "bucket_type": "rev_quartile",
           "rep_count": 6,
-          "median_pcid": 140,
-          "median_rev_growth_pct": 0.65,
-          "median_jv": 3.95,
+          "median_pcid": 137,
+          "median_rev_growth_pct": 0.5,
+          "median_jv": 2.45,
           "median_impact_coverage": 1.0,
           "peak_growth": true,
           "peak_coverage": true
@@ -182,30 +181,29 @@
           "bucket_label": "Q3",
           "bucket_type": "rev_quartile",
           "rep_count": 6,
-          "median_pcid": 148,
-          "median_rev_growth_pct": 0.3,
-          "median_jv": 7.25,
-          "median_impact_coverage": 1.0,
-          "decline_growth_85": true
+          "median_pcid": 146,
+          "median_rev_growth_pct": 0.5,
+          "median_jv": 5.8,
+          "median_impact_coverage": 1.0
         },
         {
           "bucket_order": 4,
           "bucket_label": "Q4 (highest rev)",
           "bucket_type": "rev_quartile",
           "rep_count": 6,
-          "median_pcid": 52,
-          "median_rev_growth_pct": 0.55,
+          "median_pcid": 121,
+          "median_rev_growth_pct": 0.3,
           "median_jv": 15.4,
-          "median_impact_coverage": 0.5,
-          "peak_jv": true,
-          "decline_coverage_85": true
+          "median_impact_coverage": 1.0,
+          "decline_growth_85": true,
+          "peak_jv": true
         }
       ],
       "market": "BNL-ACC",
-      "narrative": "Rev growth peaks at 31-40 PCIDs (70%); JV peaks at ~175 ($5.80/job); impact coverage peaks at 175. Binding threshold ~35\u2013175 accounts \u2014 above 85% drop: growth 40%.",
+      "narrative": "Rev growth peaks at 31-40 PCIDs (40%); JV peaks at ~175 ($5.80/job); impact coverage peaks at 175.",
       "growth_peak_bucket": "04: 31-40",
-      "growth_peak_pct": 0.7,
-      "growth_decline_bucket": "11: 150+",
+      "growth_peak_pct": 0.4,
+      "growth_decline_bucket": null,
       "jv_peak_bucket": "11: 150+",
       "jv_peak": 5.8,
       "jv_decline_bucket": null,
@@ -213,8 +211,8 @@
       "coverage_peak_bucket": "11: 150+",
       "coverage_peak": 1,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 35,
-      "binding_threshold_high": 175
+      "binding_threshold_low": null,
+      "binding_threshold_high": null
     },
     {
       "country": "BNL",
@@ -270,10 +268,9 @@
           "rep_count": 5,
           "median_pcid": 41,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 7.2,
+          "median_jv": 6.2,
           "median_impact_coverage": 2,
           "peak_growth": true,
-          "peak_jv": true,
           "peak_coverage": true
         },
         {
@@ -285,7 +282,8 @@
           "median_rev_growth_pct": 0.0,
           "median_jv": 6.6,
           "median_impact_coverage": 2,
-          "decline_growth_85": true
+          "decline_growth_85": true,
+          "peak_jv": true
         }
       ],
       "rev_quartile_buckets": [],
@@ -301,7 +299,7 @@
       "coverage_peak_bucket": "05: 41-50",
       "coverage_peak": 2.0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 45,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -409,7 +407,7 @@
       "coverage_peak_bucket": "08: 81-100",
       "coverage_peak": 2,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 90,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -466,8 +464,8 @@
           "bucket_type": "stddev",
           "rep_count": 7,
           "median_pcid": 34,
-          "median_rev_growth_pct": 0.2,
-          "median_jv": 1.0,
+          "median_rev_growth_pct": 0.1,
+          "median_jv": 0.9,
           "median_impact_coverage": 0
         }
       ],
@@ -478,8 +476,8 @@
           "bucket_type": "rev_quartile",
           "rep_count": 8,
           "median_pcid": 20,
-          "median_rev_growth_pct": -0.05,
-          "median_jv": 0.55,
+          "median_rev_growth_pct": -0.2,
+          "median_jv": 0.3,
           "median_impact_coverage": 0.0,
           "peak_coverage": true
         },
@@ -500,7 +498,7 @@
           "rep_count": 8,
           "median_pcid": 14,
           "median_rev_growth_pct": 0.25,
-          "median_jv": 1.0,
+          "median_jv": 1.05,
           "median_impact_coverage": 0.0
         },
         {
@@ -528,7 +526,7 @@
       "coverage_peak_bucket": "02: 11-20",
       "coverage_peak": 0.0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 15,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -560,7 +558,7 @@
       "segment": "M",
       "rep_count": 7,
       "segment_median_pcid": 139,
-      "segment_pcid_stddev": 19.4,
+      "segment_pcid_stddev": 19.2,
       "pcid_buckets": [
         {
           "bucket_order": 10,
@@ -591,7 +589,7 @@
       "coverage_peak_bucket": "10: 126-150",
       "coverage_peak": 0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 138,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -692,7 +690,7 @@
       "coverage_peak_bucket": "04: 31-40",
       "coverage_peak": 2,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 35,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -837,7 +835,7 @@
       "coverage_peak_bucket": "09: 101-125",
       "coverage_peak": 1.0,
       "coverage_decline_bucket": "11: 150+",
-      "binding_threshold_low": 175,
+      "binding_threshold_low": 113,
       "binding_threshold_high": 175
     },
     {
@@ -947,7 +945,7 @@
       "coverage_peak_bucket": "02: 11-20",
       "coverage_peak": 0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 15,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -1000,7 +998,7 @@
       "coverage_peak_bucket": "05: 41-50",
       "coverage_peak": 1,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 45,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -1008,7 +1006,7 @@
       "segment": "ACC",
       "rep_count": 50,
       "segment_median_pcid": 112,
-      "segment_pcid_stddev": 65.3,
+      "segment_pcid_stddev": 65.2,
       "pcid_buckets": [
         {
           "bucket_order": 6,
@@ -1041,7 +1039,7 @@
           "bucket_label": "09: 101-125",
           "bucket_type": "pcid",
           "rep_count": 12,
-          "median_pcid": 114,
+          "median_pcid": 113,
           "median_rev_growth_pct": 0.65,
           "median_jv": 2.9,
           "median_impact_coverage": 1.0,
@@ -1088,7 +1086,7 @@
           "bucket_label": "median\u22121\u03c3 to median (46\u2013112)",
           "bucket_type": "stddev",
           "rep_count": 18,
-          "median_pcid": 77,
+          "median_pcid": 78,
           "median_rev_growth_pct": 0.55,
           "median_jv": 2.85,
           "median_impact_coverage": 2,
@@ -1116,7 +1114,7 @@
           "bucket_type": "rev_quartile",
           "rep_count": 13,
           "median_pcid": 110,
-          "median_rev_growth_pct": 0.1,
+          "median_rev_growth_pct": 0.0,
           "median_jv": 1.5,
           "median_impact_coverage": 1.0,
           "peak_coverage": true
@@ -1235,7 +1233,7 @@
           "rep_count": 6,
           "median_pcid": 46,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 8.7,
+          "median_jv": 8.55,
           "median_impact_coverage": 2.0,
           "peak_growth": true,
           "decline_coverage_85": true
@@ -1268,7 +1266,7 @@
       "coverage_peak_bucket": "05: 41-50",
       "coverage_peak": 2.0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 45,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -1276,7 +1274,7 @@
       "segment": "M",
       "rep_count": 30,
       "segment_median_pcid": 96,
-      "segment_pcid_stddev": 26.9,
+      "segment_pcid_stddev": 26.8,
       "pcid_buckets": [
         {
           "bucket_order": 8,
@@ -1285,7 +1283,7 @@
           "rep_count": 12,
           "median_pcid": 94,
           "median_rev_growth_pct": 0.25,
-          "median_jv": 34.5,
+          "median_jv": 34.45,
           "median_impact_coverage": 2.0,
           "bucket_midpoint": 90,
           "peak_jv": true,
@@ -1314,7 +1312,7 @@
           "rep_count": 10,
           "median_pcid": 86,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 34.1,
+          "median_jv": 34.05,
           "median_impact_coverage": 1.0,
           "peak_jv": true,
           "peak_coverage": true
@@ -1338,7 +1336,7 @@
           "rep_count": 5,
           "median_pcid": 147,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 4.2,
+          "median_jv": 4.3,
           "median_impact_coverage": 1,
           "decline_growth_85": true
         }
@@ -1391,18 +1389,18 @@
         }
       ],
       "market": "DACH-M",
-      "narrative": "Rev growth peaks at 101-125 PCIDs (30%); JV peaks at ~90 ($34.50/job); impact coverage peaks at 90. Binding threshold ~90\u2013113 accounts \u2014 above 85% drop: JV falls to $25.70/job, coverage declining.",
+      "narrative": "Rev growth peaks at 101-125 PCIDs (30%); JV peaks at ~90 ($34.45/job); impact coverage peaks at 90. Binding threshold ~90\u2013113 accounts \u2014 above 85% drop: JV falls to $25.70/job, coverage declining.",
       "growth_peak_bucket": "09: 101-125",
       "growth_peak_pct": 0.3,
       "growth_decline_bucket": null,
       "jv_peak_bucket": "08: 81-100",
-      "jv_peak": 34.5,
+      "jv_peak": 34.45,
       "jv_decline_bucket": "09: 101-125",
       "jv_decline": 25.7,
       "coverage_peak_bucket": "08: 81-100",
       "coverage_peak": 2.0,
       "coverage_decline_bucket": "09: 101-125",
-      "binding_threshold_low": 113,
+      "binding_threshold_low": 90,
       "binding_threshold_high": 113
     },
     {
@@ -1507,7 +1505,7 @@
           "rep_count": 11,
           "median_pcid": 14,
           "median_rev_growth_pct": 0.4,
-          "median_jv": 2.0,
+          "median_jv": 1.9,
           "median_impact_coverage": 4,
           "peak_growth": true,
           "decline_coverage_85": true
@@ -1536,7 +1534,7 @@
       "coverage_peak_bucket": "01: 1-10",
       "coverage_peak": 8.5,
       "coverage_decline_bucket": "02: 11-20",
-      "binding_threshold_low": 15,
+      "binding_threshold_low": 5,
       "binding_threshold_high": 15
     },
     {
@@ -1613,7 +1611,7 @@
       "coverage_peak_bucket": "11: 150+",
       "coverage_peak": 0.0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 175,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -1690,7 +1688,7 @@
       "coverage_peak_bucket": "04: 31-40",
       "coverage_peak": 2.0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 35,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -1798,7 +1796,7 @@
       "coverage_peak_bucket": "09: 101-125",
       "coverage_peak": 1.0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 113,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -2038,14 +2036,14 @@
       "segment": "ACC",
       "rep_count": 20,
       "segment_median_pcid": 174,
-      "segment_pcid_stddev": 58.5,
+      "segment_pcid_stddev": 58.6,
       "pcid_buckets": [
         {
           "bucket_order": 11,
           "bucket_label": "11: 150+",
           "bucket_type": "pcid",
           "rep_count": 12,
-          "median_pcid": 179,
+          "median_pcid": 180,
           "median_rev_growth_pct": 0.05,
           "median_jv": 0.6,
           "median_impact_coverage": 0.5,
@@ -2087,10 +2085,10 @@
           "bucket_label": "Q1 (lowest rev)",
           "bucket_type": "rev_quartile",
           "rep_count": 5,
-          "median_pcid": 98,
+          "median_pcid": 116,
           "median_rev_growth_pct": -0.5,
-          "median_jv": 0.3,
-          "median_impact_coverage": 0,
+          "median_jv": 0.2,
+          "median_impact_coverage": 0.5,
           "peak_coverage": true
         },
         {
@@ -2099,20 +2097,20 @@
           "bucket_type": "rev_quartile",
           "rep_count": 5,
           "median_pcid": 180,
-          "median_rev_growth_pct": 0.0,
+          "median_rev_growth_pct": -0.1,
           "median_jv": 0.5,
-          "median_impact_coverage": 0
+          "median_impact_coverage": 0,
+          "decline_coverage_85": true
         },
         {
           "bucket_order": 3,
           "bucket_label": "Q3",
           "bucket_type": "rev_quartile",
           "rep_count": 5,
-          "median_pcid": 171,
-          "median_rev_growth_pct": -0.1,
-          "median_jv": 1.2,
-          "median_impact_coverage": 0.0,
-          "peak_jv": true
+          "median_pcid": 177,
+          "median_rev_growth_pct": 0.0,
+          "median_jv": 0.9,
+          "median_impact_coverage": 0
         },
         {
           "bucket_order": 4,
@@ -2124,7 +2122,7 @@
           "median_jv": 1.0,
           "median_impact_coverage": 0,
           "peak_growth": true,
-          "decline_jv_85": true
+          "peak_jv": true
         }
       ],
       "market": "IN-ACC",
@@ -2139,7 +2137,7 @@
       "coverage_peak_bucket": "11: 150+",
       "coverage_peak": 0.5,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 175,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -2244,7 +2242,7 @@
           "rep_count": 5,
           "median_pcid": 57,
           "median_rev_growth_pct": 0.5,
-          "median_jv": 8.4,
+          "median_jv": 8.3,
           "median_impact_coverage": 0,
           "peak_growth": true
         },
@@ -2325,7 +2323,7 @@
           "rep_count": 5,
           "median_pcid": 28,
           "median_rev_growth_pct": 1.0,
-          "median_jv": 0.4,
+          "median_jv": 0.5,
           "median_impact_coverage": 0,
           "bucket_midpoint": 25,
           "peak_growth": true,
@@ -2336,18 +2334,18 @@
       "stddev_buckets": [],
       "rev_quartile_buckets": [],
       "market": "IT-NAM",
-      "narrative": "Rev growth peaks at 21-30 PCIDs (100%); JV peaks at ~25 ($0.40/job); impact coverage peaks at 25.",
+      "narrative": "Rev growth peaks at 21-30 PCIDs (100%); JV peaks at ~25 ($0.50/job); impact coverage peaks at 25.",
       "growth_peak_bucket": "03: 21-30",
       "growth_peak_pct": 1.0,
       "growth_decline_bucket": null,
       "jv_peak_bucket": "03: 21-30",
-      "jv_peak": 0.4,
+      "jv_peak": 0.5,
       "jv_decline_bucket": null,
       "jv_decline": null,
       "coverage_peak_bucket": "03: 21-30",
       "coverage_peak": 0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 25,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -2451,7 +2449,7 @@
       "segment": "M",
       "rep_count": 20,
       "segment_median_pcid": 135,
-      "segment_pcid_stddev": 70.5,
+      "segment_pcid_stddev": 70.6,
       "pcid_buckets": [
         {
           "bucket_order": 10,
@@ -2471,7 +2469,7 @@
           "bucket_label": "11: 150+",
           "bucket_type": "pcid",
           "rep_count": 7,
-          "median_pcid": 275,
+          "median_pcid": 277,
           "median_rev_growth_pct": 0.4,
           "median_jv": 0.5,
           "median_impact_coverage": 0,
@@ -2483,7 +2481,7 @@
       "stddev_buckets": [
         {
           "bucket_order": 2,
-          "bucket_label": "median\u22121\u03c3 to median (65\u2013135)",
+          "bucket_label": "median\u22121\u03c3 to median (64\u2013135)",
           "bucket_type": "stddev",
           "rep_count": 6,
           "median_pcid": 133,
@@ -2494,7 +2492,7 @@
         },
         {
           "bucket_order": 3,
-          "bucket_label": "median to median+1\u03c3 (135\u2013205)",
+          "bucket_label": "median to median+1\u03c3 (135\u2013206)",
           "bucket_type": "stddev",
           "rep_count": 7,
           "median_pcid": 135,
@@ -2505,10 +2503,10 @@
         },
         {
           "bucket_order": 4,
-          "bucket_label": "> median+1\u03c3 (> 205)",
+          "bucket_label": "> median+1\u03c3 (> 206)",
           "bucket_type": "stddev",
           "rep_count": 7,
-          "median_pcid": 275,
+          "median_pcid": 277,
           "median_rev_growth_pct": 0.4,
           "median_jv": 0.5,
           "median_impact_coverage": 0,
@@ -2522,7 +2520,7 @@
           "bucket_label": "Q1 (lowest rev)",
           "bucket_type": "rev_quartile",
           "rep_count": 5,
-          "median_pcid": 275,
+          "median_pcid": 277,
           "median_rev_growth_pct": 0.3,
           "median_jv": 0.4,
           "median_impact_coverage": 0,
@@ -2574,7 +2572,7 @@
       "coverage_peak_bucket": "10: 126-150",
       "coverage_peak": 0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 175,
+      "binding_threshold_low": 138,
       "binding_threshold_high": 175
     },
     {
@@ -2613,7 +2611,7 @@
       "coverage_peak_bucket": "03: 21-30",
       "coverage_peak": 0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 25,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -2757,7 +2755,7 @@
       "coverage_peak_bucket": "11: 150+",
       "coverage_peak": 0.0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 175,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -2982,7 +2980,7 @@
           "bucket_label": "> median+1\u03c3 (> 115)",
           "bucket_type": "stddev",
           "rep_count": 10,
-          "median_pcid": 126,
+          "median_pcid": 127,
           "median_rev_growth_pct": 0.25,
           "median_jv": 8.45,
           "median_impact_coverage": 1,
@@ -3031,7 +3029,7 @@
           "rep_count": 14,
           "median_pcid": 92,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 39.35,
+          "median_jv": 39.7,
           "median_impact_coverage": 1.0,
           "peak_jv": true
         }
@@ -3048,7 +3046,7 @@
       "coverage_peak_bucket": "08: 81-100",
       "coverage_peak": 1,
       "coverage_decline_bucket": "09: 101-125",
-      "binding_threshold_low": 113,
+      "binding_threshold_low": 90,
       "binding_threshold_high": 113
     },
     {
@@ -3065,7 +3063,7 @@
           "rep_count": 10,
           "median_pcid": 8,
           "median_rev_growth_pct": 0.6,
-          "median_jv": 5.15,
+          "median_jv": 3.8,
           "median_impact_coverage": 0.0,
           "bucket_midpoint": 5,
           "peak_growth": true,
@@ -3091,11 +3089,11 @@
           "bucket_order": 2,
           "bucket_label": "median\u22121\u03c3 to median (4\u201314)",
           "bucket_type": "stddev",
-          "rep_count": 18,
+          "rep_count": 19,
           "median_pcid": 11,
-          "median_rev_growth_pct": 0.15,
-          "median_jv": 1.75,
-          "median_impact_coverage": 0.0,
+          "median_rev_growth_pct": 0.2,
+          "median_jv": 1.7,
+          "median_impact_coverage": 0,
           "peak_jv": true
         },
         {
@@ -3117,7 +3115,7 @@
           "rep_count": 5,
           "median_pcid": 36,
           "median_rev_growth_pct": 0.3,
-          "median_jv": 1.7,
+          "median_jv": 1.6,
           "median_impact_coverage": 1,
           "decline_growth_85": true,
           "peak_coverage": true
@@ -3163,19 +3161,19 @@
           "rep_count": 11,
           "median_pcid": 10,
           "median_rev_growth_pct": 0.7,
-          "median_jv": 5.1,
+          "median_jv": 4.0,
           "median_impact_coverage": 0,
           "peak_growth": true,
           "peak_jv": true
         }
       ],
       "market": "UK-NAM",
-      "narrative": "Rev growth peaks at 1-10 PCIDs (60%); JV peaks at ~5 ($5.15/job); impact coverage peaks at 5. Binding threshold ~5\u201315 accounts \u2014 above 85% drop: JV falls to $1.25/job, growth 40%.",
+      "narrative": "Rev growth peaks at 1-10 PCIDs (60%); JV peaks at ~5 ($3.80/job); impact coverage peaks at 5. Binding threshold ~5\u201315 accounts \u2014 above 85% drop: JV falls to $1.25/job, growth 40%.",
       "growth_peak_bucket": "01: 1-10",
       "growth_peak_pct": 0.6,
       "growth_decline_bucket": "02: 11-20",
       "jv_peak_bucket": "01: 1-10",
-      "jv_peak": 5.15,
+      "jv_peak": 3.8,
       "jv_decline_bucket": "02: 11-20",
       "jv_decline": 1.25,
       "coverage_peak_bucket": "01: 1-10",
@@ -3212,17 +3210,17 @@
       "country": "US",
       "segment": "ACC",
       "rep_count": 29,
-      "segment_median_pcid": 309,
-      "segment_pcid_stddev": 127.5,
+      "segment_median_pcid": 318,
+      "segment_pcid_stddev": 125.8,
       "pcid_buckets": [
         {
           "bucket_order": 11,
           "bucket_label": "11: 150+",
           "bucket_type": "pcid",
           "rep_count": 28,
-          "median_pcid": 310,
+          "median_pcid": 318,
           "median_rev_growth_pct": 1.0,
-          "median_jv": 1.05,
+          "median_jv": 1.0,
           "median_impact_coverage": 0.0,
           "bucket_midpoint": 175,
           "peak_growth": true,
@@ -3233,26 +3231,26 @@
       "stddev_buckets": [
         {
           "bucket_order": 2,
-          "bucket_label": "median\u22121\u03c3 to median (181\u2013309)",
+          "bucket_label": "median\u22121\u03c3 to median (192\u2013318)",
           "bucket_type": "stddev",
-          "rep_count": 13,
-          "median_pcid": 300,
+          "rep_count": 12,
+          "median_pcid": 307,
           "median_rev_growth_pct": 1.0,
-          "median_jv": 1.1,
-          "median_impact_coverage": 0,
+          "median_jv": 1.0,
+          "median_impact_coverage": 0.0,
           "peak_growth": true,
           "peak_jv": true,
           "peak_coverage": true
         },
         {
           "bucket_order": 3,
-          "bucket_label": "median to median+1\u03c3 (309\u2013437)",
+          "bucket_label": "median to median+1\u03c3 (318\u2013444)",
           "bucket_type": "stddev",
-          "rep_count": 13,
-          "median_pcid": 320,
+          "rep_count": 14,
+          "median_pcid": 328,
           "median_rev_growth_pct": 1.0,
           "median_jv": 1.0,
-          "median_impact_coverage": 0
+          "median_impact_coverage": 0.0
         }
       ],
       "rev_quartile_buckets": [
@@ -3261,7 +3259,7 @@
           "bucket_label": "Q1 (lowest rev)",
           "bucket_type": "rev_quartile",
           "rep_count": 8,
-          "median_pcid": 303,
+          "median_pcid": 308,
           "median_rev_growth_pct": 1.0,
           "median_jv": 0.75,
           "median_impact_coverage": 0.0,
@@ -3273,9 +3271,9 @@
           "bucket_label": "Q2",
           "bucket_type": "rev_quartile",
           "rep_count": 7,
-          "median_pcid": 305,
+          "median_pcid": 315,
           "median_rev_growth_pct": 1.0,
-          "median_jv": 1.1,
+          "median_jv": 1.0,
           "median_impact_coverage": 0
         },
         {
@@ -3283,7 +3281,7 @@
           "bucket_label": "Q3",
           "bucket_type": "rev_quartile",
           "rep_count": 7,
-          "median_pcid": 320,
+          "median_pcid": 325,
           "median_rev_growth_pct": 1.0,
           "median_jv": 1.0,
           "median_impact_coverage": 0
@@ -3293,26 +3291,26 @@
           "bucket_label": "Q4 (highest rev)",
           "bucket_type": "rev_quartile",
           "rep_count": 7,
-          "median_pcid": 330,
+          "median_pcid": 335,
           "median_rev_growth_pct": 1.0,
-          "median_jv": 1.4,
+          "median_jv": 1.7,
           "median_impact_coverage": 0,
           "peak_jv": true
         }
       ],
       "market": "US-ACC",
-      "narrative": "Rev growth peaks at 150+ PCIDs (100%); JV peaks at ~175 ($1.05/job); impact coverage peaks at 175.",
+      "narrative": "Rev growth peaks at 150+ PCIDs (100%); JV peaks at ~175 ($1.00/job); impact coverage peaks at 175.",
       "growth_peak_bucket": "11: 150+",
       "growth_peak_pct": 1.0,
       "growth_decline_bucket": null,
       "jv_peak_bucket": "11: 150+",
-      "jv_peak": 1.05,
+      "jv_peak": 1.0,
       "jv_decline_bucket": null,
       "jv_decline": null,
       "coverage_peak_bucket": "11: 150+",
       "coverage_peak": 0.0,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 175,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     },
     {
@@ -3320,7 +3318,7 @@
       "segment": "DCA",
       "rep_count": 103,
       "segment_median_pcid": 119,
-      "segment_pcid_stddev": 40.8,
+      "segment_pcid_stddev": 40.6,
       "pcid_buckets": [
         {
           "bucket_order": 4,
@@ -3329,7 +3327,7 @@
           "rep_count": 12,
           "median_pcid": 38,
           "median_rev_growth_pct": 0.25,
-          "median_jv": 14.35,
+          "median_jv": 14.3,
           "median_impact_coverage": 0.0,
           "bucket_midpoint": 35,
           "peak_growth": true,
@@ -3342,7 +3340,7 @@
           "rep_count": 9,
           "median_pcid": 90,
           "median_rev_growth_pct": 0.1,
-          "median_jv": 16.7,
+          "median_jv": 16.8,
           "median_impact_coverage": 0,
           "bucket_midpoint": 90,
           "decline_growth_85": true
@@ -3352,7 +3350,7 @@
           "bucket_label": "09: 101-125",
           "bucket_type": "pcid",
           "rep_count": 25,
-          "median_pcid": 115,
+          "median_pcid": 114,
           "median_rev_growth_pct": 0.1,
           "median_jv": 36.6,
           "median_impact_coverage": 0,
@@ -3365,7 +3363,7 @@
           "rep_count": 34,
           "median_pcid": 140,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 39.6,
+          "median_jv": 37.6,
           "median_impact_coverage": 0.0,
           "bucket_midpoint": 138
         },
@@ -3374,9 +3372,9 @@
           "bucket_label": "11: 150+",
           "bucket_type": "pcid",
           "rep_count": 11,
-          "median_pcid": 154,
+          "median_pcid": 153,
           "median_rev_growth_pct": 0.1,
-          "median_jv": 65.0,
+          "median_jv": 65.1,
           "median_impact_coverage": 0,
           "bucket_midpoint": 175,
           "peak_jv": true
@@ -3410,11 +3408,11 @@
           "bucket_order": 3,
           "bucket_label": "median to median+1\u03c3 (119\u2013160)",
           "bucket_type": "stddev",
-          "rep_count": 50,
+          "rep_count": 51,
           "median_pcid": 142,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 40.4,
-          "median_impact_coverage": 0.0,
+          "median_jv": 39.3,
+          "median_impact_coverage": 0,
           "peak_jv": true
         }
       ],
@@ -3424,9 +3422,9 @@
           "bucket_label": "Q1 (lowest rev)",
           "bucket_type": "rev_quartile",
           "rep_count": 26,
-          "median_pcid": 108,
+          "median_pcid": 107,
           "median_rev_growth_pct": 0.15,
-          "median_jv": 16.3,
+          "median_jv": 15.4,
           "median_impact_coverage": 0.0,
           "peak_coverage": true
         },
@@ -3436,10 +3434,9 @@
           "bucket_type": "rev_quartile",
           "rep_count": 26,
           "median_pcid": 136,
-          "median_rev_growth_pct": 0.2,
+          "median_rev_growth_pct": 0.15,
           "median_jv": 29.2,
-          "median_impact_coverage": 0.0,
-          "peak_growth": true
+          "median_impact_coverage": 0.0
         },
         {
           "bucket_order": 3,
@@ -3447,10 +3444,10 @@
           "bucket_type": "rev_quartile",
           "rep_count": 25,
           "median_pcid": 115,
-          "median_rev_growth_pct": 0.1,
-          "median_jv": 38.0,
+          "median_rev_growth_pct": 0.2,
+          "median_jv": 36.4,
           "median_impact_coverage": 0,
-          "decline_growth_85": true
+          "peak_growth": true
         },
         {
           "bucket_order": 4,
@@ -3459,18 +3456,18 @@
           "rep_count": 26,
           "median_pcid": 135,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 69.8,
+          "median_jv": 70.55,
           "median_impact_coverage": 0.0,
           "peak_jv": true
         }
       ],
       "market": "US-DCA",
-      "narrative": "Rev growth peaks at 31-40 PCIDs (25%); JV peaks at ~175 ($65.00/job); impact coverage peaks at 35. Binding threshold ~35\u201390 accounts \u2014 above 85% drop: growth 10%.",
+      "narrative": "Rev growth peaks at 31-40 PCIDs (25%); JV peaks at ~175 ($65.10/job); impact coverage peaks at 35. Binding threshold ~35\u201390 accounts \u2014 above 85% drop: growth 10%.",
       "growth_peak_bucket": "04: 31-40",
       "growth_peak_pct": 0.25,
       "growth_decline_bucket": "08: 81-100",
       "jv_peak_bucket": "11: 150+",
-      "jv_peak": 65.0,
+      "jv_peak": 65.1,
       "jv_decline_bucket": null,
       "jv_decline": null,
       "coverage_peak_bucket": "04: 31-40",
@@ -3530,7 +3527,7 @@
           "bucket_label": "median\u22121\u03c3 to median (30\u201338)",
           "bucket_type": "stddev",
           "rep_count": 100,
-          "median_pcid": 35,
+          "median_pcid": 36,
           "median_rev_growth_pct": 0.2,
           "median_jv": 11.6,
           "median_impact_coverage": 2.0,
@@ -3580,7 +3577,7 @@
           "median_pcid": 37,
           "median_rev_growth_pct": 0.2,
           "median_jv": 9.0,
-          "median_impact_coverage": 1.5,
+          "median_impact_coverage": 2.0,
           "peak_growth": true,
           "peak_coverage": true
         },
@@ -3592,7 +3589,8 @@
           "median_pcid": 37,
           "median_rev_growth_pct": 0.2,
           "median_jv": 12.2,
-          "median_impact_coverage": 1.5
+          "median_impact_coverage": 1.0,
+          "decline_coverage_85": true
         },
         {
           "bucket_order": 4,
@@ -3603,8 +3601,7 @@
           "median_rev_growth_pct": 0.2,
           "median_jv": 15.9,
           "median_impact_coverage": 1,
-          "peak_jv": true,
-          "decline_coverage_85": true
+          "peak_jv": true
         }
       ],
       "market": "US-L",
@@ -3627,20 +3624,18 @@
       "segment": "M",
       "rep_count": 229,
       "segment_median_pcid": 95,
-      "segment_pcid_stddev": 18.4,
+      "segment_pcid_stddev": 18.8,
       "pcid_buckets": [
         {
           "bucket_order": 8,
           "bucket_label": "08: 81-100",
           "bucket_type": "pcid",
-          "rep_count": 211,
+          "rep_count": 209,
           "median_pcid": 95,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 46.15,
+          "median_jv": 46.2,
           "median_impact_coverage": 1,
           "bucket_midpoint": 90,
-          "peak_growth": true,
-          "peak_jv": true,
           "peak_coverage": true
         },
         {
@@ -3653,43 +3648,55 @@
           "median_jv": 17.8,
           "median_impact_coverage": 0,
           "bucket_midpoint": 138,
-          "decline_jv_85": true,
           "decline_coverage_85": true
+        },
+        {
+          "bucket_order": 11,
+          "bucket_label": "11: 150+",
+          "bucket_type": "pcid",
+          "rep_count": 5,
+          "median_pcid": 188,
+          "median_rev_growth_pct": 1.0,
+          "median_jv": 56.0,
+          "median_impact_coverage": 0,
+          "bucket_midpoint": 175,
+          "peak_growth": true,
+          "peak_jv": true
         }
       ],
       "stddev_buckets": [
         {
           "bucket_order": 2,
-          "bucket_label": "median\u22121\u03c3 to median (77\u201395)",
+          "bucket_label": "median\u22121\u03c3 to median (76\u201395)",
           "bucket_type": "stddev",
-          "rep_count": 80,
+          "rep_count": 79,
           "median_pcid": 94,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 50.15,
-          "median_impact_coverage": 1.0,
+          "median_jv": 50.6,
+          "median_impact_coverage": 1,
           "peak_growth": true,
           "peak_jv": true,
           "peak_coverage": true
         },
         {
           "bucket_order": 3,
-          "bucket_label": "median to median+1\u03c3 (95\u2013113)",
+          "bucket_label": "median to median+1\u03c3 (95\u2013114)",
           "bucket_type": "stddev",
           "rep_count": 131,
           "median_pcid": 96,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 43.0,
+          "median_jv": 43.05,
           "median_impact_coverage": 1
         },
         {
           "bucket_order": 4,
-          "bucket_label": "> median+1\u03c3 (> 113)",
+          "bucket_label": "> median+1\u03c3 (> 114)",
           "bucket_type": "stddev",
-          "rep_count": 18,
+          "rep_count": 19,
           "median_pcid": 137,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 21.05,
-          "median_impact_coverage": 0.0,
+          "median_jv": 21.5,
+          "median_impact_coverage": 0,
           "decline_jv_85": true,
           "decline_coverage_85": true
         }
@@ -3702,7 +3709,7 @@
           "rep_count": 58,
           "median_pcid": 96,
           "median_rev_growth_pct": 0.1,
-          "median_jv": 31.1,
+          "median_jv": 31.05,
           "median_impact_coverage": 1.0,
           "peak_coverage": true
         },
@@ -3723,9 +3730,10 @@
           "bucket_type": "rev_quartile",
           "rep_count": 57,
           "median_pcid": 95,
-          "median_rev_growth_pct": 0.2,
+          "median_rev_growth_pct": 0.1,
           "median_jv": 49.1,
-          "median_impact_coverage": 1
+          "median_impact_coverage": 1,
+          "decline_growth_85": true
         },
         {
           "bucket_order": 4,
@@ -3740,14 +3748,14 @@
         }
       ],
       "market": "US-M",
-      "narrative": "Rev growth peaks at 81-100 PCIDs (20%); JV peaks at ~90 ($46.15/job); impact coverage peaks at 90. Binding threshold ~90\u2013138 accounts \u2014 above 85% drop: JV falls to $17.80/job, coverage declining.",
-      "growth_peak_bucket": "08: 81-100",
-      "growth_peak_pct": 0.2,
+      "narrative": "Rev growth peaks at 150+ PCIDs (100%); JV peaks at ~175 ($56.00/job); impact coverage peaks at 90. Binding threshold ~90\u2013138 accounts \u2014 above 85% drop: coverage declining.",
+      "growth_peak_bucket": "11: 150+",
+      "growth_peak_pct": 1.0,
       "growth_decline_bucket": null,
-      "jv_peak_bucket": "08: 81-100",
-      "jv_peak": 46.15,
-      "jv_decline_bucket": "10: 126-150",
-      "jv_decline": 17.8,
+      "jv_peak_bucket": "11: 150+",
+      "jv_peak": 56.0,
+      "jv_decline_bucket": null,
+      "jv_decline": null,
       "coverage_peak_bucket": "08: 81-100",
       "coverage_peak": 1,
       "coverage_decline_bucket": "10: 126-150",
@@ -3926,7 +3934,7 @@
       "coverage_peak_bucket": "05: 41-50",
       "coverage_peak": 0.5,
       "coverage_decline_bucket": "11: 150+",
-      "binding_threshold_low": 175,
+      "binding_threshold_low": 45,
       "binding_threshold_high": 175
     },
     {
@@ -3943,7 +3951,7 @@
           "rep_count": 131,
           "median_pcid": 61,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 25.9,
+          "median_jv": 25.8,
           "median_impact_coverage": 1,
           "bucket_midpoint": 58,
           "peak_growth": true,
@@ -3959,7 +3967,7 @@
           "rep_count": 57,
           "median_pcid": 60,
           "median_rev_growth_pct": 0.1,
-          "median_jv": 26.9,
+          "median_jv": 27.7,
           "median_impact_coverage": 1,
           "peak_jv": true,
           "peak_coverage": true
@@ -3971,7 +3979,7 @@
           "rep_count": 74,
           "median_pcid": 62,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 24.5,
+          "median_jv": 24.45,
           "median_impact_coverage": 1.0,
           "peak_growth": true
         }
@@ -3984,7 +3992,7 @@
           "rep_count": 34,
           "median_pcid": 61,
           "median_rev_growth_pct": 0.1,
-          "median_jv": 19.2,
+          "median_jv": 19.0,
           "median_impact_coverage": 1.0,
           "peak_coverage": true
         },
@@ -3995,7 +4003,7 @@
           "rep_count": 33,
           "median_pcid": 61,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 22.4,
+          "median_jv": 23.4,
           "median_impact_coverage": 1,
           "peak_growth": true
         },
@@ -4006,7 +4014,7 @@
           "rep_count": 33,
           "median_pcid": 61,
           "median_rev_growth_pct": 0.2,
-          "median_jv": 28.3,
+          "median_jv": 28.1,
           "median_impact_coverage": 1
         },
         {
@@ -4014,7 +4022,7 @@
           "bucket_label": "Q4 (highest rev)",
           "bucket_type": "rev_quartile",
           "rep_count": 33,
-          "median_pcid": 61,
+          "median_pcid": 60,
           "median_rev_growth_pct": 0.2,
           "median_jv": 34.8,
           "median_impact_coverage": 1,
@@ -4022,18 +4030,18 @@
         }
       ],
       "market": "US-UMM",
-      "narrative": "Rev growth peaks at 51-65 PCIDs (20%); JV peaks at ~58 ($25.90/job); impact coverage peaks at 58.",
+      "narrative": "Rev growth peaks at 51-65 PCIDs (20%); JV peaks at ~58 ($25.80/job); impact coverage peaks at 58.",
       "growth_peak_bucket": "06: 51-65",
       "growth_peak_pct": 0.2,
       "growth_decline_bucket": null,
       "jv_peak_bucket": "06: 51-65",
-      "jv_peak": 25.9,
+      "jv_peak": 25.8,
       "jv_decline_bucket": null,
       "jv_decline": null,
       "coverage_peak_bucket": "06: 51-65",
       "coverage_peak": 1,
       "coverage_decline_bucket": null,
-      "binding_threshold_low": 58,
+      "binding_threshold_low": null,
       "binding_threshold_high": null
     }
   ]

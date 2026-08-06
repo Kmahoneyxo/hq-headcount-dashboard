@@ -334,11 +334,18 @@ def build_segment_narrative(
             declines.append((d["bucket_order"], name, d, peak))
 
     binding_text = ""
+    binding_lo: int | float | None = None
+    binding_hi: int | float | None = None
     if declines:
         declines.sort(key=lambda x: x[0])
         bind_order, bind_metric, bind_bucket, bind_peak = declines[0]
-        lo = (bind_peak or {}).get("bucket_midpoint") or (bind_peak or {}).get("median_pcid")
-        hi = bind_bucket.get("bucket_midpoint") or bind_bucket.get("median_pcid") or bind_bucket.get("bucket_upper")
+        binding_lo = (bind_peak or {}).get("bucket_midpoint") or (bind_peak or {}).get("median_pcid")
+        binding_hi = (
+            bind_bucket.get("bucket_midpoint")
+            or bind_bucket.get("median_pcid")
+            or bind_bucket.get("bucket_upper")
+        )
+        lo, hi = binding_lo, binding_hi
         above_bits: list[str] = []
         if jv_decline and jv_decline.get("median_jv") is not None:
             above_bits.append(f"JV falls to {fmt_jv(jv_decline['median_jv'])}")
@@ -379,8 +386,8 @@ def build_segment_narrative(
         "coverage_peak_bucket": cov_peak["bucket_label"] if cov_peak else None,
         "coverage_peak": cov_peak_val,
         "coverage_decline_bucket": cov_decline["bucket_label"] if cov_decline else None,
-        "binding_threshold_low": (growth_peak or jv_peak or cov_peak or {}).get("bucket_midpoint"),
-        "binding_threshold_high": (declines[0][2].get("bucket_midpoint") if declines else None),
+        "binding_threshold_low": binding_lo,
+        "binding_threshold_high": binding_hi,
     }
 
 
