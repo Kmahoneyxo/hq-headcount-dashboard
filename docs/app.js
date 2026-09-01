@@ -14,6 +14,9 @@ let sbsChart = null;
 let bookScoreChart = null;
 let growthChart = null;
 let jvChart = null;
+let inflectionChart = null;
+let productMixChart = null;
+let bhJvChart = null;
 let lastLoadedAt = null;
 let lastReloadedAt = null;
 let isRefreshing = false;
@@ -26,6 +29,18 @@ const REC_COLORS = {
   Hold: "#6eb5ff",
   "Do Not Hire": "#f07178",
 };
+
+function hcRecLabel(m) {
+  const rec = m.headcount_recommendation || "Hold";
+  if (m.hc_curve_validated === false && m.headcount_recommendation_pre_gate) {
+    return `Hold (gated from ${m.headcount_recommendation_pre_gate})`;
+  }
+  return rec;
+}
+
+function hcRecClass(m) {
+  return (m.headcount_recommendation || "Hold").replace(/ /g, "\\ ");
+}
 
 const IMPACT_COVERAGE_DEFINITION =
   "Impact coverage = impact calls per assigned account over the trailing 90 days. " +
@@ -55,6 +70,13 @@ const JV_DEFINITION =
   "Reps bucketed by PCID count (same bands as revenue growth curve); each bucket shows median $/job across reps with PQR ≥ $5K and jobs > 0. " +
   "JV plateau = largest bucket within 90% of segment peak $/job where bigger books no longer add $/job (sql/16 opp_plateau). " +
   "Compare segment median JV to plateau $/job when avg book exceeds the plateau book size.";
+
+const INFLECTION_DEFINITION =
+  "Inflection curves show when outcomes change as PCIDs rise — not segment averages. " +
+  "Growth % = median (current 90d rev − PQR) / PQR per bucket. " +
+  "Coverage = median impact calls per account. JV = median $/job. " +
+  "Product mix = median CPC vs CPA share of revenue (sql/23). " +
+  "Ideal headcount targets the bucket range where growth stays within 85% of peak before JV or coverage decline.";
 
 async function loadConfig() {
   try {
@@ -790,6 +812,328 @@ function buildOptimalBookRationale(m) {
   return { primary, bullets };
 }
 
+function bucketLabel(b) {
+  return b.book_bucket?.includes(": ") ? b.book_bucket.split(": ")[1] : b.book_bucket;
+}
+
+function buildCoverageCurve(m) {
+  const buckets = m.coverage_by_bucket || [];
+  if (m.coverage_curve_primary) {
+    return {
+      primary: m.coverage_curve_primary,
+      bullets: m.coverage_curve_bullets || [],
+      buckets,
+      peakAccounts: m.coverage_peak_accounts,
+      peakCov: m.coverage_peak_calls_per_account,
+      declineAbove: m.coverage_decline_above_pcid ?? m.coverage_inflection_book_max,
+      declineCov: m.coverage_decline_median_calls,
+    };
+  }
+  const inflection = m.coverage_inflection_book_max;
+  const at = m.coverage_at_inflection;
+  const primary =
+    inflection != null && at != null
+      ? `Coverage inflection near ~${fmtNum(inflection)} PCIDs (${at} calls/account at peak).`
+      : "";
+  return { primary, bullets: [], buckets, peakAccounts: inflection, peakCov: at, declineAbove: inflection, declineCov: null };
+}
+
+function buildProductMix(m) {
+  const buckets = m.product_mix_by_bucket || [];
+  return {
+    primary: m.product_mix_primary || "",
+    bullets: m.product_mix_bullets || [],
+    buckets,
+  };
+}
+
+function renderCoverageCurveBlock(m, cov) {
+  if (!cov.primary && !cov.buckets.length) return "";
+  const bullets =
+    cov.bullets.length > 0
+      ? `<ul class="market-summary-bullets growth-curve-bullets">${cov.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
+      : "";
+  const rows = cov.buckets
+    .map((b) => {
+      const isPeak = cov.peakAccounts != null && b.bucket_midpoint === cov.peakAccounts;
+      const isInf = cov.declineAbove != null && b.bucket_upper === cov.declineAbove;
+      return `<tr class="${isPeak ? "growth-row-ideal" : isInf ? "growth-row-inflection" : ""}">
+        <td>${bucketLabel(b)}</td>
+        <td class="num">${fmtNum(b.rep_count)}</td>
+        <td class="num">${b.median_impact_calls_per_account ?? "—"}</td>
+        <td>${isPeak ? "Peak" : isInf ? "Inflection" : ""}</td>
+      </tr>`;
+    })
+    .join("");
+  const table =
+    cov.buckets.length
+      ? `<div class="table-wrap table-wrap-sm growth-bucket-table"><table>
+        <thead><tr><th>PCID bucket</th><th class="num">Reps</th><th class="num">Median coverage</th><th></th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`
+      : "";
+  return `<div class="growth-curve-block coverage-curve-block">
+    <div class="growth-curve-header">
+      <span class="growth-curve-title">Impact coverage vs book size</span>
+      <span class="metric-tip" title="${IMPACT_COVERAGE_DEFINITION}">?</span>
+    </div>
+    <p class="growth-curve-primary">${cov.primary}</p>
+    ${bullets}
+    ${table}
+  </div>`;
+}
+
+function renderThresholdCallout(m) {
+  const ta = m.threshold_analysis;
+  const el = document.getElementById("bh-threshold");
+  if (!el) return;
+  if (!ta?.narrative) {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+    return;
+  }
+  el.classList.remove("hidden");
+  const binding =
+    ta.binding_threshold_low != null
+      ? `Binding ceiling ~${fmtNum(ta.binding_threshold_low)}–${fmtNum(ta.binding_threshold_high)} PCIDs`
+      : "";
+  el.innerHTML = `<strong>Goal A threshold (sql/22):</strong> ${ta.narrative}${binding ? ` · ${binding}` : ""}`;
+}
+
+function renderBookHealth() {
+  const countries = [...new Set(allMarketsForLookup().map((m) => m.country))].sort();
+  const countrySelect = document.getElementById("bh-country");
+  const segmentSelect = document.getElementById("bh-segment");
+  if (!countrySelect || !segmentSelect) return;
+
+  if (countrySelect.options.length !== countries.length) {
+    countrySelect.innerHTML = countries
+      .map((c) => `<option value="${c}"${c === lookupCountry ? " selected" : ""}>${c}</option>`)
+      .join("");
+  }
+  countrySelect.value = lookupCountry;
+  segmentSelect.value = lookupSegment;
+
+  const m = findLookupMarket();
+  const summaryEl = document.getElementById("bh-inflection-summary");
+  const detailEl = document.getElementById("bh-detail");
+  const mixEmpty = document.getElementById("product-mix-empty");
+
+  if (!m) {
+    if (summaryEl) summaryEl.textContent = `No data for ${lookupCountry}-${lookupSegment}.`;
+    if (detailEl) detailEl.innerHTML = "";
+    renderThresholdCallout({});
+    if (mixEmpty) mixEmpty.classList.remove("hidden");
+    return;
+  }
+
+  renderThresholdCallout(m);
+  const growth = buildGrowthCurve(m);
+  const jv = buildJvCurve(m);
+  const cov = buildCoverageCurve(m);
+  const mix = buildProductMix(m);
+
+  if (summaryEl) {
+    const gateNote =
+      m.hc_curve_validated === false && m.hc_curve_gate_reason
+        ? `<p class="threshold-callout gate-note">${m.hc_curve_gate_reason}</p>`
+        : "";
+    summaryEl.innerHTML = `<p><strong>${m.country}-${m.segment}</strong> · ideal ${fmtNum(idealPcid(m))} PCIDs · avg ${fmtNum(m.current_avg_book)} · ${m.perfect_book_source || "—"} · ${hcRecLabel(m)}</p>
+      <p>${growth.primary || ""} ${cov.primary ? ` · ${cov.primary}` : ""}</p>${gateNote}`;
+  }
+
+  if (detailEl) {
+    detailEl.innerHTML = `
+      <div class="growth-curve-block">
+        <p class="growth-curve-primary">${growth.primary || "—"}</p>
+        ${renderGrowthBucketTable(growth.buckets, m)}
+      </div>
+      ${renderCoverageCurveBlock(m, cov)}
+      <div class="growth-curve-block jv-curve-block">
+        <p class="growth-curve-primary">${jv.primary || "—"}</p>
+        ${renderJvBucketTable(jv.buckets, m)}
+      </div>`;
+  }
+
+  if (mixEmpty) {
+    mixEmpty.classList.toggle("hidden", mix.buckets.length > 0);
+  }
+}
+
+function renderInflectionComboChart(m) {
+  if (!chartsAvailable()) return;
+  const ctx = document.getElementById("inflection-combo-chart");
+  if (!ctx) return;
+  const growthBuckets = m.growth_by_bucket || [];
+  const covBuckets = m.coverage_by_bucket || [];
+  if (inflectionChart) {
+    inflectionChart.destroy();
+    inflectionChart = null;
+  }
+  if (!growthBuckets.length && !covBuckets.length) return;
+
+  const byOrder = new Map();
+  growthBuckets.forEach((b) => byOrder.set(b.bucket_order, { g: b }));
+  covBuckets.forEach((b) => {
+    const row = byOrder.get(b.bucket_order) || {};
+    row.c = b;
+    byOrder.set(b.bucket_order, row);
+  });
+  const orders = [...byOrder.keys()].sort((a, b) => a - b);
+  const labels = orders.map((o) => {
+    const g = byOrder.get(o).g;
+    const c = byOrder.get(o).c;
+    return bucketLabel(g || c || {});
+  });
+  const growthData = orders.map((o) => {
+    const p = byOrder.get(o).g?.median_growth_pct;
+    return p != null ? p * 100 : null;
+  });
+  const covData = orders.map((o) => byOrder.get(o).c?.median_impact_calls_per_account ?? null);
+  const ideal = idealPcid(m);
+
+  inflectionChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Median rev growth %",
+          data: growthData,
+          borderColor: "#4c8bf5",
+          backgroundColor: "rgba(76, 139, 245, 0.15)",
+          yAxisID: "y",
+          tension: 0.2,
+          spanGaps: true,
+        },
+        {
+          label: "Impact calls / account",
+          data: covData,
+          borderColor: "#3ecf8e",
+          backgroundColor: "rgba(62, 207, 142, 0.1)",
+          yAxisID: "y1",
+          tension: 0.2,
+          spanGaps: true,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { labels: { color: "#9aa3b5" } },
+        tooltip: { enabled: true },
+      },
+      scales: {
+        y: {
+          type: "linear",
+          position: "left",
+          title: { display: true, text: "Growth %", color: "#9aa3b5" },
+          ticks: { color: "#9aa3b5", callback: (v) => `${v}%` },
+          grid: { color: "#2a3040" },
+        },
+        y1: {
+          type: "linear",
+          position: "right",
+          title: { display: true, text: "Calls / acct", color: "#9aa3b5" },
+          ticks: { color: "#9aa3b5" },
+          grid: { drawOnChartArea: false },
+        },
+        x: {
+          ticks: { color: "#9aa3b5", font: { size: 10 }, maxRotation: 45 },
+          grid: { display: false },
+        },
+      },
+    },
+  });
+  if (ideal != null) {
+    /* ideal PCID shown in summary — chart uses bucket bands not continuous x */
+  }
+}
+
+function renderBhJvChart(m) {
+  if (!chartsAvailable()) return;
+  const ctx = document.getElementById("bh-jv-chart");
+  if (!ctx) return;
+  const buckets = m.jv_by_bucket || [];
+  if (bhJvChart) {
+    bhJvChart.destroy();
+    bhJvChart = null;
+  }
+  if (!buckets.length) return;
+  const plateauBook = m.jv_plateau_book_max ?? m.opp_plateau_book_max;
+  const labels = buckets.map(bucketLabel);
+  const data = buckets.map((b) => b.median_rev_per_job);
+  const colors = buckets.map((b) =>
+    plateauBook != null && b.bucket_upper === plateauBook ? "#3ecf8e" : "#a78bfa",
+  );
+  bhJvChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ label: "$/job", data, backgroundColor: colors }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { color: "#9aa3b5" }, grid: { color: "#2a3040" } },
+        x: { ticks: { color: "#9aa3b5", font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
+      },
+    },
+  });
+}
+
+function renderProductMixChart(m) {
+  if (!chartsAvailable()) return;
+  const ctx = document.getElementById("product-mix-chart");
+  if (!ctx) return;
+  const buckets = m.product_mix_by_bucket || [];
+  if (productMixChart) {
+    productMixChart.destroy();
+    productMixChart = null;
+  }
+  if (!buckets.length) return;
+
+  const labels = buckets.map(bucketLabel);
+  const cpcPct = buckets.map((b) => (b.median_cpc_share != null ? b.median_cpc_share * 100 : 0));
+  const cpaPct = buckets.map((b) => (b.median_cpa_share != null ? b.median_cpa_share * 100 : 0));
+
+  productMixChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "CPC %", data: cpcPct, backgroundColor: "#4c8bf5", stack: "mix" },
+        { label: "CPA %", data: cpaPct, backgroundColor: "#f5a623", stack: "mix" },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: "#9aa3b5" } } },
+      scales: {
+        x: { stacked: true, ticks: { color: "#9aa3b5", font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
+        y: {
+          stacked: true,
+          max: 100,
+          ticks: { color: "#9aa3b5", callback: (v) => `${v}%` },
+          grid: { color: "#2a3040" },
+        },
+      },
+    },
+  });
+}
+
+function renderBookHealthCharts() {
+  const m = findLookupMarket();
+  if (!m) return;
+  renderInflectionComboChart(m);
+  renderBhJvChart(m);
+  renderProductMixChart(m);
+}
+
 function renderOptimalBookPanel(_m) {
   /* consolidated into lookup panel */
 }
@@ -823,7 +1167,7 @@ function renderLookup() {
 
   const gap = m.headcount_gap;
   const gapStr = gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
-  const recClass = m.headcount_recommendation.replace(/ /g, "\\ ");
+  const recClass = hcRecClass(m);
   const hcStatus = m.summary_status || "—";
   const health = buildHealthFromMarket(m);
   const hcReason = buildHcReason(m);
@@ -893,7 +1237,7 @@ function renderLookup() {
         hcReason.primary,
         [],
       )}
-      <p class="lookup-formula">Ideal HC: ${fmtNum(m.assigned_accounts)} PCIDs ÷ ${fmtNum(ideal)} ideal PCID = ${fmtNum(m.optimal_headcount)} reps · gap ${gapStr} · <span class="rec rec-${recClass}">${m.headcount_recommendation}</span></p>
+      <p class="lookup-formula">Ideal HC: ${fmtNum(m.assigned_accounts)} PCIDs ÷ ${fmtNum(ideal)} ideal PCID = ${fmtNum(m.optimal_headcount)} reps · gap ${gapStr} · <span class="rec rec-${recClass}">${hcRecLabel(m)}</span>${m.hc_curve_gate_reason && m.hc_curve_validated === false ? `<br><span class="gate-note">${m.hc_curve_gate_reason}</span>` : ""}</p>
     </div>
 
     <div class="lookup-section">
@@ -1074,7 +1418,7 @@ function renderTable() {
         <td class="num highlight-col"><strong>${fmtNum(m.optimal_headcount)}</strong></td>
         <td class="num">${fmtNum(m.current_reps)}</td>
         <td class="num">${gapStr}</td>
-        <td><span class="rec rec-${m.headcount_recommendation.replace(/ /g, "\\ ")}">${m.headcount_recommendation}</span></td>
+        <td><span class="rec rec-${hcRecClass(m)}">${hcRecLabel(m)}</span></td>
         <td class="num">${fmtNum(m.current_avg_book)} / ${fmtNum(idealPcid(m))}</td>
         <td class="sbs-opp-cell${buildSbsRouting(m).hasOpp ? " sbs-opp-yes" : ""}">${sbsFlag}</td>
       </tr>`;
@@ -1236,6 +1580,7 @@ function renderBookScoreChart() {
 function renderAll() {
   renderMeta();
   renderLookup();
+  renderBookHealth();
   renderHeadline();
   renderKpis();
   renderFilters();
@@ -1261,6 +1606,22 @@ function bindEvents() {
     lookupSegment = e.target.value;
     renderAll();
   });
+  const bhCountry = document.getElementById("bh-country");
+  const bhSegment = document.getElementById("bh-segment");
+  if (bhCountry) {
+    bhCountry.addEventListener("change", (e) => {
+      lookupCountry = e.target.value;
+      document.getElementById("lookup-country").value = lookupCountry;
+      renderAll();
+    });
+  }
+  if (bhSegment) {
+    bhSegment.addEventListener("change", (e) => {
+      lookupSegment = e.target.value;
+      document.getElementById("lookup-segment").value = lookupSegment;
+      renderAll();
+    });
+  }
   document.getElementById("region-filters").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-region]");
     if (!btn) return;
@@ -1285,8 +1646,13 @@ function bindEvents() {
       document.querySelectorAll(".dash-tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === id));
       document.getElementById("tab-markets").classList.toggle("hidden", id !== "markets");
       document.getElementById("tab-markets").classList.toggle("active", id === "markets");
+      document.getElementById("tab-book-health").classList.toggle("hidden", id !== "book-health");
+      document.getElementById("tab-book-health").classList.toggle("active", id === "book-health");
       document.getElementById("tab-methodology").classList.toggle("hidden", id !== "methodology");
       document.getElementById("tab-methodology").classList.toggle("active", id === "methodology");
+      if (id === "book-health") {
+        renderBookHealthCharts();
+      }
     });
   });
 }
@@ -1297,6 +1663,7 @@ function renderCharts() {
   if (lookup) {
     renderGrowthChart(lookup);
     renderJvChart(lookup);
+    renderBookHealthCharts();
   }
 }
 

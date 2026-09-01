@@ -13,6 +13,7 @@ This is **one project**, not separate tools. Headcount decisions only make sense
 **Purpose:** Confirm **best book size** and **book health** by country × segment (then rep).
 
 **Questions it must answer:**
+- **When does growth change?** Not segment averages alone — find inflection points: when rev growth accelerates, plateaus, or turns negative as PCIDs move; when coverage and JV ($/job) rise or fall; which products (CPC/CPA) drive that. Headcount should maximize **sustainable growth**, not average book size.
 - What is the **ideal book size** (growth peak before diminishing returns)?
 - What is **FY26 book build score** vs policy target?
 - When is a book **too big** or **too little**?

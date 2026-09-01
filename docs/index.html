@@ -30,6 +30,7 @@
     </div>
     <nav class="dash-tabs" aria-label="Dashboard sections">
       <button type="button" class="dash-tab active" data-tab="markets">Markets</button>
+      <button type="button" class="dash-tab" data-tab="book-health">Book health</button>
       <button type="button" class="dash-tab" data-tab="methodology">Methodology</button>
     </nav>
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
@@ -130,6 +131,63 @@
             <canvas id="gap-chart"></canvas>
           </div>
         </div>
+      </section>
+    </div>
+
+    <div id="tab-book-health" class="tab-panel hidden">
+      <section class="lookup-panel" id="book-health-panel">
+        <div class="lookup-header">
+          <div>
+            <h2>Book health &amp; inflection curves</h2>
+            <p class="caption">When growth, JV, coverage, and products change as PCIDs move — find where books start to grow or decline</p>
+          </div>
+        </div>
+        <div class="lookup-controls">
+          <label class="lookup-field">
+            <span>Country</span>
+            <select id="bh-country" class="select"></select>
+          </label>
+          <label class="lookup-field">
+            <span>Segment</span>
+            <select id="bh-segment" class="select">
+              <option value="M">M</option>
+              <option value="UMM">UMM</option>
+              <option value="ACC">ACC</option>
+              <option value="L">L</option>
+              <option value="NAM">NAM</option>
+              <option value="DCA">DCA</option>
+              <option value="ISDCA">ISDCA</option>
+              <option value="NAMDCA">NAMDCA</option>
+            </select>
+          </label>
+        </div>
+        <div id="bh-threshold" class="threshold-callout hidden"></div>
+        <div id="bh-inflection-summary" class="bh-summary"></div>
+        <div class="inflection-charts-grid">
+          <div class="panel inflection-panel">
+            <h3>Growth vs coverage</h3>
+            <p class="caption">Median quarterly rev growth % and impact calls/account by PCID bucket</p>
+            <div class="growth-chart-wrap inflection-combo-wrap">
+              <canvas id="inflection-combo-chart" aria-label="Growth and coverage by PCID bucket"></canvas>
+            </div>
+          </div>
+          <div class="panel inflection-panel">
+            <h3>JV ($/job)</h3>
+            <p class="caption">When monetization per job peaks or plateaus</p>
+            <div class="growth-chart-wrap">
+              <canvas id="bh-jv-chart" aria-label="Job value by PCID bucket"></canvas>
+            </div>
+          </div>
+          <div class="panel inflection-panel">
+            <h3>Product mix (CPC vs CPA)</h3>
+            <p class="caption">Median revenue share by product — sql/23</p>
+            <div class="growth-chart-wrap">
+              <canvas id="product-mix-chart" aria-label="CPC vs CPA share by PCID bucket"></canvas>
+            </div>
+            <p id="product-mix-empty" class="growth-curve-empty hidden">Product mix not loaded — run sql/23 and merge-bucket-exports.py.</p>
+          </div>
+        </div>
+        <div id="bh-detail" class="bh-detail"></div>
       </section>
     </div>
 
@@ -253,6 +311,6 @@
     <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a> · <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">Connect PTD</a></p>
   </footer>
 
-  <script src="app.js?v=20260805a"></script>
+  <script src="app.js?v=20260901b"></script>
 </body>
 </html>

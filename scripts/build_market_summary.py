@@ -30,6 +30,53 @@ JV_PEAK_FLOOR_RATIO = 0.90  # JV plateau stays within 90% of segment peak (sql/1
 MIN_REPS_PER_BUCKET = 5
 MIN_REPS_PERFECT_BUCKET = 20
 MIN_PQR_FOR_GROWTH = 5000  # sql/16 rep_filtered
+CURVE_VALIDATED_SOURCES = frozenset({"curve_strict", "curve_relaxed"})
+
+
+def _chart_buckets_from_reps(
+    exported: list[dict] | None,
+    computed: list[dict] | None,
+) -> list[dict]:
+    """Chart series: prefer rep_book buckets when fuller than warehouse export."""
+    ex = exported or []
+    co = computed or []
+    ex_n = len([b for b in ex if b.get("rep_count", 0) >= MIN_REPS_PER_BUCKET])
+    co_n = len([b for b in co if b.get("rep_count", 0) >= MIN_REPS_PER_BUCKET])
+    if co_n > ex_n:
+        return co
+    return ex if ex else co
+
+
+def is_growth_curve_validated(m: dict) -> bool:
+    """Gate HC on validated growth curve (not peer/median-only or flat)."""
+    src = (m.get("perfect_book_source") or "").lower()
+    if src.startswith("peer_") or src == "segment_median":
+        return False
+    if src not in CURVE_VALIDATED_SOURCES:
+        return False
+    growth = m.get("perfect_book_growth_pct")
+    if growth is None or growth <= 0:
+        return False
+    buckets = m.get("growth_by_bucket") or []
+    n = len([b for b in buckets if b.get("rep_count", 0) >= MIN_REPS_PER_BUCKET])
+    return n >= 2
+
+
+def apply_hc_curve_gate(m: dict) -> None:
+    """Hold Hire/Optimize when ideal PCID is not curve-validated."""
+    validated = is_growth_curve_validated(m)
+    m["hc_curve_validated"] = validated
+    if validated:
+        return
+    prev = m.get("headcount_recommendation")
+    if prev and prev != "Hold":
+        m["headcount_recommendation_pre_gate"] = prev
+        m["headcount_recommendation"] = "Hold"
+    src = m.get("perfect_book_source") or "unknown"
+    m["hc_curve_gate_reason"] = (
+        f"Ideal PCID not validated by growth curve ({src}) — "
+        "HC recommendation held until curve_strict/relaxed with positive growth."
+    )
 
 
 # PCID buckets aligned with sql/16_dashboard_export.sql
@@ -734,9 +781,8 @@ def _growth_above_book(buckets: list[dict], book_max: float | int) -> float | No
 
 def build_growth_curve(m: dict, market_reps: list[dict] | None = None) -> dict:
     """Revenue growth vs book size narrative + bucket table (computed or from export)."""
-    buckets = m.get("growth_by_bucket")
-    if buckets is None and market_reps:
-        buckets = compute_growth_by_bucket(market_reps)
+    computed = compute_growth_by_bucket(market_reps) if market_reps else None
+    buckets = _chart_buckets_from_reps(m.get("growth_by_bucket"), computed)
 
     ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
     perfect_growth = m.get("perfect_book_growth_pct")
@@ -882,6 +928,172 @@ def _jv_above_book(buckets: list[dict], book_max: float | int) -> float | None:
     return round(statistics.median(above), 2)
 
 
+def compute_coverage_by_bucket(reps: list[dict]) -> list[dict]:
+    """Median impact calls per account per PCID bucket (from rep_book.json)."""
+    grouped: dict[int, dict] = {}
+    for rep in reps:
+        cov = rep.get("impact_calls_per_account")
+        if cov is None:
+            continue
+        order, label, midpoint, upper, _ceiling = _pcid_bucket(rep.get("pcid_count") or 0)
+        bucket = grouped.setdefault(
+            order,
+            {
+                "bucket_order": order,
+                "book_bucket": label,
+                "bucket_midpoint": midpoint,
+                "bucket_upper": upper,
+                "coverages": [],
+            },
+        )
+        bucket["coverages"].append(float(cov))
+
+    rows: list[dict] = []
+    for order in sorted(grouped):
+        b = grouped[order]
+        if len(b["coverages"]) < MIN_REPS_PER_BUCKET:
+            continue
+        rows.append(
+            {
+                "bucket_order": b["bucket_order"],
+                "book_bucket": b["book_bucket"],
+                "bucket_midpoint": b["bucket_midpoint"],
+                "bucket_upper": b["bucket_upper"],
+                "rep_count": len(b["coverages"]),
+                "median_impact_calls_per_account": round(statistics.median(b["coverages"]), 2),
+            }
+        )
+    return rows
+
+
+def _coverage_above_book(buckets: list[dict], book_max: float | int) -> float | None:
+    above = [
+        b["median_impact_calls_per_account"]
+        for b in buckets
+        if b.get("median_impact_calls_per_account") is not None and b["bucket_upper"] > book_max
+    ]
+    if not above:
+        return None
+    return round(statistics.median(above), 2)
+
+
+def build_coverage_curve(m: dict, market_reps: list[dict] | None = None) -> dict:
+    """Impact coverage vs book size — when coverage rises or falls by PCID bucket."""
+    computed = compute_coverage_by_bucket(market_reps) if market_reps else None
+    buckets = _chart_buckets_from_reps(m.get("coverage_by_bucket"), computed)
+
+    inflection = m.get("coverage_inflection_book_max")
+    at_inflection = m.get("coverage_at_inflection")
+    cov_status = m.get("coverage_status")
+    avg_book = m.get("current_avg_book")
+    ideal = m.get("ideal_pcid") or m.get("perfect_book_target")
+
+    peak_bucket = None
+    peak_cov = None
+    if buckets:
+        eligible = [b for b in buckets if b.get("rep_count", 0) >= MIN_REPS_PER_BUCKET]
+        if eligible:
+            peak_bucket = max(
+                eligible,
+                key=lambda b: b.get("median_impact_calls_per_account") or -999,
+            )
+            peak_cov = peak_bucket.get("median_impact_calls_per_account")
+
+    peak_accounts = (peak_bucket or {}).get("bucket_midpoint") or inflection
+    decline_cov = _coverage_above_book(buckets or [], inflection or 0) if inflection else None
+
+    bullets: list[str] = []
+    if peak_accounts is not None and peak_cov is not None:
+        band = (peak_bucket or {}).get("book_bucket", "")
+        band_label = band.split(": ", 1)[-1] if ": " in band else ""
+        bullets.append(
+            f"Peak median coverage {peak_cov} calls/account at ~{int(peak_accounts)} PCIDs"
+            + (f" ({band_label} band)." if band_label else ".")
+        )
+    if inflection is not None and at_inflection is not None:
+        bullets.append(
+            f"Coverage inflection ~{int(inflection)} PCIDs ({at_inflection} calls/account at inflection)."
+        )
+    if inflection is not None and decline_cov is not None and peak_cov is not None:
+        bullets.append(
+            f"Above ~{int(inflection)} PCIDs, coverage tends to fall "
+            f"(from {peak_cov} toward {decline_cov} calls/account)."
+        )
+    if cov_status == "Declining" and avg_book and inflection:
+        bullets.append(
+            f"Market avg book {int(round(avg_book))} exceeds inflection — coverage status Declining."
+        )
+
+    primary_parts: list[str] = []
+    if peak_accounts is not None and peak_cov is not None:
+        primary_parts.append(
+            f"Coverage peaks at ~{int(peak_accounts)} PCIDs ({peak_cov} calls/account)"
+        )
+    if inflection is not None and decline_cov is not None:
+        primary_parts.append(
+            f"declines above ~{int(inflection)} ({decline_cov} calls/account beyond)"
+        )
+    if avg_book and ideal and avg_book > (inflection or ideal):
+        primary_parts.append(f"market averages {int(round(avg_book))} PCIDs vs ideal {int(round(ideal))}")
+
+    primary = "; ".join(primary_parts) + "." if primary_parts else ""
+
+    return {
+        "coverage_by_bucket": buckets or [],
+        "coverage_peak_accounts": int(peak_accounts) if peak_accounts is not None else None,
+        "coverage_peak_calls_per_account": peak_cov,
+        "coverage_decline_above_pcid": int(inflection) if inflection is not None else None,
+        "coverage_decline_median_calls": decline_cov,
+        "coverage_curve_primary": primary,
+        "coverage_curve_bullets": bullets[:4],
+    }
+
+
+def build_product_mix_curve(m: dict) -> dict:
+    """CPC vs CPA revenue share by PCID bucket (sql/23 export)."""
+    buckets = m.get("product_mix_by_bucket") or []
+    if not buckets:
+        return {
+            "product_mix_by_bucket": [],
+            "product_mix_primary": "",
+            "product_mix_bullets": [],
+        }
+
+    eligible = [b for b in buckets if b.get("rep_count", 0) >= MIN_REPS_PER_BUCKET]
+    smallest = eligible[0] if eligible else None
+    largest = eligible[-1] if eligible else None
+    bullets: list[str] = []
+    if smallest and largest and smallest != largest:
+        cpc_lo = smallest.get("median_cpc_share")
+        cpc_hi = largest.get("median_cpc_share")
+        if cpc_lo is not None and cpc_hi is not None:
+            bullets.append(
+                f"CPC share {_fmt_pct(cpc_lo)} in {smallest['book_bucket'].split(': ', 1)[-1]} band "
+                f"vs {_fmt_pct(cpc_hi)} in {largest['book_bucket'].split(': ', 1)[-1]} band."
+            )
+    peak_cpc = max(eligible, key=lambda b: b.get("median_cpc_share") or -1) if eligible else None
+    if peak_cpc:
+        bullets.append(
+            f"Highest median CPC share {_fmt_pct(peak_cpc.get('median_cpc_share'))} "
+            f"at {peak_cpc['book_bucket'].split(': ', 1)[-1]} PCIDs."
+        )
+
+    primary = (
+        "Product mix shifts by book size — median CPC vs CPA share of current 90d revenue per rep bucket."
+    )
+    if smallest and largest and smallest.get("median_cpc_share") != largest.get("median_cpc_share"):
+        primary += (
+            f" CPC {_fmt_pct(smallest.get('median_cpc_share'))} (small books) "
+            f"→ {_fmt_pct(largest.get('median_cpc_share'))} (large books)."
+        )
+
+    return {
+        "product_mix_by_bucket": buckets,
+        "product_mix_primary": primary,
+        "product_mix_bullets": bullets[:3],
+    }
+
+
 def compute_jv_plateau_from_buckets(
     buckets: list[dict],
 ) -> tuple[int | None, float | None, float | None, dict | None]:
@@ -934,9 +1146,8 @@ def build_jv_curve(
 ) -> dict:
     """JV ($/job) vs book size narrative + bucket table (sql/19 + sql/16 opp_plateau)."""
     merged = merge_reps_with_jv(market_reps or [], jv_by_id or {})
-    buckets = m.get("jv_by_bucket")
-    if buckets is None and merged:
-        buckets = compute_jv_by_bucket(merged)
+    computed = compute_jv_by_bucket(merged) if merged else None
+    buckets = _chart_buckets_from_reps(m.get("jv_by_bucket"), computed)
 
     segment_avg_jv = (
         round(statistics.median([r["rev_per_job"] for r in merged]), 2) if merged else None
@@ -1084,6 +1295,8 @@ def build_market_summary(
     optimal = build_optimal_book_rationale(m)
     healthy = build_healthy_book_definition(m, market_reps)
     growth = build_growth_curve(m, market_reps)
+    coverage = build_coverage_curve(m, market_reps)
+    product_mix = build_product_mix_curve(m)
 
     health_bullets: list[str] = []
     if healthy.get("pct_reps_healthy") is not None:
@@ -1117,6 +1330,8 @@ def build_market_summary(
         **optimal,
         **healthy,
         **growth,
+        **coverage,
+        **product_mix,
         **jv_fields,
     }
 
@@ -1133,6 +1348,7 @@ def enrich_market(
         reps = rep_book_by_market.get(_market_key(m))
     summary = build_market_summary(m, country_markets, reps, jv_by_id)
     m.update(summary)
+    apply_hc_curve_gate(m)
     return m
 
 

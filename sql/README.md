@@ -17,7 +17,9 @@ Execute in order via **dp-mcp** → `execute_query` (queryType: `TRINO`, environ
 | 11 | `11_book_score_join.sql` | **Book Building FY26 score** | FY26 book score by country × segment from `sales_book_summary_v2` |
 | 16 | `16_dashboard_export.sql` | **Full dashboard export** | Ideal HC, PQR, book health, split-hire (Layer 1+2) |
 | 17 | `17_rep_book_profile.sql` | **Rep book health (flagged)** | Flagged reps (too big/too little) → `book_health.json` |
-| 17a | `17_rep_book_profile_all.sql` | **Rep book (all reps)** | Full rep book profile → `rep_book.json` + export |
+| 21 | `21_jv_by_bucket.sql` | JV by PCID bucket | `jv_by_bucket[]` in headcount (or computed from rep_jv) |
+| 23 | `23_product_mix_by_bucket.sql` | CPC vs CPA share by bucket | `product_mix_by_bucket[]` via merge-bucket-exports.py |
+| 24 | `24_coverage_by_bucket.sql` | Impact coverage by bucket | `coverage_by_bucket[]` (or computed from rep_book) |
 
 ## Dashboard refresh
 
@@ -26,6 +28,8 @@ Run query **16** on Quest **prod** (interactive times out at 10m). Export → `s
 Run query **17** for rep-level flags → `scripts/merge-book-health.py`.
 
 Run query **17a** (`17_rep_book_profile_all.sql`) for all reps → `scripts/merge-rep-book.py`.
+
+Run **23** / **24** on prod → export JSON → `python3 scripts/merge-bucket-exports.py docs/data/product_mix_by_bucket.json` (and coverage file). Then `python3 scripts/build_market_summary.py docs/data/headcount.json` to refresh narratives.
 
 ## Before running
 

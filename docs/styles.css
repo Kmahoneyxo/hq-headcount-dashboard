@@ -407,6 +407,48 @@ h2 {
   margin-bottom: 12px;
 }
 
+.inflection-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.inflection-panel h3 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+}
+
+.inflection-combo-wrap {
+  height: 220px;
+}
+
+.threshold-callout {
+  background: rgba(76, 139, 245, 0.08);
+  border: 1px solid rgba(76, 139, 245, 0.35);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.gate-note {
+  color: var(--text-muted, #8b949e);
+  font-size: 0.82rem;
+  margin-top: 6px;
+}
+
+.bh-summary {
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.bh-detail .growth-curve-block {
+  margin-bottom: 16px;
+}
+
 .growth-bucket-table {
   margin-top: 4px;
 }

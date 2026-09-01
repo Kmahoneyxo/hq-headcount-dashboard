@@ -182,7 +182,69 @@
         "jv_decline": 16.7,
         "binding_threshold_low": 90,
         "binding_threshold_high": 138
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 205,
+          "median_impact_calls_per_account": 1.0
+        },
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 13,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 90,
+      "coverage_peak_calls_per_account": 1.0,
+      "coverage_decline_above_pcid": 100,
+      "coverage_decline_median_calls": 0.0,
+      "coverage_curve_primary": "Coverage peaks at ~90 PCIDs (1.0 calls/account); declines above ~100 (0.0 calls/account beyond).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 1.0 calls/account at ~90 PCIDs (81-100 band).",
+        "Coverage inflection ~100 PCIDs (1 calls/account at inflection).",
+        "Above ~100 PCIDs, coverage tends to fall (from 1.0 toward 0.0 calls/account)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "M",
+          "country": "US",
+          "book_bucket": "08: 81-100",
+          "bucket_order": 8,
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 205,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 528014.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "M",
+          "country": "US",
+          "book_bucket": "10: 126-150",
+          "bucket_order": 10,
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 13,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 530216.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 81-100 band vs 100% in 126-150 band.",
+        "Highest median CPC share 100% at 81-100 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "L",
@@ -372,7 +434,89 @@
         "jv_decline": 6.2,
         "binding_threshold_low": 35,
         "binding_threshold_high": 58
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 137,
+          "median_impact_calls_per_account": 1.0
+        },
+        {
+          "bucket_order": 5,
+          "book_bucket": "05: 41-50",
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 34,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 6,
+          "book_bucket": "06: 51-65",
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 27,
+          "median_impact_calls_per_account": 2.0
+        }
+      ],
+      "coverage_peak_accounts": 58,
+      "coverage_peak_calls_per_account": 2.0,
+      "coverage_decline_above_pcid": 65,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~58 PCIDs (2.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 2.0 calls/account at ~58 PCIDs (51-65 band).",
+        "Coverage inflection ~65 PCIDs (2 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "L",
+          "country": "US",
+          "book_bucket": "04: 31-40",
+          "bucket_order": 4,
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 143,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 468487.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "L",
+          "country": "US",
+          "book_bucket": "05: 41-50",
+          "bucket_order": 5,
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 38,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 554408.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "L",
+          "country": "US",
+          "book_bucket": "06: 51-65",
+          "bucket_order": 6,
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 27,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 383750.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 31-40 band vs 100% in 51-65 band.",
+        "Highest median CPC share 100% at 31-40 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "NAM",
@@ -609,7 +753,153 @@
         "jv_decline": 1.9,
         "binding_threshold_low": 45,
         "binding_threshold_high": 175
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 1,
+          "book_bucket": "01: 1-10",
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 159,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 28,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 3,
+          "book_bucket": "03: 21-30",
+          "bucket_midpoint": 25,
+          "bucket_upper": 30,
+          "rep_count": 14,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 11,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 5,
+          "book_bucket": "05: 41-50",
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 5,
+          "median_impact_calls_per_account": 1.0
+        },
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 5,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 45,
+      "coverage_peak_calls_per_account": 1.0,
+      "coverage_decline_above_pcid": 50,
+      "coverage_decline_median_calls": 0.0,
+      "coverage_curve_primary": "Coverage peaks at ~45 PCIDs (1.0 calls/account); declines above ~50 (0.0 calls/account beyond).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 1.0 calls/account at ~45 PCIDs (41-50 band).",
+        "Coverage inflection ~50 PCIDs (1 calls/account at inflection).",
+        "Above ~50 PCIDs, coverage tends to fall (from 1.0 toward 0.0 calls/account)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "NAM",
+          "country": "US",
+          "book_bucket": "01: 1-10",
+          "bucket_order": 1,
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 162,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 216378.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "NAM",
+          "country": "US",
+          "book_bucket": "02: 11-20",
+          "bucket_order": 2,
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 30,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 126181.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "NAM",
+          "country": "US",
+          "book_bucket": "03: 21-30",
+          "bucket_order": 3,
+          "bucket_midpoint": 25,
+          "bucket_upper": 30,
+          "rep_count": 14,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 184931.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "NAM",
+          "country": "US",
+          "book_bucket": "04: 31-40",
+          "bucket_order": 4,
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 12,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 209712.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "NAM",
+          "country": "US",
+          "book_bucket": "05: 41-50",
+          "bucket_order": 5,
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 5,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 177884.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "NAM",
+          "country": "US",
+          "book_bucket": "11: 150+",
+          "bucket_order": 11,
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 5,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 123081.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 1-10 band vs 100% in 150+ band.",
+        "Highest median CPC share 100% at 1-10 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "UMM",
@@ -767,7 +1057,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 6,
+          "book_bucket": "06: 51-65",
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 130,
+          "median_impact_calls_per_account": 1.0
+        }
+      ],
+      "coverage_peak_accounts": 58,
+      "coverage_peak_calls_per_account": 1.0,
+      "coverage_decline_above_pcid": 65,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~58 PCIDs (1.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 1.0 calls/account at ~58 PCIDs (51-65 band).",
+        "Coverage inflection ~65 PCIDs (1 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "UMM",
+          "country": "US",
+          "book_bucket": "06: 51-65",
+          "bucket_order": 6,
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 130,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 442820.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 51-65 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_strict) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "DCA",
@@ -1004,7 +1334,154 @@
         "jv_decline": null,
         "binding_threshold_low": 35,
         "binding_threshold_high": 45
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 10,
+          "median_impact_calls_per_account": 0.5
+        },
+        {
+          "bucket_order": 5,
+          "book_bucket": "05: 41-50",
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 5,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 8,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 9,
+          "book_bucket": "09: 101-125",
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 24,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 30,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 13,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 35,
+      "coverage_peak_calls_per_account": 0.5,
+      "coverage_decline_above_pcid": 40,
+      "coverage_decline_median_calls": 0.0,
+      "coverage_curve_primary": "Coverage peaks at ~35 PCIDs (0.5 calls/account); declines above ~40 (0.0 calls/account beyond); market averages 102 PCIDs vs ideal 113.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.5 calls/account at ~35 PCIDs (31-40 band).",
+        "Coverage inflection ~40 PCIDs (1 calls/account at inflection).",
+        "Above ~40 PCIDs, coverage tends to fall (from 0.5 toward 0.0 calls/account).",
+        "Market avg book 102 exceeds inflection \u2014 coverage status Declining."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "DCA",
+          "country": "US",
+          "book_bucket": "04: 31-40",
+          "bucket_order": 4,
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 11,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 607301.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "DCA",
+          "country": "US",
+          "book_bucket": "05: 41-50",
+          "bucket_order": 5,
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 5,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 815000.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "DCA",
+          "country": "US",
+          "book_bucket": "08: 81-100",
+          "bucket_order": 8,
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 8,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 290472.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "DCA",
+          "country": "US",
+          "book_bucket": "09: 101-125",
+          "bucket_order": 9,
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 24,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 398899.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "DCA",
+          "country": "US",
+          "book_bucket": "10: 126-150",
+          "bucket_order": 10,
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 30,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 380527.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "DCA",
+          "country": "US",
+          "book_bucket": "11: 150+",
+          "bucket_order": 11,
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 13,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 811208.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 31-40 band vs 100% in 150+ band.",
+        "Highest median CPC share 100% at 31-40 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "M",
@@ -1178,7 +1655,68 @@
         "jv_decline": 7.5,
         "binding_threshold_low": 90,
         "binding_threshold_high": 138
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 40,
+          "median_impact_calls_per_account": 1.0
+        },
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 5,
+          "median_impact_calls_per_account": 1.0
+        }
+      ],
+      "coverage_peak_accounts": 90,
+      "coverage_peak_calls_per_account": 1.0,
+      "coverage_decline_above_pcid": 150,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~90 PCIDs (1.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 1.0 calls/account at ~90 PCIDs (81-100 band).",
+        "Coverage inflection ~150 PCIDs (1 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "M",
+          "country": "UK",
+          "book_bucket": "08: 81-100",
+          "bucket_order": 8,
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 41,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 469907.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "M",
+          "country": "UK",
+          "book_bucket": "10: 126-150",
+          "bucket_order": 10,
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 5,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 209063.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 81-100 band vs 100% in 126-150 band.",
+        "Highest median CPC share 100% at 81-100 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "M",
@@ -1367,7 +1905,90 @@
         "jv_decline": 2.9,
         "binding_threshold_low": 113,
         "binding_threshold_high": 175
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 7,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 9,
+          "book_bucket": "09: 101-125",
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 30,
+          "median_impact_calls_per_account": 1.0
+        },
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 6,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 113,
+      "coverage_peak_calls_per_account": 1.0,
+      "coverage_decline_above_pcid": 125,
+      "coverage_decline_median_calls": 0.0,
+      "coverage_curve_primary": "Coverage peaks at ~113 PCIDs (1.0 calls/account); declines above ~125 (0.0 calls/account beyond).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 1.0 calls/account at ~113 PCIDs (101-125 band).",
+        "Coverage inflection ~125 PCIDs (1 calls/account at inflection).",
+        "Above ~125 PCIDs, coverage tends to fall (from 1.0 toward 0.0 calls/account)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "M",
+          "country": "CA",
+          "book_bucket": "08: 81-100",
+          "bucket_order": 8,
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 7,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 342443.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "M",
+          "country": "CA",
+          "book_bucket": "09: 101-125",
+          "bucket_order": 9,
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 30,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 285648.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "M",
+          "country": "CA",
+          "book_bucket": "11: 150+",
+          "bucket_order": 11,
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 6,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 67428.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 81-100 band vs 100% in 150+ band.",
+        "Highest median CPC share 100% at 81-100 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "M",
@@ -1539,7 +2160,69 @@
         "jv_decline": 26.1,
         "binding_threshold_low": 90,
         "binding_threshold_high": 113
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 12,
+          "median_impact_calls_per_account": 2.0
+        },
+        {
+          "bucket_order": 9,
+          "book_bucket": "09: 101-125",
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 7,
+          "median_impact_calls_per_account": 1.0
+        }
+      ],
+      "coverage_peak_accounts": 90,
+      "coverage_peak_calls_per_account": 2.0,
+      "coverage_decline_above_pcid": 100,
+      "coverage_decline_median_calls": 1.0,
+      "coverage_curve_primary": "Coverage peaks at ~90 PCIDs (2.0 calls/account); declines above ~100 (1.0 calls/account beyond).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 2.0 calls/account at ~90 PCIDs (81-100 band).",
+        "Coverage inflection ~100 PCIDs (2 calls/account at inflection).",
+        "Above ~100 PCIDs, coverage tends to fall (from 2.0 toward 1.0 calls/account)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "M",
+          "country": "DACH",
+          "book_bucket": "08: 81-100",
+          "bucket_order": 8,
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 12,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 367824.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "M",
+          "country": "DACH",
+          "book_bucket": "09: 101-125",
+          "bucket_order": 9,
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 7,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 430797.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 81-100 band vs 100% in 101-125 band.",
+        "Highest median CPC share 100% at 81-100 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "NAM",
@@ -1711,7 +2394,68 @@
         "jv_decline": 1.3,
         "binding_threshold_low": 5,
         "binding_threshold_high": 15
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 1,
+          "book_bucket": "01: 1-10",
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 10,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 30,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 5,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": 20,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~5 PCIDs (0.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~5 PCIDs (1-10 band).",
+        "Coverage inflection ~20 PCIDs (1 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "NAM",
+          "country": "UK",
+          "book_bucket": "01: 1-10",
+          "bucket_order": 1,
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 10,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 343444.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "NAM",
+          "country": "UK",
+          "book_bucket": "02: 11-20",
+          "bucket_order": 2,
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 30,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 93600.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 1-10 band vs 100% in 11-20 band.",
+        "Highest median CPC share 100% at 1-10 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "M",
@@ -1869,7 +2613,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 8,
+          "book_bucket": "08: 81-100",
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 15,
+          "median_impact_calls_per_account": 2.0
+        }
+      ],
+      "coverage_peak_accounts": 90,
+      "coverage_peak_calls_per_account": 2.0,
+      "coverage_decline_above_pcid": 100,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~90 PCIDs (2.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 2.0 calls/account at ~90 PCIDs (81-100 band).",
+        "Coverage inflection ~100 PCIDs (2 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "M",
+          "country": "BNL",
+          "book_bucket": "08: 81-100",
+          "bucket_order": 8,
+          "bucket_midpoint": 90,
+          "bucket_upper": 100,
+          "rep_count": 15,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 463110.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 81-100 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_relaxed) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "L",
@@ -2043,7 +2827,68 @@
         "jv_decline": 3.9,
         "binding_threshold_low": 35,
         "binding_threshold_high": 45
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 19,
+          "median_impact_calls_per_account": 2.0
+        },
+        {
+          "bucket_order": 5,
+          "book_bucket": "05: 41-50",
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 19,
+          "median_impact_calls_per_account": 2.0
+        }
+      ],
+      "coverage_peak_accounts": 35,
+      "coverage_peak_calls_per_account": 2.0,
+      "coverage_decline_above_pcid": 50,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~35 PCIDs (2.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 2.0 calls/account at ~35 PCIDs (31-40 band).",
+        "Coverage inflection ~50 PCIDs (2 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "L",
+          "country": "UK",
+          "book_bucket": "04: 31-40",
+          "bucket_order": 4,
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 20,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 194779.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "L",
+          "country": "UK",
+          "book_bucket": "05: 41-50",
+          "bucket_order": 5,
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 19,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 100740.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 31-40 band vs 100% in 41-50 band.",
+        "Highest median CPC share 100% at 31-40 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "NAM",
@@ -2215,7 +3060,70 @@
         "jv_decline": 1.9,
         "binding_threshold_low": 5,
         "binding_threshold_high": 15
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 1,
+          "book_bucket": "01: 1-10",
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 12,
+          "median_impact_calls_per_account": 8.5
+        },
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 27,
+          "median_impact_calls_per_account": 2.0
+        }
+      ],
+      "coverage_peak_accounts": 5,
+      "coverage_peak_calls_per_account": 8.5,
+      "coverage_decline_above_pcid": 10,
+      "coverage_decline_median_calls": 2.0,
+      "coverage_curve_primary": "Coverage peaks at ~5 PCIDs (8.5 calls/account); declines above ~10 (2.0 calls/account beyond); market averages 15 PCIDs vs ideal 15.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 8.5 calls/account at ~5 PCIDs (1-10 band).",
+        "Coverage inflection ~10 PCIDs (9 calls/account at inflection).",
+        "Above ~10 PCIDs, coverage tends to fall (from 8.5 toward 2.0 calls/account).",
+        "Market avg book 15 exceeds inflection \u2014 coverage status Declining."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "NAM",
+          "country": "DACH",
+          "book_bucket": "01: 1-10",
+          "bucket_order": 1,
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 12,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 113235.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "NAM",
+          "country": "DACH",
+          "book_bucket": "02: 11-20",
+          "bucket_order": 2,
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 27,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 98135.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 1-10 band vs 100% in 11-20 band.",
+        "Highest median CPC share 100% at 1-10 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "M",
@@ -2372,7 +3280,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 9,
+          "book_bucket": "09: 101-125",
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 12,
+          "median_impact_calls_per_account": 1.0
+        }
+      ],
+      "coverage_peak_accounts": 113,
+      "coverage_peak_calls_per_account": 1.0,
+      "coverage_decline_above_pcid": 125,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~113 PCIDs (1.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 1.0 calls/account at ~113 PCIDs (101-125 band).",
+        "Coverage inflection ~125 PCIDs (1 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "M",
+          "country": "FR",
+          "book_bucket": "09: 101-125",
+          "bucket_order": 9,
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 12,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 303542.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 101-125 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_relaxed) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -2545,7 +3493,68 @@
         "jv_decline": null,
         "binding_threshold_low": 58,
         "binding_threshold_high": 138
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 6,
+          "book_bucket": "06: 51-65",
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 7,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 8,
+          "median_impact_calls_per_account": 1.0
+        }
+      ],
+      "coverage_peak_accounts": 138,
+      "coverage_peak_calls_per_account": 1.0,
+      "coverage_decline_above_pcid": 150,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~138 PCIDs (1.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 1.0 calls/account at ~138 PCIDs (126-150 band).",
+        "Coverage inflection ~150 PCIDs (1 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "ACC",
+          "country": "IT",
+          "book_bucket": "06: 51-65",
+          "bucket_order": 6,
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 7,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 73682.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "ACC",
+          "country": "IT",
+          "book_bucket": "10: 126-150",
+          "bucket_order": 10,
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 8,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 218021.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 51-65 band vs 100% in 126-150 band.",
+        "Highest median CPC share 100% at 51-65 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "NAM",
@@ -2701,7 +3710,46 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 17,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 15,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~15 PCIDs (0.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~15 PCIDs (11-20 band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "NAM",
+          "country": "CA",
+          "book_bucket": "02: 11-20",
+          "bucket_order": 2,
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 17,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 131341.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 11-20 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_relaxed) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "L",
@@ -2717,7 +3765,7 @@
       "revenue_90d": 3059040.0,
       "optimal_headcount_assigned": 20.0,
       "headcount_gap": -3.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 157795,
       "sbs_revenue_90d": 30565767.0,
       "avg_fy26_book_score": 0.041,
@@ -2859,7 +3907,48 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 5,
+          "book_bucket": "05: 41-50",
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 12,
+          "median_impact_calls_per_account": 2.0
+        }
+      ],
+      "coverage_peak_accounts": 45,
+      "coverage_peak_calls_per_account": 2.0,
+      "coverage_decline_above_pcid": 50,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~45 PCIDs (2.0 calls/account); market averages 52 PCIDs vs ideal 45.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 2.0 calls/account at ~45 PCIDs (41-50 band).",
+        "Coverage inflection ~50 PCIDs (2 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "L",
+          "country": "DACH",
+          "book_bucket": "05: 41-50",
+          "bucket_order": 5,
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 12,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 199468.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 41-50 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_relaxed) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ISDCA",
@@ -2875,7 +3964,7 @@
       "revenue_90d": 2774057.0,
       "optimal_headcount_assigned": 9.0,
       "headcount_gap": 0.0,
-      "headcount_recommendation": "Do Not Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 385827,
       "sbs_revenue_90d": 71111973.0,
       "avg_fy26_book_score": -0.086,
@@ -2996,7 +4085,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Do Not Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (segment_median) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAM",
@@ -3152,7 +4254,46 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 24,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 15,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~15 PCIDs (0.0 calls/account); market averages 16 PCIDs vs ideal 15.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~15 PCIDs (11-20 band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "NAM",
+          "country": "BNL",
+          "book_bucket": "02: 11-20",
+          "bucket_order": 2,
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 24,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 42470.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 11-20 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_strict) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAMDCA",
@@ -3168,7 +4309,7 @@
       "revenue_90d": 2459304.0,
       "optimal_headcount_assigned": 11.0,
       "headcount_gap": -3.0,
-      "headcount_recommendation": "Do Not Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 385827,
       "sbs_revenue_90d": 71111973.0,
       "avg_fy26_book_score": 0.149,
@@ -3286,7 +4427,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "market averages 68 PCIDs vs ideal 49.",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Do Not Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (segment_median) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -3302,7 +4456,7 @@
       "revenue_90d": 2306706.0,
       "optimal_headcount_assigned": 9.0,
       "headcount_gap": 3.0,
-      "headcount_recommendation": "Optimize",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 0,
       "sbs_revenue_90d": 0.0,
       "avg_fy26_book_score": -0.055,
@@ -3436,7 +4590,48 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 9,
+          "book_bucket": "09: 101-125",
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 5,
+          "median_impact_calls_per_account": 1.0
+        }
+      ],
+      "coverage_peak_accounts": 113,
+      "coverage_peak_calls_per_account": 1.0,
+      "coverage_decline_above_pcid": 125,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~113 PCIDs (1.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 1.0 calls/account at ~113 PCIDs (101-125 band).",
+        "Coverage inflection ~125 PCIDs (1 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "ACC",
+          "country": "Ireland",
+          "book_bucket": "09: 101-125",
+          "bucket_order": 9,
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 5,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 204616.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 101-125 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Optimize",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_relaxed) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "L",
@@ -3592,7 +4787,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 9,
+          "median_impact_calls_per_account": 2.0
+        }
+      ],
+      "coverage_peak_accounts": 35,
+      "coverage_peak_calls_per_account": 2.0,
+      "coverage_decline_above_pcid": 40,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~35 PCIDs (2.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 2.0 calls/account at ~35 PCIDs (31-40 band).",
+        "Coverage inflection ~40 PCIDs (2 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "L",
+          "country": "CA",
+          "book_bucket": "04: 31-40",
+          "bucket_order": 4,
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 9,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 193060.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 31-40 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_relaxed) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "M",
@@ -3608,7 +4843,7 @@
       "revenue_90d": 1954046.0,
       "optimal_headcount_assigned": 41.0,
       "headcount_gap": -21.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 182900,
       "sbs_revenue_90d": 7149972.0,
       "avg_fy26_book_score": -0.191,
@@ -3764,7 +4999,69 @@
         "jv_decline": 0.5,
         "binding_threshold_low": 138,
         "binding_threshold_high": 175
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 13,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 7,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 138,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~138 PCIDs (0.0 calls/account); market averages 186 PCIDs vs ideal 90.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~138 PCIDs (126-150 band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "M",
+          "country": "MX",
+          "book_bucket": "10: 126-150",
+          "bucket_order": 10,
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 13,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 153060.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "M",
+          "country": "MX",
+          "book_bucket": "11: 150+",
+          "bucket_order": 11,
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 7,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 14411.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 126-150 band vs 100% in 150+ band.",
+        "Highest median CPC share 100% at 126-150 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:US) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "UMM",
@@ -3919,7 +5216,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 5,
+          "book_bucket": "05: 41-50",
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 9,
+          "median_impact_calls_per_account": 1.0
+        }
+      ],
+      "coverage_peak_accounts": 45,
+      "coverage_peak_calls_per_account": 1.0,
+      "coverage_decline_above_pcid": 50,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~45 PCIDs (1.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 1.0 calls/account at ~45 PCIDs (41-50 band).",
+        "Coverage inflection ~50 PCIDs (1 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "UMM",
+          "country": "CA",
+          "book_bucket": "05: 41-50",
+          "bucket_order": 5,
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 9,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 171861.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 41-50 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_relaxed) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -3935,7 +5272,7 @@
       "revenue_90d": 1561682.0,
       "optimal_headcount_assigned": 57.0,
       "headcount_gap": -36.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 385827,
       "sbs_revenue_90d": 71111973.0,
       "avg_fy26_book_score": -0.104,
@@ -4074,7 +5411,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 16,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 175,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~175 PCIDs (0.0 calls/account); market averages 156 PCIDs vs ideal 58.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~175 PCIDs (150+ band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "ACC",
+          "country": "UK",
+          "book_bucket": "11: 150+",
+          "bucket_order": 11,
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 16,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 81806.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 150+ PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:DACH) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -4090,7 +5467,7 @@
       "revenue_90d": 1555875.0,
       "optimal_headcount_assigned": 191.0,
       "headcount_gap": -158.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 1911268,
       "sbs_revenue_90d": 681879541.0,
       "avg_fy26_book_score": -0.29,
@@ -4227,7 +5604,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 29,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 175,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~175 PCIDs (0.0 calls/account); market averages 336 PCIDs vs ideal 58.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~175 PCIDs (150+ band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "ACC",
+          "country": "US",
+          "book_bucket": "11: 150+",
+          "bucket_order": 11,
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 29,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 45721.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 150+ PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:DACH) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -4390,7 +5807,67 @@
         "jv_decline": null,
         "binding_threshold_low": 35,
         "binding_threshold_high": 175
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 5,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 9,
+          "median_impact_calls_per_account": 1.0
+        }
+      ],
+      "coverage_peak_accounts": 175,
+      "coverage_peak_calls_per_account": 1.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~175 PCIDs (1.0 calls/account); market averages 105 PCIDs vs ideal 35.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 1.0 calls/account at ~175 PCIDs (150+ band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "ACC",
+          "country": "BNL",
+          "book_bucket": "04: 31-40",
+          "bucket_order": 4,
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 5,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 50922.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "ACC",
+          "country": "BNL",
+          "book_bucket": "11: 150+",
+          "bucket_order": 11,
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 9,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 67837.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 31-40 band vs 100% in 150+ band.",
+        "Highest median CPC share 100% at 31-40 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "ACC",
@@ -4595,7 +6072,109 @@
         "jv_decline": 2.5,
         "binding_threshold_low": 58,
         "binding_threshold_high": 113
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 6,
+          "book_bucket": "06: 51-65",
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 5,
+          "median_impact_calls_per_account": 1.0
+        },
+        {
+          "bucket_order": 9,
+          "book_bucket": "09: 101-125",
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 7,
+          "median_impact_calls_per_account": 1.0
+        },
+        {
+          "bucket_order": 10,
+          "book_bucket": "10: 126-150",
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 10,
+          "median_impact_calls_per_account": 1.0
+        },
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 9,
+          "median_impact_calls_per_account": 1.0
+        }
+      ],
+      "coverage_peak_accounts": 58,
+      "coverage_peak_calls_per_account": 1.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~58 PCIDs (1.0 calls/account); market averages 107 PCIDs vs ideal 58.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 1.0 calls/account at ~58 PCIDs (51-65 band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "ACC",
+          "country": "DACH",
+          "book_bucket": "06: 51-65",
+          "bucket_order": 6,
+          "bucket_midpoint": 58,
+          "bucket_upper": 65,
+          "rep_count": 5,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 37414.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "ACC",
+          "country": "DACH",
+          "book_bucket": "09: 101-125",
+          "bucket_order": 9,
+          "bucket_midpoint": 113,
+          "bucket_upper": 125,
+          "rep_count": 9,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 17619.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "ACC",
+          "country": "DACH",
+          "book_bucket": "10: 126-150",
+          "bucket_order": 10,
+          "bucket_midpoint": 138,
+          "bucket_upper": 150,
+          "rep_count": 11,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 31004.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "ACC",
+          "country": "DACH",
+          "book_bucket": "11: 150+",
+          "bucket_order": 11,
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 10,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 30162.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 51-65 band vs 100% in 150+ band.",
+        "Highest median CPC share 100% at 51-65 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "L",
@@ -4753,7 +6332,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 5,
+          "book_bucket": "05: 41-50",
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 6,
+          "median_impact_calls_per_account": 2.0
+        }
+      ],
+      "coverage_peak_accounts": 45,
+      "coverage_peak_calls_per_account": 2.0,
+      "coverage_decline_above_pcid": 50,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~45 PCIDs (2.0 calls/account).",
+      "coverage_curve_bullets": [
+        "Peak median coverage 2.0 calls/account at ~45 PCIDs (41-50 band).",
+        "Coverage inflection ~50 PCIDs (2 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "L",
+          "country": "BNL",
+          "book_bucket": "05: 41-50",
+          "bucket_order": 5,
+          "bucket_midpoint": 45,
+          "bucket_upper": 50,
+          "rep_count": 6,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 135114.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 41-50 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_relaxed) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAM",
@@ -4925,7 +6544,70 @@
         "jv_decline": 0.5,
         "binding_threshold_low": 5,
         "binding_threshold_high": 15
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 1,
+          "book_bucket": "01: 1-10",
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 12,
+          "median_impact_calls_per_account": 0.0
+        },
+        {
+          "bucket_order": 2,
+          "book_bucket": "02: 11-20",
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 11,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 5,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": 10,
+      "coverage_decline_median_calls": 0.0,
+      "coverage_curve_primary": "Coverage peaks at ~5 PCIDs (0.0 calls/account); declines above ~10 (0.0 calls/account beyond); market averages 12 PCIDs vs ideal 15.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~5 PCIDs (1-10 band).",
+        "Coverage inflection ~10 PCIDs (5 calls/account at inflection).",
+        "Above ~10 PCIDs, coverage tends to fall (from 0.0 toward 0.0 calls/account).",
+        "Market avg book 12 exceeds inflection \u2014 coverage status Declining."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "NAM",
+          "country": "FR",
+          "book_bucket": "01: 1-10",
+          "bucket_order": 1,
+          "bucket_midpoint": 5,
+          "bucket_upper": 10,
+          "rep_count": 12,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 56858.0,
+          "median_cpa_revenue_90d": 0.0
+        },
+        {
+          "segment": "NAM",
+          "country": "FR",
+          "book_bucket": "02: 11-20",
+          "bucket_order": 2,
+          "bucket_midpoint": 15,
+          "bucket_upper": 20,
+          "rep_count": 11,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 39501.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "CPC share 100% in 1-10 band vs 100% in 11-20 band.",
+        "Highest median CPC share 100% at 1-10 PCIDs."
+      ],
+      "hc_curve_validated": true
     },
     {
       "segment": "L",
@@ -4941,7 +6623,7 @@
       "revenue_90d": 933792.0,
       "optimal_headcount_assigned": 15.0,
       "headcount_gap": -3.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 236839,
       "sbs_revenue_90d": 18981101.0,
       "avg_fy26_book_score": -0.071,
@@ -5081,7 +6763,48 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 4,
+          "book_bucket": "04: 31-40",
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 8,
+          "median_impact_calls_per_account": 2.0
+        }
+      ],
+      "coverage_peak_accounts": 35,
+      "coverage_peak_calls_per_account": 2.0,
+      "coverage_decline_above_pcid": 40,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~35 PCIDs (2.0 calls/account); market averages 45 PCIDs vs ideal 35.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 2.0 calls/account at ~35 PCIDs (31-40 band).",
+        "Coverage inflection ~40 PCIDs (2 calls/account at inflection)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "L",
+          "country": "FR",
+          "book_bucket": "04: 31-40",
+          "bucket_order": 4,
+          "bucket_midpoint": 35,
+          "bucket_upper": 40,
+          "rep_count": 9,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 98906.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 31-40 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_relaxed) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -5097,7 +6820,7 @@
       "revenue_90d": 771137.0,
       "optimal_headcount_assigned": 29.0,
       "headcount_gap": -15.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 93796,
       "sbs_revenue_90d": 6522914.0,
       "avg_fy26_book_score": -0.007,
@@ -5236,7 +6959,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 7,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 175,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~175 PCIDs (0.0 calls/account); market averages 122 PCIDs vs ideal 58.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~175 PCIDs (150+ band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "ACC",
+          "country": "AU",
+          "book_bucket": "11: 150+",
+          "bucket_order": 11,
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 7,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 83425.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 150+ PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:DACH) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ISDCA",
@@ -5252,7 +7015,7 @@
       "revenue_90d": 671909.0,
       "optimal_headcount_assigned": 4.0,
       "headcount_gap": 0.0,
-      "headcount_recommendation": "Do Not Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 236839,
       "sbs_revenue_90d": 18981101.0,
       "avg_fy26_book_score": -0.075,
@@ -5372,7 +7135,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Do Not Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (segment_median) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -5388,7 +7164,7 @@
       "revenue_90d": 621048.0,
       "optimal_headcount_assigned": 19.0,
       "headcount_gap": -9.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 0,
       "sbs_revenue_90d": 0.0,
       "avg_fy26_book_score": -0.001,
@@ -5503,7 +7279,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "market averages 110 PCIDs vs ideal 58.",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:DACH) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAM",
@@ -5519,7 +7308,7 @@
       "revenue_90d": 609230.0,
       "optimal_headcount_assigned": 41.0,
       "headcount_gap": -36.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 140831,
       "sbs_revenue_90d": 2222852.0,
       "avg_fy26_book_score": 0.247,
@@ -5635,7 +7424,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "market averages 41 PCIDs vs ideal 5.",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:US) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -5651,7 +7453,7 @@
       "revenue_90d": 595819.0,
       "optimal_headcount_assigned": 43.0,
       "headcount_gap": -29.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 236839,
       "sbs_revenue_90d": 18981101.0,
       "avg_fy26_book_score": -0.159,
@@ -5790,7 +7592,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 10,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 175,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~175 PCIDs (0.0 calls/account); market averages 178 PCIDs vs ideal 58.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~175 PCIDs (150+ band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "ACC",
+          "country": "FR",
+          "book_bucket": "11: 150+",
+          "bucket_order": 11,
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 10,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 54813.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 150+ PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:DACH) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAMDCA",
@@ -5806,7 +7648,7 @@
       "revenue_90d": 584762.0,
       "optimal_headcount_assigned": 4.0,
       "headcount_gap": 1.0,
-      "headcount_recommendation": "Optimize",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 157795,
       "sbs_revenue_90d": 30565767.0,
       "avg_fy26_book_score": 0.177,
@@ -5925,7 +7767,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Optimize",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (segment_median) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -5941,7 +7796,7 @@
       "revenue_90d": 544343.0,
       "optimal_headcount_assigned": 3.0,
       "headcount_gap": 1.0,
-      "headcount_recommendation": "Optimize",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 292226,
       "sbs_revenue_90d": 53559210.0,
       "avg_fy26_book_score": 0.142,
@@ -6059,7 +7914,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Optimize",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:DACH) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -6075,7 +7943,7 @@
       "revenue_90d": 476058.0,
       "optimal_headcount_assigned": 55.0,
       "headcount_gap": -30.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 507375,
       "sbs_revenue_90d": 2922675.0,
       "avg_fy26_book_score": -0.063,
@@ -6214,7 +8082,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 11,
+          "book_bucket": "11: 150+",
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 12,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 175,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~175 PCIDs (0.0 calls/account); market averages 126 PCIDs vs ideal 58.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~175 PCIDs (150+ band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "ACC",
+          "country": "IN",
+          "book_bucket": "11: 150+",
+          "bucket_order": 11,
+          "bucket_midpoint": 175,
+          "bucket_upper": 999,
+          "rep_count": 12,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 14632.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 150+ PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:DACH) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAMDCA",
@@ -6230,7 +8138,7 @@
       "revenue_90d": 448035.0,
       "optimal_headcount_assigned": 3.0,
       "headcount_gap": 1.0,
-      "headcount_recommendation": "Optimize",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 148047,
       "sbs_revenue_90d": 16497617.0,
       "avg_fy26_book_score": 0.025,
@@ -6348,7 +8256,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Optimize",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (segment_median) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAM",
@@ -6364,7 +8285,7 @@
       "revenue_90d": 382117.0,
       "optimal_headcount_assigned": 9.0,
       "headcount_gap": -1.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 182900,
       "sbs_revenue_90d": 7149972.0,
       "avg_fy26_book_score": -0.004,
@@ -6503,7 +8424,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 3,
+          "book_bucket": "03: 21-30",
+          "bucket_midpoint": 25,
+          "bucket_upper": 30,
+          "rep_count": 7,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 25,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~25 PCIDs (0.0 calls/account); market averages 29 PCIDs vs ideal 25.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~25 PCIDs (21-30 band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "NAM",
+          "country": "MX",
+          "book_bucket": "03: 21-30",
+          "bucket_order": 3,
+          "bucket_midpoint": 25,
+          "bucket_upper": 30,
+          "rep_count": 7,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 24176.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 21-30 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_relaxed) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAM",
@@ -6519,7 +8480,7 @@
       "revenue_90d": 348209.0,
       "optimal_headcount_assigned": 7.0,
       "headcount_gap": -1.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 148047,
       "sbs_revenue_90d": 16497617.0,
       "avg_fy26_book_score": -0.03,
@@ -6658,7 +8619,47 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [
+        {
+          "bucket_order": 3,
+          "book_bucket": "03: 21-30",
+          "bucket_midpoint": 25,
+          "bucket_upper": 30,
+          "rep_count": 5,
+          "median_impact_calls_per_account": 0.0
+        }
+      ],
+      "coverage_peak_accounts": 25,
+      "coverage_peak_calls_per_account": 0.0,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "Coverage peaks at ~25 PCIDs (0.0 calls/account); market averages 29 PCIDs vs ideal 25.",
+      "coverage_curve_bullets": [
+        "Peak median coverage 0.0 calls/account at ~25 PCIDs (21-30 band)."
+      ],
+      "product_mix_by_bucket": [
+        {
+          "segment": "NAM",
+          "country": "IT",
+          "book_bucket": "03: 21-30",
+          "bucket_order": 3,
+          "bucket_midpoint": 25,
+          "bucket_upper": 30,
+          "rep_count": 5,
+          "median_cpc_share": 1.0,
+          "median_cpa_share": 0.0,
+          "median_cpc_revenue_90d": 52483.0,
+          "median_cpa_revenue_90d": 0.0
+        }
+      ],
+      "product_mix_primary": "Product mix shifts by book size \u2014 median CPC vs CPA share of current 90d revenue per rep bucket.",
+      "product_mix_bullets": [
+        "Highest median CPC share 100% at 21-30 PCIDs."
+      ],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (curve_relaxed) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "M",
@@ -6674,7 +8675,7 @@
       "revenue_90d": 312948.0,
       "optimal_headcount_assigned": 10.0,
       "headcount_gap": -3.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 140831,
       "sbs_revenue_90d": 2222852.0,
       "avg_fy26_book_score": -0.152,
@@ -6793,7 +8794,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "market averages 131 PCIDs vs ideal 90.",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:US) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ISDCA",
@@ -6809,7 +8823,7 @@
       "revenue_90d": 304627.0,
       "optimal_headcount_assigned": 2.0,
       "headcount_gap": 0.0,
-      "headcount_recommendation": "Do Not Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 148047,
       "sbs_revenue_90d": 16497617.0,
       "avg_fy26_book_score": -0.241,
@@ -6930,7 +8944,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Do Not Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (segment_median) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -6946,7 +8973,7 @@
       "revenue_90d": 299416.0,
       "optimal_headcount_assigned": 19.0,
       "headcount_gap": -10.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 23192,
       "sbs_revenue_90d": 861720.0,
       "avg_fy26_book_score": 0.037,
@@ -7065,7 +9092,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "market averages 121 PCIDs vs ideal 58.",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:DACH) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAM",
@@ -7081,7 +9121,7 @@
       "revenue_90d": 231896.0,
       "optimal_headcount_assigned": 11.0,
       "headcount_gap": -9.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 0,
       "sbs_revenue_90d": 0.0,
       "avg_fy26_book_score": 0.057,
@@ -7188,7 +9228,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "market averages 28 PCIDs vs ideal 5.",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:US) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ISDCA",
@@ -7204,7 +9257,7 @@
       "revenue_90d": 223224.0,
       "optimal_headcount_assigned": 1.0,
       "headcount_gap": 0.0,
-      "headcount_recommendation": "Do Not Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 84989,
       "sbs_revenue_90d": 23339216.0,
       "avg_fy26_book_score": null,
@@ -7315,7 +9368,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Do Not Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (segment_median) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAM",
@@ -7331,7 +9397,7 @@
       "revenue_90d": 186319.0,
       "optimal_headcount_assigned": 11.0,
       "headcount_gap": -9.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 0,
       "sbs_revenue_90d": 0.0,
       "avg_fy26_book_score": -0.069,
@@ -7443,7 +9509,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "market averages 27 PCIDs vs ideal 5.",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:US) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAMDCA",
@@ -7459,7 +9538,7 @@
       "revenue_90d": 148782.0,
       "optimal_headcount_assigned": 1.0,
       "headcount_gap": 0.0,
-      "headcount_recommendation": "Do Not Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 84989,
       "sbs_revenue_90d": 23339216.0,
       "avg_fy26_book_score": 0.0,
@@ -7571,7 +9650,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Do Not Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (segment_median) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAMDCA",
@@ -7587,7 +9679,7 @@
       "revenue_90d": 136994.0,
       "optimal_headcount_assigned": 4.0,
       "headcount_gap": 0.0,
-      "headcount_recommendation": "Do Not Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 236839,
       "sbs_revenue_90d": 18981101.0,
       "avg_fy26_book_score": 0.054,
@@ -7706,7 +9798,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "market averages 18 PCIDs vs ideal 16.",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Do Not Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (segment_median) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ISDCA",
@@ -7722,7 +9827,7 @@
       "revenue_90d": 129427.0,
       "optimal_headcount_assigned": 2.0,
       "headcount_gap": 0.0,
-      "headcount_recommendation": "Do Not Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 157795,
       "sbs_revenue_90d": 30565767.0,
       "avg_fy26_book_score": 0.0,
@@ -7841,7 +9946,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Do Not Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (segment_median) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAM",
@@ -7857,7 +9975,7 @@
       "revenue_90d": 64496.0,
       "optimal_headcount_assigned": 42.0,
       "headcount_gap": -38.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 93796,
       "sbs_revenue_90d": 6522914.0,
       "avg_fy26_book_score": 0.069,
@@ -7976,7 +10094,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "market averages 53 PCIDs vs ideal 5.",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:US) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "NAM",
@@ -7992,7 +10123,7 @@
       "revenue_90d": 46716.0,
       "optimal_headcount_assigned": 61.0,
       "headcount_gap": -54.0,
-      "headcount_recommendation": "Hire",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 507375,
       "sbs_revenue_90d": 2922675.0,
       "avg_fy26_book_score": 0.129,
@@ -8110,7 +10241,20 @@
         "jv_decline": null,
         "binding_threshold_low": null,
         "binding_threshold_high": null
-      }
+      },
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "market averages 43 PCIDs vs ideal 5.",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Hire",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:US) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     },
     {
       "segment": "ACC",
@@ -8126,7 +10270,7 @@
       "revenue_90d": 0.0,
       "optimal_headcount_assigned": 0.0,
       "headcount_gap": 1.0,
-      "headcount_recommendation": "Optimize",
+      "headcount_recommendation": "Hold",
       "sbs_whitespace_country": 51908,
       "sbs_revenue_90d": 1655752.0,
       "avg_fy26_book_score": null,
@@ -8217,7 +10361,20 @@
         "Peak median growth 100% at ~58 accounts/rep (51-65 band).",
         "Optimal book 58 PCIDs \u2014 largest bucket within 85% of peak growth (100%).",
         "Above ~65 accounts/rep, growth tends to fall (from 100% toward lower levels)."
-      ]
+      ],
+      "coverage_by_bucket": [],
+      "coverage_peak_accounts": null,
+      "coverage_peak_calls_per_account": null,
+      "coverage_decline_above_pcid": null,
+      "coverage_decline_median_calls": null,
+      "coverage_curve_primary": "",
+      "coverage_curve_bullets": [],
+      "product_mix_by_bucket": [],
+      "product_mix_primary": "",
+      "product_mix_bullets": [],
+      "hc_curve_validated": false,
+      "headcount_recommendation_pre_gate": "Optimize",
+      "hc_curve_gate_reason": "Ideal PCID not validated by growth curve (peer_segment:DACH) \u2014 HC recommendation held until curve_strict/relaxed with positive growth."
     }
   ],
   "sbs_whitespace": [
