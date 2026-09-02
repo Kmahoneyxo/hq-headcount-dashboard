@@ -28,6 +28,7 @@ var SHEET_LABEL = 'Global Sales Rep Headcount (1)';
 var MODEL_TAB_NAME = 'HC_Model';
 var EXECUTIVE_TAB_NAME = 'Executive_View';
 var LOOKER_EXPORT_TAB_NAME = 'Looker_Export';
+var MARKETS_TEMPLATE_TAB_NAME = 'Markets_Template';
 var KNOWN_SEGMENTS = ['M', 'UMM', 'ACC', 'L', 'NAM', 'DCA', 'ISDCA', 'NAMDCA'];
 
 var PCID_BANDS = [
@@ -78,8 +79,9 @@ function refreshDashboardSummary() {
   writeHcModelTab_(ss, payload);
   writeExecutiveViewTab_(ss, payload);
   writeLookerExportTab_(ss, payload);
+  writeMarketsTemplateTab_(ss);
   SpreadsheetApp.getActiveSpreadsheet().toast(
-    'Updated ' + MODEL_TAB_NAME + ', ' + EXECUTIVE_TAB_NAME + ', ' + LOOKER_EXPORT_TAB_NAME,
+    'Updated ' + MODEL_TAB_NAME + ', ' + EXECUTIVE_TAB_NAME + ', ' + LOOKER_EXPORT_TAB_NAME + ', ' + MARKETS_TEMPLATE_TAB_NAME,
     'HQ Dashboard',
     5
   );
@@ -386,9 +388,13 @@ function writeLookerExportTab_(ss, payload) {
   });
 
   var headers = [
-    'updated_at', 'market', 'country', 'segment', 'region', 'recommendation',
-    'heads_to_add', 'heads_over', 'hc_gap', 'current_reps', 'optimal_hc',
-    'ideal_pcid', 'ideal_band', 'median_book', 'avg_pcid', 'assigned_pcids', 'action_short',
+    'updated_at', 'market', 'country', 'segment', 'region',
+    'recommendation', 'heads_to_add', 'heads_over', 'hc_gap',
+    'current_reps', 'optimal_hc', 'ideal_pcid', 'ideal_band',
+    'avg_pcid', 'segment_avg_pcid', 'median_book', 'assigned_pcids',
+    'revenue_90d', 'avg_pqr_per_rep', 'segment_avg_pqr',
+    'coverage_peak_accounts', 'median_impact_calls', 'coverage_at_inflection',
+    'action_short',
   ];
 
   var rows = [headers];
@@ -407,9 +413,16 @@ function writeLookerExportTab_(ss, payload) {
       s.optimal_hc != null ? s.optimal_hc : '',
       s.ideal_pcid != null ? s.ideal_pcid : '',
       s.ideal_band || '',
-      s.median_book != null ? s.median_book : '',
       s.current_avg_book != null ? s.current_avg_book : '',
+      s.segment_avg_pcid != null ? s.segment_avg_pcid : '',
+      s.median_book != null ? s.median_book : '',
       s.assigned_accounts != null ? s.assigned_accounts : '',
+      s.revenue_90d != null ? s.revenue_90d : '',
+      s.avg_pqr_per_rep != null ? s.avg_pqr_per_rep : '',
+      s.segment_avg_pqr != null ? s.segment_avg_pqr : '',
+      s.coverage_peak_accounts != null ? s.coverage_peak_accounts : '',
+      s.median_impact_calls_per_account != null ? s.median_impact_calls_per_account : '',
+      s.coverage_at_inflection != null ? s.coverage_at_inflection : '',
       actionShort_(s.action_note),
     ]);
   });
@@ -424,7 +437,53 @@ function writeLookerExportTab_(ss, payload) {
   sheet.setFrozenRows(1);
   sheet.setColumnWidth(1, 180);
   sheet.setColumnWidth(2, 90);
-  sheet.setColumnWidth(17, 320);
+  sheet.setColumnWidth(headers.length, 320);
+}
+
+/** Optional paste target — row 1 headers match headcount-dashboard.csv / Markets tab aliases. */
+function writeMarketsTemplateTab_(ss) {
+  var sheet = ss.getSheetByName(MARKETS_TEMPLATE_TAB_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(MARKETS_TEMPLATE_TAB_NAME);
+  } else {
+    sheet.clear();
+  }
+
+  var headers = [
+    'country', 'segment', 'market',
+    'ideal_pcid', 'optimal_hc', 'current_reps', 'current_avg_book', 'assigned_accounts',
+    'hc_gap', 'recommendation',
+    'revenue_90d', 'segment_avg_pcid', 'avg_pqr_per_rep', 'segment_avg_pqr',
+    'coverage_peak_accounts', 'median_impact_calls_per_account', 'coverage_at_inflection',
+    'growth_peak_accounts', 'growth_peak_pct', 'jv_plateau_book_max', 'jv_plateau_rev_per_job',
+  ];
+
+  var csvLabels = [
+    'Country', 'Segment', 'Market',
+    'Ideal PCID (accounts/rep)', 'Ideal headcount', 'Current reps', 'Avg PCID per rep', 'Assigned accounts',
+    'Headcount gap', 'HC recommendation',
+    'Revenue 90d ($)', 'Segment avg PCID', 'Avg PQR per rep ($)', 'Segment avg PQR ($)',
+    'Coverage inflection book max', 'Median impact calls/account', 'Coverage at inflection',
+    'Growth peak (accounts/rep)', 'Growth peak %', 'JV plateau book max', 'JV plateau $/job',
+  ];
+
+  var rows = [
+    ['Markets tab template — copy row 3+ from docs/data/headcount-dashboard.csv (or warehouse export) into a tab named Markets, then HQ Dashboard → Refresh dashboards.'],
+    headers,
+    csvLabels,
+  ];
+
+  sheet.getRange(1, 1, rows.length, headers.length).setValues(padRows_(rows, headers.length));
+  sheet.getRange(1, 1, 1, headers.length).merge()
+    .setBackground('#fff8e1').setFontSize(10).setWrap(true);
+  sheet.getRange(2, 1, 2, headers.length)
+    .setBackground('#e8f0fe').setFontWeight('bold').setFontSize(9);
+  sheet.getRange(3, 1, 3, headers.length)
+    .setBackground('#f5f5f6').setFontSize(8).setFontColor('#5f6368');
+  sheet.setFrozenRows(2);
+  sheet.setColumnWidth(1, 72);
+  sheet.setColumnWidth(3, 88);
+  sheet.setColumnWidth(11, 120);
 }
 
 function actionShort_(text) {
@@ -612,7 +671,15 @@ function readMarketsSheet_(sheet) {
     growth_decline_above_pcid: ['growth_decline_above_pcid'],
     jv_plateau_book_max: ['jv_plateau_book_max', 'jv plateau book'],
     jv_plateau_rev_per_job: ['jv_plateau_rev_per_job', 'jv plateau rev per job'],
-    coverage_peak_accounts: ['coverage_peak_accounts', 'coverage inflection book max'],
+    coverage_peak_accounts: ['coverage_peak_accounts', 'coverage peak accounts', 'coverage inflection book max'],
+    median_impact_calls_per_account: [
+      'median_impact_calls_per_account', 'median impact calls/account', 'median impact calls per account',
+    ],
+    coverage_at_inflection: ['coverage_at_inflection', 'coverage at inflection'],
+    revenue_90d: ['revenue_90d', 'revenue 90d', 'revenue 90d ($)', 'market revenue 90d'],
+    segment_avg_pcid: ['segment_avg_pcid', 'segment avg pcid'],
+    avg_pqr_per_rep: ['avg_pqr_per_rep', 'avg pqr per rep', 'avg pqr per rep ($)'],
+    segment_avg_pqr: ['segment_avg_pqr', 'segment avg pqr', 'segment avg pqr ($)'],
     optimal_book_primary: ['optimal_book_primary', 'optimal book primary'],
   });
 
@@ -650,6 +717,12 @@ function readMarketsSheet_(sheet) {
       jv_plateau_book_max: parseNum_(cell_(row, col.jv_plateau_book_max)),
       jv_plateau_rev_per_job: parseNum_(cell_(row, col.jv_plateau_rev_per_job)),
       coverage_peak_accounts: parseNum_(cell_(row, col.coverage_peak_accounts)),
+      median_impact_calls_per_account: parseNum_(cell_(row, col.median_impact_calls_per_account)),
+      coverage_at_inflection: parseNum_(cell_(row, col.coverage_at_inflection)),
+      revenue_90d: parseNum_(cell_(row, col.revenue_90d)),
+      segment_avg_pcid: parseNum_(cell_(row, col.segment_avg_pcid)),
+      avg_pqr_per_rep: parseNum_(cell_(row, col.avg_pqr_per_rep)),
+      segment_avg_pqr: parseNum_(cell_(row, col.segment_avg_pqr)),
       optimal_book_primary: cell_(row, col.optimal_book_primary) || null,
     });
   }
@@ -721,6 +794,13 @@ function buildSegments_(repRows, marketsTab, modelEngine) {
       hc_rec_why: hcRecWhy,
       action_note: actionNote,
       source: tab.ideal_pcid != null ? 'markets_tab' : 'rep_level_rollup',
+      revenue_90d: tab.revenue_90d != null ? tab.revenue_90d : null,
+      segment_avg_pcid: tab.segment_avg_pcid != null ? tab.segment_avg_pcid : (avgBook != null ? Math.round(avgBook * 10) / 10 : null),
+      avg_pqr_per_rep: tab.avg_pqr_per_rep != null ? tab.avg_pqr_per_rep : null,
+      segment_avg_pqr: tab.segment_avg_pqr != null ? tab.segment_avg_pqr : null,
+      coverage_peak_accounts: tab.coverage_peak_accounts != null ? tab.coverage_peak_accounts : null,
+      median_impact_calls_per_account: tab.median_impact_calls_per_account != null ? tab.median_impact_calls_per_account : null,
+      coverage_at_inflection: tab.coverage_at_inflection != null ? tab.coverage_at_inflection : null,
     });
   });
   return segments;

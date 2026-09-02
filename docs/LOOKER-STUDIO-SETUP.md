@@ -1,5 +1,7 @@
 # Looker Studio setup — HQ Headcount Dashboard
 
+**Full step-by-step build (from zero):** [LOOKER-STUDIO-BUILD.md](./LOOKER-STUDIO-BUILD.md) — sheet setup, Apps Script, field types, country/segment filters on all charts, scorecards, master table, bar charts, pie chart, and refresh workflow.
+
 Connect Looker Studio to the **Looker_Export** tab in the live Google Sheet. That tab is a flat table (one row per country×segment market) rebuilt whenever you run **HQ Dashboard → Refresh dashboards** in the sheet.
 
 **Source sheet:** [Global Sales Rep Headcount (1)](https://docs.google.com/spreadsheets/d/1Hq64TSm77FVH4hLxME2wrs1bJbT8Qi9Puk4FWMdkGsw/edit)  
@@ -114,6 +116,13 @@ Run this after Rep_Level or Markets tab updates so Looker sees current recommend
 | `median_book` | **Number** | Median assigned PCIDs from Rep_Level |
 | `avg_pcid` | **Number** | Average PCIDs per rep |
 | `assigned_pcids` | **Number** | Total assigned PCIDs in segment |
+| `revenue_90d` | **Number** | Market 90d revenue ($); Markets tab |
+| `avg_pqr_per_rep` | **Number** | Avg PQR per rep ($); Markets tab |
+| `segment_avg_pqr` | **Number** | Segment avg PQR ($); Markets tab |
+| `segment_avg_pcid` | **Number** | Segment average PCID |
+| `coverage_peak_accounts` | **Number** | PCIDs/rep at coverage peak |
+| `median_impact_calls` | **Number** | Median impact calls/account |
+| `coverage_at_inflection` | **Number** | Calls/account at inflection |
 | `action_short` | Text | One-line action summary (≤80 chars) |
 
 **Sort default for tables:** `heads_to_add` descending, then `market` ascending (matches the sheet).
@@ -179,6 +188,8 @@ The `updated_at` column updates on every refresh — use a scorecard with **Max*
 
 ## 5. Column reference (Looker_Export)
 
+See [LOOKER-STUDIO-BUILD.md](./LOOKER-STUDIO-BUILD.md#looker_export-column-reference) for the full column list including revenue and coverage fields.
+
 | Column | Description |
 |--------|-------------|
 | `updated_at` | ISO timestamp when the tab was last built |
@@ -196,7 +207,14 @@ The `updated_at` column updates on every refresh — use a scorecard with **Max*
 | `ideal_band` | PCID band for ideal target |
 | `median_book` | Median PCIDs per rep (Rep_Level) |
 | `avg_pcid` | Average PCIDs per rep |
+| `segment_avg_pcid` | Segment average PCID |
 | `assigned_pcids` | Total assigned PCIDs |
+| `revenue_90d` | Market 90d revenue ($) — from Markets tab |
+| `avg_pqr_per_rep` | Avg PQR per rep — from Markets tab |
+| `segment_avg_pqr` | Segment avg PQR — from Markets tab |
+| `coverage_peak_accounts` | PCIDs/rep at coverage peak |
+| `median_impact_calls` | Median impact calls/account |
+| `coverage_at_inflection` | Calls/account at inflection |
 | `action_short` | Short action line for tables |
 
 ---
@@ -209,5 +227,6 @@ The `updated_at` column updates on every refresh — use a scorecard with **Max*
 | Wrong field types | Edit data source → set numbers vs text per table above |
 | Stale data | Refresh dashboards in sheet, then refresh data source in Looker |
 | Empty `heads_to_add` | Normal for markets at or above optimal; use filters or show zeros in chart settings |
+| Blank revenue/coverage | Populate **Markets** tab from `headcount-dashboard.csv` — see [LOOKER-STUDIO-BUILD.md](./LOOKER-STUDIO-BUILD.md#a5-optional--populate-markets-tab-revenue--coverage) |
 
 For Apps Script deployment, see [APPS-SCRIPT-DEPLOY.md](./APPS-SCRIPT-DEPLOY.md).
