@@ -414,6 +414,130 @@ h2 {
   margin: 0.75rem 0 0;
 }
 
+.ref-check-panel {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+}
+
+.ref-check-panel.ref-ok {
+  border-color: #0d7a4d40;
+  background: #0d7a4d08;
+}
+
+.ref-check-panel.ref-warn {
+  border-color: #b4530940;
+  background: #b4530908;
+}
+
+.ref-check-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.ref-check-lead {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+  color: var(--text);
+}
+
+.ref-check-badge {
+  font-weight: 600;
+}
+
+.ref-check-table-wrap {
+  margin-top: 0.5rem;
+}
+
+.ref-check-table {
+  font-size: 0.8125rem;
+}
+
+.ref-check-table .num {
+  text-align: right;
+}
+
+.ref-row-match td:last-child {
+  color: #0d7a4d;
+}
+
+.ref-row-mismatch td {
+  background: #b4530910;
+}
+
+.ref-check-segment-note {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  padding: 0.5rem 0;
+}
+
+.ref-check-link,
+.sources-meta-link {
+  font-size: 0.8125rem;
+  margin: 0.5rem 0 0;
+}
+
+.ref-badge-ok {
+  color: #0d7a4d;
+  font-weight: 700;
+}
+
+.ref-badge-warn {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.ref-check-col {
+  text-align: center;
+}
+
+.ref-sync-instructions {
+  margin-top: 1rem;
+}
+
+.workbook-check-wrap {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.workbook-check-heading {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+}
+
+.workbook-check-totals {
+  font-size: 0.9375rem;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.workbook-check-table {
+  font-size: 0.8125rem;
+}
+
+.workbook-row-ok td:first-child {
+  color: #0d7a4d;
+}
+
+.workbook-row-warn td {
+  background: #b4530910;
+}
+
+.workbook-row-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+  line-height: 1.35;
+}
+
+.workbook-mismatch-details {
+  margin-top: 0.75rem;
+}
+
 .lookup-details {
   margin-top: 16px;
   border: 1px solid var(--border);

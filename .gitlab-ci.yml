@@ -1,0 +1,11 @@
+# Deploy static site in docs/ to prototypes.indeed.com (headcount-dash).
+# Requires CI variable: PUBLISHER_USERNAME = your LDAP (Settings → CI/CD → Variables).
+
+publish-prototype:
+  stage: deploy
+  image: $JAVASCRIPT_BUILD_IMAGE:$JAVASCRIPT_BUILD_IMAGE_TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - echo "Publishing docs/ to prototypes.indeed.com..."
+    - PUBLISHER_USERNAME=${PUBLISHER_USERNAME:-$GITLAB_USER_LOGIN} npx @indeed/prototypes-publisher --ci

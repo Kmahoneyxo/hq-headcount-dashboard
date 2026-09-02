@@ -1,0 +1,3 @@
+# Large reference export (keep local; sync via scripts/sync-reference-workbook.py)
+docs/data/reference-workbook.xlsx
+docs/data/hq_raw_data.xlsx

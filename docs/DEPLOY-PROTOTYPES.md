@@ -66,17 +66,26 @@ publish-prototype:
 
 Repo: `https://code.corp.indeed.com/kmahoney/hq-headcount-dashboard` (branch `main`, publish dir `docs/`).
 
+**If Prototypes → Builds opens GitLab (no zip):**
+
+1. In GitLab: **Settings → CI/CD → Variables** → add `PUBLISHER_USERNAME` = your LDAP.
+2. Push `.gitlab-ci.yml` and latest `docs/` to `main` on GitLab (exclude files >25MB — see troubleshooting).
+3. GitLab: **Build → Pipelines → Run pipeline** (or push triggers automatically).
+4. When the `publish-prototype` job succeeds, refresh Prototypes — **Builds** should show a deployment and **View prototype** works.
+
 > **Note:** The publisher only uploads whitelisted extensions (html, js, css, json, images, fonts, etc.). `data/*.csv` and `data/*.xlsx` are **skipped** — JSON data files upload fine; optional CSV/XLSX header downloads will 404 unless you use Option A zip upload or extend the publisher.
 
-### Option A — Upload zip (fastest)
+### Option A — Upload zip (legacy / new projects only)
 
-From the repo root:
+Zip upload is only available when creating a **new** Prototypes project without GitLab. If your project shows a **Gitlab** badge (like `headcount-dash`), use **Option C** or **GitLab CI** below — the **Builds** button opens GitLab, not a zip picker.
+
+From the repo root (if zip upload is available in your project type):
 
 ```bash
 cd docs && zip -r ../hq-headcount-dashboard-prototypes.zip . -x "*.DS_Store"
 ```
 
-Upload `hq-headcount-dashboard-prototypes.zip` to the new Prototypes project.
+Upload `hq-headcount-dashboard-prototypes.zip` during project creation or where the UI offers **Upload build**.
 
 ### Option B — GitHub zip / manual upload
 

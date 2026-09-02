@@ -1,0 +1,535 @@
+{
+  "source_type": "workbook",
+  "workbook_format": "global_headcount",
+  "reference_label": "Global Sales Rep Headcount (1)",
+  "country_checks": {
+    "AU": {
+      "sheet_reps": 17,
+      "dashboard_reps": 18,
+      "match": false
+    },
+    "BNL": {
+      "sheet_reps": 91,
+      "dashboard_reps": 92,
+      "match": false
+    },
+    "BR": {
+      "sheet_reps": 10,
+      "dashboard_reps": 12,
+      "match": false
+    },
+    "CA": {
+      "sheet_reps": 102,
+      "dashboard_reps": 93,
+      "match": false
+    },
+    "DACH": {
+      "sheet_reps": 164,
+      "dashboard_reps": 165,
+      "match": false
+    },
+    "FR": {
+      "sheet_reps": 87,
+      "dashboard_reps": 80,
+      "match": false
+    },
+    "IBE": {
+      "sheet_reps": 14,
+      "dashboard_reps": 12,
+      "match": false
+    },
+    "IN": {
+      "sheet_reps": 31,
+      "dashboard_reps": 32,
+      "match": false
+    },
+    "IT": {
+      "sheet_reps": 39,
+      "dashboard_reps": 36,
+      "match": false
+    },
+    "MX": {
+      "sheet_reps": 26,
+      "dashboard_reps": 28,
+      "match": false
+    },
+    "SG": {
+      "sheet_reps": 8,
+      "dashboard_reps": 9,
+      "match": false
+    },
+    "UK": {
+      "sheet_reps": 192,
+      "dashboard_reps": 179,
+      "match": false
+    },
+    "US": {
+      "sheet_reps": 914,
+      "dashboard_reps": 956,
+      "match": false
+    },
+    "EM": {
+      "sheet_reps": 11,
+      "dashboard_reps": null,
+      "match": false
+    }
+  },
+  "source_url": "https://docs.google.com/spreadsheets/d/1Hq64TSm77FVH4hLxME2wrs1bJbT8Qi9Puk4FWMdkGsw/edit",
+  "source_workbook": "/Users/kmahoney/hq-headcount-dashboard/docs/data/reference-workbook.xlsx",
+  "imported_at": "2026-09-02",
+  "dashboard_snapshot": "2026-09-01",
+  "workbook_summary": {
+    "sheets_in_file": 10,
+    "sheets_compared": 3,
+    "sheets_skipped": [
+      "Rep_Level PIvot Table",
+      "Data_PCID Level",
+      "Sheet11",
+      "2025-2026 Revenue",
+      "Reps pulled_Idash",
+      "Rep_team file",
+      "Idash Code"
+    ],
+    "rows_matched": 1005,
+    "rows_mismatched": 631
+  },
+  "sheets": [
+    {
+      "role": "global_capacity_dashboard",
+      "name": "Capacity_Dashboard",
+      "skipped": false,
+      "sheet_rows": 14,
+      "dashboard_rows": 15,
+      "matched": 0,
+      "mismatched": 13,
+      "missing_in_dashboard": 0,
+      "compare_fields": [
+        "current_reps_sum"
+      ],
+      "mismatch_samples": [
+        {
+          "key": "AU",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 17,
+              "dashboard": 18
+            }
+          ]
+        },
+        {
+          "key": "BNL",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 91,
+              "dashboard": 92
+            }
+          ]
+        },
+        {
+          "key": "BR",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 10,
+              "dashboard": 12
+            }
+          ]
+        },
+        {
+          "key": "CA",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 102,
+              "dashboard": 93
+            }
+          ]
+        },
+        {
+          "key": "DACH",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 164,
+              "dashboard": 165
+            }
+          ]
+        },
+        {
+          "key": "FR",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 87,
+              "dashboard": 80
+            }
+          ]
+        },
+        {
+          "key": "IBE",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 14,
+              "dashboard": 12
+            }
+          ]
+        },
+        {
+          "key": "IN",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 31,
+              "dashboard": 32
+            }
+          ]
+        },
+        {
+          "key": "IT",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 39,
+              "dashboard": 36
+            }
+          ]
+        },
+        {
+          "key": "MX",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 26,
+              "dashboard": 28
+            }
+          ]
+        },
+        {
+          "key": "SG",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 8,
+              "dashboard": 9
+            }
+          ]
+        },
+        {
+          "key": "UK",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 192,
+              "dashboard": 179
+            }
+          ]
+        },
+        {
+          "key": "US",
+          "diffs": [
+            {
+              "field": "current_reps_sum",
+              "sheet": 914,
+              "dashboard": 956
+            }
+          ]
+        }
+      ],
+      "country_totals": {
+        "AU": 17,
+        "BNL": 91,
+        "BR": 10,
+        "CA": 102,
+        "DACH": 164,
+        "EM": 11,
+        "FR": 87,
+        "IBE": 14,
+        "IN": 31,
+        "IT": 39,
+        "MX": 26,
+        "SG": 8,
+        "UK": 192,
+        "US": 914
+      },
+      "note": "Capacity_Dashboard country rep counts vs sum of current_reps across segments in headcount.json."
+    },
+    {
+      "role": "global_rep_level",
+      "name": "Rep_Level",
+      "skipped": false,
+      "sheet_rows": 2009,
+      "dashboard_rows": 1655,
+      "matched": 1005,
+      "mismatched": 618,
+      "missing_in_dashboard": 386,
+      "columns_mapped": [
+        "sales_rep_id",
+        "pcid_count",
+        "country",
+        "sales_team_name",
+        "rep_or_director"
+      ],
+      "compare_fields": [
+        "pcid_count"
+      ],
+      "mismatch_samples": [
+        {
+          "key": "17284",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "42853",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 152
+        },
+        {
+          "key": "41946",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 147,
+              "dashboard": 142
+            }
+          ]
+        },
+        {
+          "key": "8152",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 161,
+              "dashboard": 150
+            }
+          ]
+        },
+        {
+          "key": "39738",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 141,
+              "dashboard": 132
+            }
+          ]
+        },
+        {
+          "key": "42830",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 142,
+              "dashboard": 137
+            }
+          ]
+        },
+        {
+          "key": "28881",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 115,
+              "dashboard": 114
+            }
+          ]
+        },
+        {
+          "key": "42815",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 46,
+              "dashboard": 39
+            }
+          ]
+        },
+        {
+          "key": "6425",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 36,
+              "dashboard": 34
+            }
+          ]
+        },
+        {
+          "key": "14913",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 48,
+              "dashboard": 41
+            }
+          ]
+        },
+        {
+          "key": "18792",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 47
+        },
+        {
+          "key": "10132",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "29156",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 46,
+              "dashboard": 44
+            }
+          ]
+        },
+        {
+          "key": "15452",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "13215",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 37,
+              "dashboard": 34
+            }
+          ]
+        },
+        {
+          "key": "3375",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "3377",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "3774",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "30207",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 196,
+              "dashboard": 194
+            }
+          ]
+        },
+        {
+          "key": "1534",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "13570",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 202,
+              "dashboard": 200
+            }
+          ]
+        },
+        {
+          "key": "33605",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 193,
+              "dashboard": 192
+            }
+          ]
+        },
+        {
+          "key": "32085",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 190,
+              "dashboard": 186
+            }
+          ]
+        },
+        {
+          "key": "14493",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "12965",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "30945",
+          "diffs": [
+            {
+              "field": "pcid_count",
+              "sheet": 97,
+              "dashboard": 96
+            }
+          ]
+        },
+        {
+          "key": "12964",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "4512",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "19942",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        },
+        {
+          "key": "10672",
+          "issue": "missing_in_dashboard",
+          "sheet_pcid": 0
+        }
+      ],
+      "note": "Rep_Level PCID Count vs rep_book.json (sql/17). Mismatches often reflect snapshot date or PQR\u2265$5k filter in dashboard."
+    },
+    {
+      "role": "global_model_engine",
+      "name": "Model_Engine",
+      "skipped": false,
+      "sheet_rows": 3,
+      "dashboard_rows": 3,
+      "matched": 0,
+      "mismatched": 0,
+      "missing_in_dashboard": 0,
+      "compare_fields": [
+        "avg_pcid",
+        "avg_growth"
+      ],
+      "mismatch_samples": [],
+      "note": "Model_Engine regional averages vs rep_book.json rollup (informational \u2014 different grain than dashboard markets)."
+    }
+  ],
+  "compare_fields": [
+    "ideal_pcid",
+    "optimal_headcount",
+    "current_reps",
+    "headcount_gap",
+    "headcount_recommendation",
+    "assigned_accounts",
+    "avg_pcid_per_rep"
+  ],
+  "markets": {},
+  "row_count": 0
+}

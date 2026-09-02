@@ -1,4 +1,8 @@
 {
   "refresh_api": null,
-  "live_refresh": false
+  "live_refresh": false,
+  "reference_sheet_url": "https://docs.google.com/spreadsheets/d/1Hq64TSm77FVH4hLxME2wrs1bJbT8Qi9Puk4FWMdkGsw/edit",
+  "reference_workbook": "reference-workbook.xlsx",
+  "reference_workbook_label": "Global Sales Rep Headcount (1)",
+  "reference_workbook_path": "docs/data/reference-workbook.xlsx"
 }

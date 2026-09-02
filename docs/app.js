@@ -1,5 +1,6 @@
 let payload = null;
 let bookHealth = null;
+let referenceCheck = null;
 let config = { refresh_api: null, live_refresh: false };
 let segmentFilter = "all";
 let recFilter = "all";
@@ -105,6 +106,12 @@ async function loadData() {
     bookHealth = bh.ok ? await bh.json() : null;
   } catch {
     bookHealth = null;
+  }
+  try {
+    const ref = await fetch(`./data/reference_check.json?${cacheBust}`, { cache: "no-store" });
+    referenceCheck = ref.ok ? await ref.json() : null;
+  } catch {
+    referenceCheck = null;
   }
 }
 
@@ -263,9 +270,18 @@ function renderMeta() {
       ? ` · Page loaded ${formatPageReloadTime(lastLoadedAt)}`
       : "";
   const live = config.live_refresh ? " · Live warehouse refresh on" : "";
+  const refSum = referenceCheckSummary();
+  const wbSum = referenceCheck?.workbook_summary;
+  const refNote = wbSum
+    ? ` · Workbook: ${fmtNum(wbSum.rows_matched)} match, ${fmtNum(wbSum.rows_mismatched)} differ`
+    : refSum
+      ? ` · Sheet check: ${refSum.matched}/${refSum.withRef} match`
+      : referenceCheck
+        ? " · Sheet check loaded"
+        : "";
   const region = regionFilter === "amer" ? " · AMER focus" : " · All markets";
   el.textContent =
-    `Ideal headcount by country × segment · ${payload.window} · Data snapshot ${payload.updated_at}${region}${timing}${live} · ${filteredMarkets().length} markets shown`;
+    `Ideal headcount by country × segment · ${payload.window} · Data snapshot ${payload.updated_at}${region}${refNote}${timing}${live} · ${filteredMarkets().length} markets shown`;
   document.getElementById("refresh-note").textContent = config.refresh_api
     ? "Refresh data runs your local refresh command via dashboard-server.py (set DASHBOARD_REFRESH_CMD for warehouse pulls)."
     : "Reload snapshot re-fetches the published JSON from GitHub Pages (use after git push). It does not query Quest. " +
@@ -294,6 +310,15 @@ function renderSources() {
     .join(" · ") || "—";
 
   const gated = (payload.markets || []).filter((m) => m.hc_curve_validated === false).length;
+  const refSum = referenceCheckSummary();
+  const refLabel = referenceLabel();
+  const refLabel = referenceLabel();
+  const refDetail = referenceCheck
+    ? referenceCheck.source_type === "workbook"
+      ? `${refLabel} · ${referenceCheck.imported_at || "—"} · ${referenceCheck.workbook_summary?.sheets_compared ?? "—"} tabs`
+      : `${referenceCheck.imported_at || "—"} · ${referenceCheck.row_count ?? Object.keys(referenceCheck.markets || {}).length} markets`
+    : `Place file at docs/data/reference-workbook.xlsx and run sync-reference-workbook.py`;
+  const refMatch = refSum ? `${refSum.matched} match · ${refSum.mismatched} differ` : "—";
 
   el.innerHTML = `
     <div class="sources-meta-grid">
@@ -312,7 +337,94 @@ function renderSources() {
         <div class="sources-meta-value sources-meta-small">${curveSummary}</div>
         <div class="sources-meta-detail">${gated} market(s) HC-gated (curve not validated)</div>
       </div>
-    </div>`;
+      <div class="sources-meta-card">
+        <div class="sources-meta-label">${refLabel}</div>
+        <div class="sources-meta-value sources-meta-small">${refMatch}</div>
+        <div class="sources-meta-detail">${refDetail}</div>
+        <p class="sources-meta-link"><code>docs/data/reference-workbook.xlsx</code></p>
+        ${config.reference_sheet_url || referenceCheck?.source_url ? `<p class="sources-meta-link">${referenceDocLink()}</p>` : ""}
+      </div>
+    </div>
+    <details class="methodology-details ref-sync-instructions">
+      <summary>Sync ${referenceLabel()}</summary>
+      <div class="methodology-body">
+        <p>Canonical reference: <code>docs/data/reference-workbook.xlsx</code> (${referenceLabel()}).</p>
+        <ol>
+          <li>Update from Google: download .xlsx from ${referenceDocLink()}.</li>
+          <li>Replace <code>docs/data/reference-workbook.xlsx</code> (or copy from Downloads).</li>
+          <li><code>python3 scripts/sync-reference-workbook.py</code></li>
+          <li>Hard-refresh dashboard — Overview + Reference tabs cross-check against this file.</li>
+        </ol>
+      </div>
+    </details>`;
+  renderWorkbookCheck();
+}
+
+function renderWorkbookCheck() {
+  const el = document.getElementById("workbook-check-wrap");
+  if (!el) return;
+  const label = referenceLabel();
+
+  if (!referenceCheck?.sheets?.length) {
+    el.innerHTML = `
+      <h3 class="workbook-check-heading">Check vs ${label}</h3>
+      <p class="caption">Copy <strong>Global Sales Rep Headcount (1)</strong> to <code>docs/data/reference-workbook.xlsx</code>, then run <code>python3 scripts/sync-reference-workbook.py</code>.</p>`;
+    return;
+  }
+
+  const sum = referenceCheck.workbook_summary || {};
+  const rows = referenceCheck.sheets
+    .filter((s) => !s.skipped)
+    .map((s) => {
+      const ok = s.mismatched === 0 && (s.missing_in_dashboard ?? 0) === 0;
+      const status = ok ? "workbook-row-ok" : "workbook-row-warn";
+        return `<tr class="${status}">
+          <td>${s.name}${s.note ? `<div class="workbook-row-note">${s.note}</div>` : ""}</td>
+          <td class="num">${fmtNum(s.sheet_rows)}</td>
+          <td class="num">${fmtNum(s.matched)}</td>
+          <td class="num">${fmtNum(s.mismatched)}</td>
+          <td class="num">${fmtNum(s.missing_in_dashboard ?? 0)}</td>
+        </tr>`;
+    })
+    .join("");
+
+  const skipped = (sum.sheets_skipped || []).map((n) => `<li>${n}</li>`).join("");
+
+  const mismatchDetails = referenceCheck.sheets
+    .flatMap((s) =>
+      (s.mismatch_samples || []).slice(0, 5).map((m) => ({
+        sheet: s.name,
+        ...m,
+      })),
+    )
+    .slice(0, 15);
+
+  const detailHtml = mismatchDetails.length
+    ? `<details class="workbook-mismatch-details"><summary>Sample mismatches (${mismatchDetails.length})</summary><ul class="notes">${mismatchDetails
+        .map((m) => {
+          if (m.issue === "missing_in_dashboard") {
+            return `<li><strong>${m.sheet}</strong> · ${m.key} — in sheet, not in dashboard JSON</li>`;
+          }
+          const diffs = (m.diffs || [])
+            .map((d) => `${d.field}: sheet ${d.sheet ?? "—"} vs dash ${d.dashboard ?? "—"}`)
+            .join("; ");
+          return `<li><strong>${m.sheet}</strong> · ${m.key} — ${diffs}</li>`;
+        })
+        .join("")}</ul></details>`
+    : "<p class=\"caption\">All compared rows match dashboard JSON for every tab.</p>";
+
+  el.innerHTML = `
+    <h3 class="workbook-check-heading">Check vs ${label}</h3>
+    <p class="caption">Source: <code>docs/data/reference-workbook.xlsx</code> · Compared <strong>${sum.sheets_compared ?? referenceCheck.sheets.length}</strong> tabs vs warehouse JSON (snapshot ${referenceCheck.dashboard_snapshot || payload?.updated_at || "—"}). Imported ${referenceCheck.imported_at || "—"}.</p>
+    <p class="workbook-check-totals"><strong>${fmtNum(sum.rows_matched)}</strong> rows match · <strong>${fmtNum(sum.rows_mismatched)}</strong> row differences</p>
+    <div class="table-wrap">
+      <table class="workbook-check-table">
+        <thead><tr><th>Tab</th><th class="num">Sheet rows</th><th class="num">Match</th><th class="num">Differ</th><th class="num">Missing in dash</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    ${skipped ? `<p class="caption">Tabs not compared (no mapping):</p><ul class="notes">${skipped}</ul>` : ""}
+    ${detailHtml}`;
 }
 
 function renderHeadline() {
@@ -400,8 +512,190 @@ function gapStr(gap) {
   return gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
 }
 
+const REF_FIELD_LABELS = {
+  ideal_pcid: "Ideal PCID",
+  optimal_headcount: "Optimal HC",
+  current_reps: "Current reps",
+  headcount_gap: "HC gap",
+  headcount_recommendation: "HC recommendation",
+  assigned_accounts: "Assigned PCIDs",
+  avg_pcid_per_rep: "Avg PCID/rep",
+  revenue_90d: "Revenue 90d",
+};
+
+function dashFieldValue(m, field) {
+  switch (field) {
+    case "ideal_pcid":
+      return idealPcid(m);
+    case "avg_pcid_per_rep":
+      return m.avg_pcid_per_rep ?? m.current_avg_book;
+    default:
+      return m[field];
+  }
+}
+
+function normRecLabel(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/\(gated from [^)]+\)/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function compareRefValue(dashVal, refVal, field) {
+  if (refVal == null && dashVal == null) return "na";
+  if (refVal == null) return "no_ref";
+  if (dashVal == null) return "no_dash";
+  if (field === "headcount_recommendation") {
+    return normRecLabel(dashVal) === normRecLabel(refVal) ? "match" : "mismatch";
+  }
+  const d = Number(dashVal);
+  const r = Number(refVal);
+  if (!Number.isNaN(d) && !Number.isNaN(r)) {
+    if (Number.isInteger(r) && Number.isInteger(d)) return d === r ? "match" : "mismatch";
+    return Math.abs(d - r) < 0.5 ? "match" : "mismatch";
+  }
+  return String(dashVal).trim() === String(refVal).trim() ? "match" : "mismatch";
+}
+
+function formatRefValue(field, val) {
+  if (val == null) return "—";
+  if (field === "headcount_recommendation") return val;
+  if (field === "revenue_90d") return fmtMoney(val);
+  if (field === "headcount_gap") return gapStr(val);
+  return fmtNum(val);
+}
+
+function compareMarketToReference(m) {
+  if (!referenceCheck?.markets) return null;
+  const key = marketKey(m);
+  const ref = referenceCheck.markets[key];
+  if (!ref) return { key, ref: null, rows: [], allMatch: false, missing: true };
+  const fields = referenceCheck.compare_fields || Object.keys(REF_FIELD_LABELS);
+  const rows = fields.map((field) => {
+    const dashVal = dashFieldValue(m, field);
+    const refVal = ref[field];
+    const status = compareRefValue(dashVal, refVal, field);
+    return { field, label: REF_FIELD_LABELS[field] || field, dashVal, refVal, status };
+  });
+  const comparable = rows.filter((r) => r.status !== "na" && r.status !== "no_ref");
+  const allMatch = comparable.length > 0 && comparable.every((r) => r.status === "match");
+  return { key, ref, rows, allMatch, missing: false };
+}
+
+function referenceCheckSummary() {
+  if (!referenceCheck?.markets || !payload?.markets) return null;
+  let matched = 0;
+  let withRef = 0;
+  let mismatched = 0;
+  for (const m of payload.markets) {
+    const c = compareMarketToReference(m);
+    if (!c || c.missing) continue;
+    withRef += 1;
+    if (c.allMatch) matched += 1;
+    else mismatched += 1;
+  }
+  return { matched, withRef, mismatched, imported_at: referenceCheck.imported_at };
+}
+
+function referenceCheckHtml(m) {
+  const label = referenceLabel();
+  const sheetUrl = config.reference_sheet_url || referenceCheck?.source_url;
+
+  if (referenceCheck?.workbook_format === "global_headcount") {
+    const country = m.country;
+    const cc = referenceCheck.country_checks?.[country];
+    const repSheet = referenceCheck.sheets?.find((s) => s.role === "global_rep_level");
+    const repNote = repSheet
+      ? `${fmtNum(repSheet.matched)} rep PCIDs match · ${fmtNum(repSheet.mismatched)} differ · ${fmtNum(repSheet.missing_in_dashboard ?? 0)} reps only in ${label}`
+      : "";
+    const countryRow = cc
+      ? `<tr class="${cc.match ? "ref-row-match" : "ref-row-mismatch"}">
+          <td>${country} rep count (Capacity_Dashboard)</td>
+          <td class="num">${fmtNum(cc.sheet_reps)}</td>
+          <td class="num">${fmtNum(cc.dashboard_reps)}</td>
+          <td>${cc.match ? "✓" : "≠"}</td>
+        </tr>`
+      : "";
+    const segmentNote = `<tr><td colspan="4" class="ref-check-segment-note">${m.country}-${m.segment}: segment-level ideal PCID / HC only in dashboard JSON — ${label} uses country + rep grain (Rep_Level, Capacity_Dashboard).</td></tr>`;
+    return `
+    <section class="ref-check-panel ${cc && !cc.match ? "ref-warn" : "ref-ok"}" aria-label="Reference workbook check">
+      <h3 class="ref-check-title">Check vs <strong>${label}</strong></h3>
+      <p class="ref-check-lead">Cross-check imported ${referenceCheck.imported_at || "—"} from <code>docs/data/reference-workbook.xlsx</code>. ${repNote}</p>
+      <div class="table-wrap ref-check-table-wrap">
+        <table class="ref-check-table">
+          <thead><tr><th>Field</th><th>${label}</th><th>Dashboard</th><th></th></tr></thead>
+          <tbody>${countryRow}${segmentNote}</tbody>
+        </table>
+      </div>
+      ${sheetUrl ? `<p class="ref-check-link">${referenceDocLink()} (Google Sheet source)</p>` : ""}
+    </section>`;
+  }
+
+  const cmp = compareMarketToReference(m);
+  if (!referenceCheck) {
+    return `
+    <section class="ref-check-panel ref-check-empty" aria-label="Reference sheet check">
+      <h3 class="ref-check-title">Reference sheet check</h3>
+      <p class="ref-check-lead">No reference data loaded. Export tab gid=1002 from the Google Sheet as CSV, save as <code>docs/data/reference-sheet.csv</code>, then run <code>python3 scripts/sync-reference-sheet.py</code>.</p>
+      ${sheetUrl ? `<p class="ref-check-link"><a href="${sheetUrl}" target="_blank" rel="noopener noreferrer">Open reference Google Sheet</a></p>` : ""}
+    </section>`;
+  }
+  if (!cmp || cmp.missing) {
+    return `
+    <section class="ref-check-panel ref-check-empty" aria-label="Reference sheet check">
+      <h3 class="ref-check-title">Reference sheet check</h3>
+      <p class="ref-check-lead">Market <strong>${marketKey(m)}</strong> not found in reference sheet (imported ${referenceCheck.imported_at || "—"}).</p>
+      ${sheetUrl ? `<p class="ref-check-link"><a href="${sheetUrl}" target="_blank" rel="noopener noreferrer">Open reference Google Sheet</a></p>` : ""}
+    </section>`;
+  }
+  const statusClass = cmp.allMatch ? "ref-ok" : "ref-warn";
+  const statusLabel = cmp.allMatch ? "Matches reference sheet" : "Differs from reference sheet";
+  const rows = cmp.rows
+    .filter((r) => r.status !== "na" && r.status !== "no_ref")
+    .map(
+      (r) => {
+        const rowClass = r.status === "match" ? "ref-row-match" : "ref-row-mismatch";
+        const delta =
+          r.status === "mismatch" && r.dashVal != null && r.refVal != null && typeof r.dashVal === "number"
+            ? ` (Δ ${gapStr(r.dashVal - r.refVal)})`
+            : "";
+        return `<tr class="${rowClass}">
+          <td>${r.label}</td>
+          <td class="num">${formatRefValue(r.field, r.refVal)}</td>
+          <td class="num">${formatRefValue(r.field, r.dashVal)}</td>
+          <td>${r.status === "match" ? "✓" : "≠"}${delta}</td>
+        </tr>`;
+      },
+    )
+    .join("");
+  return `
+    <section class="ref-check-panel ${statusClass}" aria-label="Reference sheet check">
+      <h3 class="ref-check-title">Reference sheet check — <span class="ref-check-badge">${statusLabel}</span></h3>
+      <p class="ref-check-lead">Cross-check vs Google Sheet (imported ${referenceCheck.imported_at || "—"}). Dashboard uses warehouse JSON; sheet is the stakeholder reference.</p>
+      <div class="table-wrap ref-check-table-wrap">
+        <table class="ref-check-table">
+          <thead><tr><th>Field</th><th>Sheet</th><th>Dashboard</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      ${sheetUrl ? `<p class="ref-check-link"><a href="${sheetUrl}" target="_blank" rel="noopener noreferrer">Open reference Google Sheet</a></p>` : ""}
+    </section>`;
+}
+
 /** 2–4 sentence summary: ideal book, HC math, curve gate, inflection signals. */
-function buildRecommendationWhyParagraph(m) {
+function referenceLabel() {
+  return config.reference_workbook_label || referenceCheck?.reference_label || "Reference workbook";
+}
+
+function referenceDocLink() {
+  const url = config.reference_sheet_url || referenceCheck?.source_url;
+  const label = referenceLabel();
+  return url
+    ? `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`
+    : label;
+}
+
   const ideal = idealPcid(m);
   const rec = hcRecLabel(m);
   const sentences = [];
@@ -1450,6 +1744,8 @@ function renderLookup() {
 
     ${idealPcidEvidenceHtml(m)}
 
+    ${referenceCheckHtml(m)}
+
     <details class="lookup-details">
       <summary>More detail</summary>
       <div class="lookup-details-body">
@@ -1621,6 +1917,15 @@ function findingsMarkets() {
     });
 }
 
+function referenceCheckBadge(m) {
+  const cmp = compareMarketToReference(m);
+  if (!referenceCheck) return "—";
+  if (!cmp || cmp.missing) return "—";
+  return cmp.allMatch
+    ? '<span class="ref-badge ref-badge-ok" title="Matches reference sheet">✓</span>'
+    : '<span class="ref-badge ref-badge-warn" title="Differs from reference sheet">≠</span>';
+}
+
 function renderFindings() {
   const tbody = document.getElementById("findings-body");
   if (!tbody || !payload) return;
@@ -1645,6 +1950,7 @@ function renderFindings() {
         <td class="num">${gapStr}</td>
         <td><span class="rec rec-${recClass}">${hcRecLabel(m)}</span></td>
         <td><span class="curve-validated curve-validated-${validated ? "yes" : "no"}">${curveValidatedLabel(m)}</span></td>
+        <td class="ref-check-col">${referenceCheckBadge(m)}</td>
         <td class="num">${fmtNum(m.growth_peak_accounts)}</td>
         <td class="findings-narrative">${keyFinding(m)}</td>
       </tr>`;
