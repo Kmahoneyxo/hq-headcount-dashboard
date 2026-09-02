@@ -4,6 +4,9 @@ let referenceCheck = null;
 let referenceCheckCached = null;
 let referenceCheckSource = "none";
 let referenceLiveError = null;
+let appsScriptData = null;
+let appsScriptSegments = {};
+let appsScriptSource = "none";
 let config = { refresh_api: null, live_refresh: false };
 let segmentFilter = "all";
 let recFilter = "all";
@@ -41,16 +44,60 @@ const CHART_TICK = "#5c6578";
 const CHART_GRID = "#dde1e8";
 const CHART_LEGEND = "#5c6578";
 
+function liveSegmentForMarket(m) {
+  return appsScriptSegments[marketKey(m)] || null;
+}
+
+function displayIdealPcid(m) {
+  const live = liveSegmentForMarket(m);
+  if (live?.ideal_pcid != null) return live.ideal_pcid;
+  return idealPcid(m);
+}
+
+function displayRecommendation(m) {
+  const live = liveSegmentForMarket(m);
+  if (live?.recommendation || live?.headcount_recommendation) {
+    return live.recommendation || live.headcount_recommendation;
+  }
+  return m.headcount_recommendation || "Hold";
+}
+
+function displayOptimalHc(m) {
+  const live = liveSegmentForMarket(m);
+  if (live?.optimal_hc != null) return live.optimal_hc;
+  if (live?.optimal_headcount != null) return live.optimal_headcount;
+  return m.optimal_headcount;
+}
+
+function displayHcGap(m) {
+  const live = liveSegmentForMarket(m);
+  if (live?.hc_gap != null) return live.hc_gap;
+  if (live?.headcount_gap != null) return live.headcount_gap;
+  return m.headcount_gap;
+}
+
+function displayCurrentReps(m) {
+  const live = liveSegmentForMarket(m);
+  if (live?.current_reps != null) return live.current_reps;
+  return m.current_reps;
+}
+
+function displayAvgPcid(m) {
+  const live = liveSegmentForMarket(m);
+  if (live?.current_avg_book != null) return live.current_avg_book;
+  return m.avg_pcid_per_rep ?? m.current_avg_book;
+}
+
 function hcRecLabel(m) {
-  const rec = m.headcount_recommendation || "Hold";
-  if (m.hc_curve_validated === false && m.headcount_recommendation_pre_gate) {
+  const rec = displayRecommendation(m);
+  if (!liveSegmentForMarket(m) && m.hc_curve_validated === false && m.headcount_recommendation_pre_gate) {
     return `Hold (gated from ${m.headcount_recommendation_pre_gate})`;
   }
   return rec;
 }
 
 function hcRecClass(m) {
-  return (m.headcount_recommendation || "Hold").replace(/ /g, "\\ ");
+  return displayRecommendation(m).replace(/ /g, "\\ ");
 }
 
 const IMPACT_COVERAGE_DEFINITION =
@@ -122,33 +169,154 @@ async function loadData() {
   }
 }
 
-async function loadLiveReference() {
+function dashboardCountryRepTotals(markets) {
+  const totals = {};
+  for (const m of markets || []) {
+    const c = m.country;
+    if (!c) continue;
+    totals[c] = (totals[c] || 0) + (Number(m.current_reps) || 0);
+  }
+  return totals;
+}
+
+function buildReferenceCheckFromAppsScript(data, cached) {
+  const dashTotals = dashboardCountryRepTotals(payload?.markets || []);
+  const sheetTotals = data.capacity_by_country || {};
+  const allCountries = new Set([...Object.keys(sheetTotals), ...Object.keys(dashTotals)]);
+  const countryChecks = {};
+  let rowsMatched = 0;
+  let rowsMismatched = 0;
+  for (const country of allCountries) {
+    const sheetReps = sheetTotals[country] ?? null;
+    const dashboardReps = dashTotals[country] ?? null;
+    const match =
+      sheetReps != null &&
+      dashboardReps != null &&
+      Math.round(sheetReps) === Math.round(dashboardReps);
+    countryChecks[country] = { sheet_reps: sheetReps, dashboard_reps: dashboardReps, match };
+    if (match) rowsMatched += 1;
+    else if (sheetReps != null && dashboardReps != null) rowsMismatched += 1;
+  }
+  return {
+    source_type: "workbook",
+    workbook_format: "global_headcount",
+    reference_label: data.label || config.reference_workbook_label,
+    source_url: config.reference_sheet_url,
+    source_live: true,
+    live_source: "apps_script",
+    live_fetched_at: new Date().toISOString(),
+    updated_at: data.updated_at,
+    imported_at: data.updated_at?.slice(0, 10),
+    country_checks: countryChecks,
+    segments_count: (data.segments || []).length,
+    dashboard_snapshot: cached?.dashboard_snapshot || payload?.updated_at,
+    workbook_summary: {
+      sheets_compared: 1,
+      rows_matched: rowsMatched,
+      rows_mismatched: rowsMismatched,
+      sheets_skipped: [],
+    },
+    sheets: [],
+  };
+}
+
+function ingestAppsScriptPayload(data) {
+  appsScriptData = data;
+  appsScriptSource = "live";
+  appsScriptSegments = {};
+  for (const seg of data.segments || []) {
+    const key = seg.market || (seg.country && seg.segment ? `${seg.country}-${seg.segment}` : null);
+    if (key) appsScriptSegments[key] = seg;
+  }
+  if (data.capacity_by_country && Object.keys(data.capacity_by_country).length) {
+    referenceCheck = buildReferenceCheckFromAppsScript(data, referenceCheckCached);
+    referenceCheckSource = "live";
+  }
+}
+
+async function loadAppsScript() {
   referenceLiveError = null;
-  if (!config.reference_sheet_live || typeof ReferenceLive === "undefined") {
+  appsScriptData = null;
+  appsScriptSegments = {};
+  appsScriptSource = "none";
+
+  if (!config.reference_sheet_live) {
     referenceCheck = referenceCheckCached;
     referenceCheckSource = referenceCheckCached ? "cached" : "none";
     return;
   }
-  try {
-    const result = await ReferenceLive.fetchLiveReferenceCheck(
-      config,
-      payload?.markets || [],
-      referenceCheckCached,
-    );
-    referenceCheck = result.check;
-    referenceCheckSource = result.source;
-    referenceLiveError = result.error;
-  } catch (err) {
-    referenceCheck = referenceCheckCached;
-    referenceCheckSource = referenceCheckCached ? "cached" : "none";
-    referenceLiveError = err.message || String(err);
+
+  const url = (config.reference_apps_script_url || "").trim();
+  if (url) {
+    try {
+      const fetchUrl = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+      const res = await fetch(fetchUrl, { cache: "no-store", redirect: "follow" });
+      const text = await res.text();
+      if (!res.ok || text.trimStart().startsWith("<")) {
+        throw new Error("Apps Script returned HTML — redeploy with Who has access: Anyone");
+      }
+      ingestAppsScriptPayload(JSON.parse(text));
+      return;
+    } catch (err) {
+      referenceLiveError = err.message || String(err);
+    }
   }
+
+  if (typeof ReferenceLive !== "undefined") {
+    try {
+      const result = await ReferenceLive.fetchLiveReferenceCheck(
+        config,
+        payload?.markets || [],
+        referenceCheckCached,
+      );
+      referenceCheck = result.check;
+      referenceCheckSource = result.source;
+      if (result.error) referenceLiveError = result.error;
+      return;
+    } catch (err) {
+      referenceLiveError = referenceLiveError || err.message || String(err);
+    }
+  }
+
+  referenceCheck = referenceCheckCached;
+  referenceCheckSource = referenceCheckCached ? "cached" : "none";
+}
+
+/** @deprecated alias */
+async function loadLiveReference() {
+  return loadAppsScript();
 }
 
 function referenceSourceLabel() {
+  if (appsScriptSource === "live") {
+    const ts = appsScriptData?.updated_at;
+    return ts ? `Live from Apps Script · ${new Date(ts).toLocaleString()}` : "Live from Apps Script";
+  }
   if (referenceCheckSource === "live") return "Live Google Sheet";
-  if (referenceCheckSource === "cached") return "Cached reference_check.json";
-  return "No reference";
+  if (referenceCheckSource === "cached") return "Warehouse snapshot (headcount.json)";
+  return "No live sheet";
+}
+
+function appsScriptSourceBadge() {
+  if (appsScriptSource !== "live") {
+    return `<span class="ref-source-badge">Warehouse snapshot</span> · headcount.json ${payload?.updated_at || "—"}`;
+  }
+  const ts = appsScriptData?.updated_at;
+  return `<span class="ref-live-ok">Live from Apps Script</span>${ts ? ` · ${new Date(ts).toLocaleString()}` : ""}`;
+}
+
+function appsScriptIdealBookHtml(m) {
+  const live = liveSegmentForMarket(m);
+  if (!live) {
+    return idealBookSummaryHtml(m);
+  }
+  const bullets = (live.why_trends || []).slice(0, 3);
+  return `<section class="ideal-book-live" aria-label="Ideal book from Google Sheet">
+    <h3 class="ideal-book-live-title">Ideal book — ${live.ideal_pcid != null ? `${fmtNum(live.ideal_pcid)} PCIDs/rep` : "see sheet"}${live.ideal_band ? ` <span class="ideal-band">(${live.ideal_band})</span>` : ""}</h3>
+    <p class="ideal-book-live-summary">${live.ideal_book_summary || "—"}</p>
+    ${bullets.length ? `<ul class="ideal-book-why">${bullets.map((b) => `<li>${b}</li>`).join("")}</ul>` : ""}
+    <p class="ideal-book-live-meta">${appsScriptSourceBadge()} · ${live.current_reps != null ? `${fmtNum(live.current_reps)} reps` : ""}${live.current_avg_book != null ? ` · avg ${fmtNum(live.current_avg_book)} PCIDs` : ""}${live.optimal_hc != null ? ` · optimal HC ${fmtNum(live.optimal_hc)}` : ""}${live.hc_gap != null ? ` · gap ${gapStr(live.hc_gap)}` : ""}</p>
+  </section>`;
 }
 
 function dataFingerprint() {
@@ -218,21 +386,22 @@ async function reloadSheetReference() {
   btn.disabled = true;
   if (label) label.textContent = "Loading sheet…";
   try {
-    await loadLiveReference();
+    await loadAppsScript();
     renderAll();
-    if (referenceCheckSource === "live") {
+    if (appsScriptSource === "live") {
+      const segCount = Object.keys(appsScriptSegments).length;
       const sum = countryReferenceSummary();
       showToast(
-        `Live sheet loaded — ${sum?.countriesMatch ?? "?"}/${sum?.countriesWithData ?? "?"} countries match across ${sum?.marketsTotal ?? "?"} markets.`,
+        `Apps Script loaded — ${segCount} segments · ${sum?.countriesMatch ?? "?"}/${sum?.countriesWithData ?? "?"} countries match.`,
         "ok",
       );
     } else if (referenceLiveError) {
-      showToast(`Live sheet fetch failed: ${referenceLiveError}. Using cached reference_check.json.`, "warn");
+      showToast(`Apps Script fetch failed: ${referenceLiveError}. Using headcount.json.`, "warn");
     } else {
-      showToast("Reference check updated from cache.", "ok");
+      showToast("No Apps Script URL configured — using warehouse snapshot.", "warn");
     }
   } catch (err) {
-    showToast(err.message || "Sheet reference reload failed", "err");
+    showToast(err.message || "Sheet reload failed", "err");
   } finally {
     btn.disabled = false;
     if (label) label.textContent = "Reload sheet reference";
@@ -253,7 +422,7 @@ async function refreshData() {
       }
     }
     await loadData();
-    await loadLiveReference();
+    await loadAppsScript();
     lastReloadedAt = lastLoadedAt;
     renderAll();
     const pageReloadTime = formatPageReloadTime(lastReloadedAt);
@@ -316,13 +485,13 @@ function filteredMarkets() {
       if (hideJapan && isJapan(m)) return false;
       if (regionFilter === "amer" && !amerMarkets().includes(m.country)) return false;
       if (segmentFilter !== "all" && m.segment !== segmentFilter) return false;
-      if (recFilter !== "all" && m.headcount_recommendation !== recFilter) return false;
+      if (recFilter !== "all" && displayRecommendation(m) !== recFilter) return false;
       return true;
     })
     .sort((a, b) => {
-      if (sortBy === "ideal_hc") return (b.optimal_headcount || 0) - (a.optimal_headcount || 0);
-      if (sortBy === "gap") return Math.abs(b.headcount_gap) - Math.abs(a.headcount_gap);
-      if (sortBy === "reps") return b.current_reps - a.current_reps;
+      if (sortBy === "ideal_hc") return (displayOptimalHc(b) || 0) - (displayOptimalHc(a) || 0);
+      if (sortBy === "gap") return Math.abs(displayHcGap(b)) - Math.abs(displayHcGap(a));
+      if (sortBy === "reps") return displayCurrentReps(b) - displayCurrentReps(a);
       return b.revenue_90d - a.revenue_90d;
     });
 }
@@ -363,63 +532,44 @@ function renderSources() {
   const bookUpdated = bookHealth?.updated_at;
   const query = payload.query || "sql/16_dashboard_export.sql";
   const window = payload.window || "—";
-
-  const curveSources = {};
-  for (const m of payload.markets || []) {
-    const src = m.perfect_book_source || "unknown";
-    curveSources[src] = (curveSources[src] || 0) + 1;
-  }
-  const curveSummary = Object.entries(curveSources)
-    .sort((a, b) => b[1] - a[1])
-    .map(([src, n]) => `${src}: ${n}`)
-    .join(" · ") || "—";
-
-  const gated = (payload.markets || []).filter((m) => m.hc_curve_validated === false).length;
+  const segCount = Object.keys(appsScriptSegments).length;
   const refSum = countryReferenceSummary();
   const refLabel = referenceLabel();
-  const refDetail = referenceCheck
-    ? `${referenceSourceLabel()} · ${referenceCheck.imported_at || "—"}`
-    : `Place file at docs/data/reference-workbook.xlsx and run sync-reference-workbook.py`;
-  const refMatch = refSum
-    ? `${refSum.countriesMatch}/${refSum.countriesWithData} countries match · ${refSum.marketsMatch}/${refSum.marketsTotal} markets`
-    : "—";
+  const appsUrl = (config.reference_apps_script_url || "").trim();
 
   el.innerHTML = `
     <div class="sources-meta-grid">
       <div class="sources-meta-card">
-        <div class="sources-meta-label">headcount.json snapshot</div>
+        <div class="sources-meta-label">Warehouse snapshot</div>
         <div class="sources-meta-value">${payload.updated_at || "—"}</div>
-        <div class="sources-meta-detail">${marketCount} markets · ${window}</div>
+        <div class="sources-meta-detail">${marketCount} markets · <code>${query}</code> · ${window}</div>
       </div>
       <div class="sources-meta-card">
-        <div class="sources-meta-label">Source query</div>
-        <div class="sources-meta-value"><code>${query}</code></div>
-        <div class="sources-meta-detail">book_health.json${bookUpdated ? ` · ${bookUpdated}` : ""}</div>
+        <div class="sources-meta-label">Google Sheet (Apps Script)</div>
+        <div class="sources-meta-value sources-meta-small">${appsScriptSource === "live" ? `${segCount} segments live` : appsUrl ? "Not loaded" : "URL not set"}</div>
+        <div class="sources-meta-detail">${referenceSourceLabel()}</div>
+        ${referenceLiveError && appsScriptSource !== "live" ? `<p class="sources-meta-link ref-live-warn">${referenceLiveError}</p>` : ""}
+        ${config.reference_sheet_url ? `<p class="sources-meta-link">${referenceDocLink()}</p>` : ""}
       </div>
       <div class="sources-meta-card">
-        <div class="sources-meta-label">Ideal PCID sources</div>
-        <div class="sources-meta-value sources-meta-small">${curveSummary}</div>
-        <div class="sources-meta-detail">${gated} market(s) HC-gated (curve not validated)</div>
+        <div class="sources-meta-label">Country rep cross-check</div>
+        <div class="sources-meta-value sources-meta-small">${refSum ? `${refSum.countriesMatch}/${refSum.countriesWithData} countries match` : "—"}</div>
+        <div class="sources-meta-detail">Sheet Capacity_Dashboard vs warehouse current_reps · ${refSum?.marketsMatch ?? "—"}/${refSum?.marketsTotal ?? "—"} markets</div>
       </div>
       <div class="sources-meta-card">
-        <div class="sources-meta-label">${refLabel}</div>
-        <div class="sources-meta-value sources-meta-small">${refMatch}</div>
-        <div class="sources-meta-detail">${refDetail}</div>
-        <p class="sources-meta-link"><code>docs/data/reference-workbook.xlsx</code> (offline sync)</p>
-        ${referenceLiveError && referenceCheckSource !== "live" ? `<p class="sources-meta-link ref-live-warn">Live sheet: ${referenceLiveError}</p>` : ""}
-        ${referenceCheckSource === "live" ? `<p class="sources-meta-link ref-live-ok">✓ Live CSV loaded for all countries</p>` : ""}
-        ${config.reference_sheet_url || referenceCheck?.source_url ? `<p class="sources-meta-link">${referenceDocLink()}</p>` : ""}
+        <div class="sources-meta-label">Book health</div>
+        <div class="sources-meta-value">${bookUpdated || "—"}</div>
+        <div class="sources-meta-detail"><code>book_health.json</code></div>
       </div>
     </div>
     <details class="methodology-details ref-sync-instructions">
-      <summary>Sync ${referenceLabel()}</summary>
+      <summary>Apps Script setup</summary>
       <div class="methodology-body">
-        <p>Canonical reference: <strong>${referenceLabel()}</strong>. Live fetch uses published CSV when <code>reference_sheet_live</code> is true; falls back to <code>reference_check.json</code>.</p>
+        <p>Ideal book per segment loads live from <strong>${refLabel}</strong> via Google Apps Script. Warehouse KPIs stay on <code>headcount.json</code> until you reload snapshot.</p>
         <ol>
-          <li>Publish tabs to web in Google Sheets (Capacity_Dashboard required for country rep counts).</li>
-          <li>Set <code>reference_sheet_csv_urls</code> gids in <code>config.json</code> (one per tab).</li>
-          <li>Click <strong>Reload sheet reference</strong> or hard-refresh — all markets cross-check by country.</li>
-          <li>Offline: replace <code>reference-workbook.xlsx</code> → <code>python3 scripts/sync-reference-workbook.py</code></li>
+          <li>Deploy <code>docs/google-apps-script/HeadcountDashboard.gs</code> as a Web app (see <code>docs/APPS-SCRIPT-DEPLOY.md</code>).</li>
+          <li>Paste Web app URL into <code>reference_apps_script_url</code> in <code>config.json</code>.</li>
+          <li>Click <strong>Reload sheet reference</strong> — Overview shows live ideal book + why trends per segment.</li>
         </ol>
       </div>
     </details>`;
@@ -429,112 +579,32 @@ function renderSources() {
 function renderWorkbookCheck() {
   const el = document.getElementById("workbook-check-wrap");
   if (!el) return;
-  const label = referenceLabel();
-  const sourceLine =
-    referenceCheckSource === "live"
-      ? `<span class="ref-live-ok">Live Google Sheet</span>${referenceCheck?.live_fetched_at ? ` · ${new Date(referenceCheck.live_fetched_at).toLocaleString()}` : ""}`
-      : referenceCheck
-        ? `<span class="ref-source-badge">${referenceSourceLabel()}</span> · ${referenceCheck.imported_at || "—"}`
-        : "";
-
-  if (!referenceCheck?.sheets?.length && !referenceCheck?.country_checks) {
-    el.innerHTML = `
-      <h3 class="workbook-check-heading">Check vs ${label}</h3>
-      <p class="caption">Publish <strong>Capacity_Dashboard</strong> to web, set gid in <code>config.json</code>, or copy workbook to <code>docs/data/reference-workbook.xlsx</code> and run <code>python3 scripts/sync-reference-workbook.py</code>.</p>`;
+  if (!referenceCheck?.country_checks) {
+    el.innerHTML = "";
     return;
   }
-
   const sum = referenceCheck.workbook_summary || {};
-  const countryRows = referenceCheck.country_checks
-    ? Object.entries(referenceCheck.country_checks)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([country, cc]) => {
-          const ok = cc.match;
-          const dash = cc.dashboard_reps;
-          const sheet = cc.sheet_reps;
-          const status =
-            sheet == null
-              ? "—"
-              : dash == null
-                ? "dash —"
-                : ok
-                  ? "✓"
-                  : "≠";
-          return `<tr class="${ok ? "workbook-row-ok" : sheet != null && dash != null ? "workbook-row-warn" : ""}">
-            <td><strong>${country}</strong></td>
-            <td class="num">${sheet != null ? fmtNum(sheet) : "—"}</td>
-            <td class="num">${dash != null ? fmtNum(dash) : "—"}</td>
-            <td>${status}</td>
-          </tr>`;
-        })
-        .join("")
-    : "";
-
-  const countryTable = countryRows
-    ? `<h4 class="workbook-check-subheading">Country rep counts (all markets)</h4>
-    <p class="caption">Each country×segment in headcount.json inherits its country's check. Dashboard reps = sum of segment <code>current_reps</code>.</p>
-    <div class="table-wrap">
-      <table class="workbook-check-table workbook-country-table">
-        <thead><tr><th>Country</th><th class="num">${label}</th><th class="num">Dashboard</th><th></th></tr></thead>
-        <tbody>${countryRows}</tbody>
-      </table>
-    </div>`
-    : "";
-
-  const rows = (referenceCheck.sheets || [])
-    .filter((s) => !s.skipped)
-    .map((s) => {
-      const ok = s.mismatched === 0 && (s.missing_in_dashboard ?? 0) === 0;
-      const status = ok ? "workbook-row-ok" : "workbook-row-warn";
-        return `<tr class="${status}">
-          <td>${s.name}${s.note ? `<div class="workbook-row-note">${s.note}</div>` : ""}</td>
-          <td class="num">${fmtNum(s.sheet_rows)}</td>
-          <td class="num">${fmtNum(s.matched)}</td>
-          <td class="num">${fmtNum(s.mismatched)}</td>
-          <td class="num">${fmtNum(s.missing_in_dashboard ?? 0)}</td>
-        </tr>`;
+  const rows = Object.entries(referenceCheck.country_checks)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([country, cc]) => {
+      const ok = cc.match;
+      return `<tr class="${ok ? "workbook-row-ok" : "workbook-row-warn"}">
+        <td>${country}</td>
+        <td class="num">${fmtNum(cc.sheet_reps)}</td>
+        <td class="num">${fmtNum(cc.dashboard_reps)}</td>
+        <td>${ok ? "✓" : "≠"}</td>
+      </tr>`;
     })
     .join("");
-
-  const skipped = (sum.sheets_skipped || []).map((n) => `<li>${n}</li>`).join("");
-
-  const mismatchDetails = (referenceCheck.sheets || [])
-    .flatMap((s) =>
-      (s.mismatch_samples || []).slice(0, 5).map((m) => ({
-        sheet: s.name,
-        ...m,
-      })),
-    )
-    .slice(0, 15);
-
-  const detailHtml = mismatchDetails.length
-    ? `<details class="workbook-mismatch-details"><summary>Sample mismatches (${mismatchDetails.length})</summary><ul class="notes">${mismatchDetails
-        .map((m) => {
-          if (m.issue === "missing_in_dashboard") {
-            return `<li><strong>${m.sheet}</strong> · ${m.key} — in sheet, not in dashboard JSON</li>`;
-          }
-          const diffs = (m.diffs || [])
-            .map((d) => `${d.field}: sheet ${d.sheet ?? "—"} vs dash ${d.dashboard ?? "—"}`)
-            .join("; ");
-          return `<li><strong>${m.sheet}</strong> · ${m.key} — ${diffs}</li>`;
-        })
-        .join("")}</ul></details>`
-    : "<p class=\"caption\">All compared rows match dashboard JSON for every tab.</p>";
-
   el.innerHTML = `
-    <h3 class="workbook-check-heading">Check vs ${label}</h3>
-    <p class="caption">${sourceLine} · Snapshot ${referenceCheck.dashboard_snapshot || payload?.updated_at || "—"} · <strong>${fmtNum(sum.rows_matched)}</strong> countries match · <strong>${fmtNum(sum.rows_mismatched)}</strong> differ</p>
-    ${referenceLiveError && referenceCheckSource !== "live" ? `<p class="ref-live-warn">Live fetch: ${referenceLiveError}</p>` : ""}
-    ${countryTable}
-    ${rows ? `<h4 class="workbook-check-subheading">Published tabs</h4>
+    <h3 class="workbook-check-heading">Country rep counts — sheet vs warehouse</h3>
+    <p class="caption">${referenceSourceLabel()} · ${fmtNum(sum.rows_matched)} match · ${fmtNum(sum.rows_mismatched)} differ</p>
     <div class="table-wrap">
-      <table class="workbook-check-table">
-        <thead><tr><th>Tab</th><th class="num">Sheet rows</th><th class="num">Match</th><th class="num">Differ</th><th class="num">Missing in dash</th></tr></thead>
+      <table class="workbook-check-table workbook-country-table">
+        <thead><tr><th>Country</th><th class="num">Sheet</th><th class="num">Dashboard</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
-    </div>` : ""}
-    ${skipped ? `<p class="caption">Tabs not compared (no mapping):</p><ul class="notes">${skipped}</ul>` : ""}
-    ${detailHtml}`;
+    </div>`;
 }
 
 function renderHeadline() {
@@ -701,9 +771,6 @@ function countryReferenceForMarket(m) {
 /** All markets: segment rows inherit country-level sheet check. */
 function countryReferenceSummary() {
   if (!referenceCheck?.country_checks || !payload?.markets) return null;
-  const dashTotals = ReferenceLive
-    ? ReferenceLive.dashboardCountryRepTotals(payload.markets)
-    : {};
   let marketsMatch = 0;
   let marketsTotal = 0;
   const countrySeen = {};
@@ -923,6 +990,23 @@ function buildIdealBookSummary(m) {
 }
 
 function idealBookSummaryHtml(m) {
+  const live = liveSegmentForMarket(m);
+  if (live) {
+    const bullets = (live.why_trends || []).slice(0, 3);
+    const rec = live.recommendation || hcRecLabel(m);
+    return `
+    <section class="ideal-book-panel" aria-label="Ideal book from Google Sheet">
+      <h3 class="ideal-book-title">Ideal book for ${m.country}-${m.segment}</h3>
+      <div class="ideal-book-headline">
+        <span class="ideal-book-pcid">${live.ideal_pcid != null ? `${fmtNum(live.ideal_pcid)} PCIDs` : "—"}</span>
+        <span class="ideal-book-meta">${live.ideal_band || "—"} band · ${appsScriptSource === "live" ? "Apps Script" : "sheet"}</span>
+      </div>
+      <p class="ideal-book-lead">${live.ideal_book_summary || "—"}</p>
+      ${bullets.length ? `<ul class="ideal-book-trends">${bullets.map((b) => `<li>${b}</li>`).join("")}</ul>` : ""}
+      <p class="ideal-book-context">${appsScriptSourceBadge()}${live.current_reps != null ? ` · ${fmtNum(live.current_reps)} reps` : ""}${live.current_avg_book != null ? ` · avg ${fmtNum(live.current_avg_book)} PCIDs` : ""}${live.optimal_hc != null ? ` · optimal HC ${fmtNum(live.optimal_hc)}` : ""}${live.hc_gap != null ? ` · gap ${gapStr(live.hc_gap)}` : ""} · <span class="rec rec-${(rec || "Hold").replace(/ /g, "\\ ")}">${rec}</span></p>
+    </section>`;
+  }
+
   const s = buildIdealBookSummary(m);
   const avgBook = m.current_avg_book ?? m.avg_pcid_per_rep;
   if (s.ideal == null) {
@@ -943,8 +1027,8 @@ function idealBookSummaryHtml(m) {
       }
       ${
         avgBook != null
-          ? `<p class="ideal-book-context">Today: avg <strong>${fmtNum(avgBook)}</strong> PCIDs/rep · segment avg <strong>${fmtNum(s.segAvg)}</strong></p>`
-          : ""
+          ? `<p class="ideal-book-context">Today: avg <strong>${fmtNum(avgBook)}</strong> PCIDs/rep · segment avg <strong>${fmtNum(s.segAvg)}</strong> · ${appsScriptSourceBadge()}</p>`
+          : `<p class="ideal-book-context">${appsScriptSourceBadge()}</p>`
       }
     </section>`;
 }
@@ -1952,16 +2036,20 @@ function renderLookup() {
     return;
   }
 
-  const gap = m.headcount_gap;
+  const gap = displayHcGap(m);
   const gapLabel = gapStr(gap);
   const recClass = hcRecClass(m);
   const health = buildHealthFromMarket(m);
   const hcReason = buildHcReason(m);
   const sbs = buildSbsRouting(m);
   const recs = buildRecommendationsFromMarket(m);
-  const ideal = idealPcid(m);
+  const ideal = displayIdealPcid(m);
+  const currentReps = displayCurrentReps(m);
+  const optimalHc = displayOptimalHc(m);
+  const avgBook = displayAvgPcid(m);
   const key = marketKey(m);
   const bh = bookHealth?.markets?.[key];
+  const live = liveSegmentForMarket(m);
 
   const sbsLine = sbs.hasOpp
     ? sbs.opportunity || `SBS whitespace — ~${fmtNum(sbs.books)} books buildable`
@@ -1973,36 +2061,36 @@ function renderLookup() {
       <span class="rec lookup-rec-badge rec-${recClass}">${hcRecLabel(m)}</span>
     </div>
 
-    ${idealBookSummaryHtml(m)}
+    ${appsScriptIdealBookHtml(m)}
 
     <details class="lookup-details">
       <summary>Headcount recommendation &amp; book health</summary>
       <div class="lookup-details-body">
         <div class="lookup-stats">
           <div class="lookup-stat-card">
-            <div class="lookup-stat-value">${fmtNum(m.current_reps)}</div>
-            <div class="lookup-stat-label">Current reps</div>
+            <div class="lookup-stat-value">${fmtNum(currentReps)}</div>
+            <div class="lookup-stat-label">Current reps${live ? " (sheet)" : ""}</div>
           </div>
           <div class="lookup-stat-card highlight">
-            <div class="lookup-stat-value">${fmtNum(m.optimal_headcount)}</div>
-            <div class="lookup-stat-label">Optimal HC</div>
+            <div class="lookup-stat-value">${fmtNum(optimalHc)}</div>
+            <div class="lookup-stat-label">Optimal HC${live ? " (sheet)" : ""}</div>
           </div>
           <div class="lookup-stat-card">
             <div class="lookup-stat-value">${gapLabel}</div>
-            <div class="lookup-stat-label">HC gap</div>
+            <div class="lookup-stat-label">HC gap${live ? " (sheet)" : ""}</div>
           </div>
           <div class="lookup-stat-card">
             <div class="lookup-stat-value">${fmtNum(ideal)}</div>
-            <div class="lookup-stat-label">Ideal PCID</div>
+            <div class="lookup-stat-label">Ideal PCID${live ? " (sheet)" : ""}</div>
           </div>
         </div>
         <section class="rec-why-panel" aria-label="Recommendation rationale">
           <h3 class="rec-why-title">Why <span class="rec rec-${recClass}">${hcRecLabel(m)}</span>?</h3>
-          <p class="rec-why-summary">${buildRecommendationWhyParagraph(m)}</p>
-          <p class="lookup-formula">${fmtNum(m.assigned_accounts)} PCIDs ÷ ${fmtNum(ideal)} ideal = ${fmtNum(m.optimal_headcount)} optimal HC · gap ${gapLabel}${m.hc_curve_gate_reason && m.hc_curve_validated === false ? ` · <span class="gate-note">${m.hc_curve_gate_reason}</span>` : ""}</p>
+          <p class="rec-why-summary">${live ? [live.ideal_book_summary, ...(live.why_trends || [])].filter(Boolean).join(" ") : buildRecommendationWhyParagraph(m)}</p>
+          <p class="lookup-formula">${live ? `Sheet: ${fmtNum(currentReps)} reps · optimal HC ${fmtNum(optimalHc)} · gap ${gapLabel}` : `${fmtNum(m.assigned_accounts)} PCIDs ÷ ${fmtNum(ideal)} ideal = ${fmtNum(m.optimal_headcount)} optimal HC · gap ${gapLabel}`}${m.hc_curve_gate_reason && m.hc_curve_validated === false && !live ? ` · <span class="gate-note">${m.hc_curve_gate_reason}</span>` : ""}</p>
         </section>
         <p><strong>Book health:</strong> ${health.primary || "—"}</p>
-        <p>Avg ${fmtNum(m.current_avg_book)} PCIDs/rep vs ideal ${fmtNum(ideal)} · PQR ${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"} · ${fmtNum(m.reps_too_big ?? 0)} too big, ${fmtNum(m.reps_too_little ?? 0)} too little</p>
+        <p>Avg ${fmtNum(avgBook)} PCIDs/rep vs ideal ${fmtNum(ideal)} · PQR ${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"} · ${fmtNum(m.reps_too_big ?? 0)} too big, ${fmtNum(m.reps_too_little ?? 0)} too little</p>
         <p><strong>SBS:</strong> ${sbsLine}</p>
         ${recs.bullets.length ? `<ul class="notes">${recs.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>` : ""}
       </div>
@@ -2128,6 +2216,11 @@ function bookGapPct(m) {
 }
 
 function keyFinding(m) {
+  const live = liveSegmentForMarket(m);
+  if (live) {
+    const parts = [live.ideal_book_summary, ...(live.why_trends || [])].filter(Boolean);
+    if (parts.length) return parts.join(" ");
+  }
   const s = buildIdealBookSummary(m);
   return s.text || m.recommendation_primary || m.hc_reason_primary || "—";
 }
@@ -2154,22 +2247,34 @@ function findingsMarkets() {
         return ak.localeCompare(bk) * dir;
       }
       if (col === "headcount_recommendation" || col === "hc_curve_validated") {
-        const av = col === "hc_curve_validated" ? curveValidatedLabel(a) : a.headcount_recommendation || "";
-        const bv = col === "hc_curve_validated" ? curveValidatedLabel(b) : b.headcount_recommendation || "";
+        const av = col === "hc_curve_validated" ? curveValidatedLabel(a) : displayRecommendation(a);
+        const bv = col === "hc_curve_validated" ? curveValidatedLabel(b) : displayRecommendation(b);
         return av.localeCompare(bv) * dir;
       }
       const av =
         col === "avg_pcid"
-          ? a.avg_pcid_per_rep ?? a.current_avg_book
+          ? displayAvgPcid(a)
           : col === "ideal_pcid"
-            ? idealPcid(a)
-            : a[col];
+            ? displayIdealPcid(a)
+            : col === "optimal_headcount"
+              ? displayOptimalHc(a)
+              : col === "headcount_gap"
+                ? displayHcGap(a)
+                : col === "current_reps"
+                  ? displayCurrentReps(a)
+                  : a[col];
       const bv =
         col === "avg_pcid"
-          ? b.avg_pcid_per_rep ?? b.current_avg_book
+          ? displayAvgPcid(b)
           : col === "ideal_pcid"
-            ? idealPcid(b)
-            : b[col];
+            ? displayIdealPcid(b)
+            : col === "optimal_headcount"
+              ? displayOptimalHc(b)
+              : col === "headcount_gap"
+                ? displayHcGap(b)
+                : col === "current_reps"
+                  ? displayCurrentReps(b)
+                  : b[col];
       const an = Number(av);
       const bn = Number(bv);
       if (!Number.isNaN(an) && !Number.isNaN(bn)) return (an - bn) * dir;
@@ -2198,23 +2303,24 @@ function renderFindings() {
   const amer = amerMarkets();
   tbody.innerHTML = findingsMarkets()
     .map((m) => {
-      const gap = m.headcount_gap;
+      const gap = displayHcGap(m);
       const gapStr = gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
       const recClass = hcRecClass(m);
-      const avgPcid = m.avg_pcid_per_rep ?? m.current_avg_book;
-      const ideal = idealPcid(m);
+      const avgPcid = displayAvgPcid(m);
+      const ideal = displayIdealPcid(m);
       const usRow = m.country === "US" ? " findings-us-row" : "";
       const amerRow = amer.includes(m.country) ? " findings-amer-row" : "";
       const validated = m.hc_curve_validated !== false;
+      const live = liveSegmentForMarket(m);
       return `<tr class="${usRow}${amerRow}">
         <td class="sticky-col"><strong>${m.country}-${m.segment}</strong></td>
         <td class="num">${fmtMoney(m.revenue_90d)}</td>
-        <td class="num">${fmtNum(m.current_reps)}</td>
-        <td class="num">${fmtNum(avgPcid)}</td>
-        <td class="num">${fmtNum(ideal)}</td>
+        <td class="num">${fmtNum(displayCurrentReps(m))}${live ? '<span class="live-dot" title="From sheet">●</span>' : ""}</td>
+        <td class="num">${fmtNum(avgPcid)}${live ? '<span class="live-dot" title="From sheet">●</span>' : ""}</td>
+        <td class="num">${fmtNum(ideal)}${live ? '<span class="live-dot" title="From sheet">●</span>' : ""}</td>
         <td class="findings-narrative">${keyFinding(m)}</td>
-        <td class="num">${fmtNum(m.optimal_headcount)}</td>
-        <td class="num">${gapStr}</td>
+        <td class="num">${fmtNum(displayOptimalHc(m))}${live ? '<span class="live-dot" title="From sheet">●</span>' : ""}</td>
+        <td class="num">${gapStr}${live ? '<span class="live-dot" title="From sheet">●</span>' : ""}</td>
         <td><span class="rec rec-${recClass}">${hcRecLabel(m)}</span></td>
         <td><span class="curve-validated curve-validated-${validated ? "yes" : "no"}">${curveValidatedLabel(m)}</span></td>
         <td class="ref-check-col">${referenceCheckBadge(m)}</td>
@@ -2232,21 +2338,22 @@ function renderTable() {
   const tbody = document.getElementById("market-body");
   tbody.innerHTML = filteredMarkets()
     .map((m) => {
-      const gap = m.headcount_gap;
+      const gap = displayHcGap(m);
       const gapStr = gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
       const isLookupRow =
         m.country === lookupCountry && m.segment === lookupSegment;
       const hcStatus = m.summary_status || "—";
       const sbsFlag = sbsOppLabel(m);
       const hcClass = hcStatusClass(hcStatus).replace("summary-", "");
+      const live = liveSegmentForMarket(m);
       return `<tr${isLookupRow ? ' class="lookup-row"' : ""}>
         <td class="sticky-col">${m.country}-${m.segment}</td>
         <td><span class="hc-verdict hc-verdict-${hcClass}">${hcStatus}</span></td>
-        <td class="num highlight-col"><strong>${fmtNum(m.optimal_headcount)}</strong></td>
-        <td class="num">${fmtNum(m.current_reps)}</td>
-        <td class="num">${gapStr}</td>
+        <td class="num highlight-col"><strong>${fmtNum(displayOptimalHc(m))}</strong>${live ? '<span class="live-dot" title="From sheet">●</span>' : ""}</td>
+        <td class="num">${fmtNum(displayCurrentReps(m))}${live ? '<span class="live-dot" title="From sheet">●</span>' : ""}</td>
+        <td class="num">${gapStr}${live ? '<span class="live-dot" title="From sheet">●</span>' : ""}</td>
         <td><span class="rec rec-${hcRecClass(m)}">${hcRecLabel(m)}</span></td>
-        <td class="num">${fmtNum(m.current_avg_book)} / ${fmtNum(idealPcid(m))}</td>
+        <td class="num">${fmtNum(displayAvgPcid(m))} / ${fmtNum(displayIdealPcid(m))}</td>
         <td class="sbs-opp-cell${buildSbsRouting(m).hasOpp ? " sbs-opp-yes" : ""}">${sbsFlag}</td>
       </tr>`;
     })
@@ -2524,11 +2631,15 @@ async function init() {
   try {
     await loadConfig();
     await loadData();
-    await loadLiveReference();
+    await loadAppsScript();
   } catch (err) {
     document.querySelector(".container").innerHTML =
       `<div class="error"><strong>Failed to load dashboard data.</strong> ${err.message}</div>`;
     return;
+  }
+
+  if (referenceLiveError && appsScriptSource !== "live") {
+    showToast(`Apps Script: ${referenceLiveError}. Using headcount.json for ideal book.`, "warn");
   }
 
   try {
