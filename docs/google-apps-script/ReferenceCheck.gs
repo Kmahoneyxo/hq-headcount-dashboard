@@ -71,14 +71,15 @@ function doGet(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-/** Run from editor or HQ Dashboard menu — rebuilds HC_Model + Executive_View. */
+/** Run from editor or HQ Dashboard menu — rebuilds output tabs. */
 function refreshDashboardSummary() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var payload = buildDashboardPayload_(ss);
   writeHcModelTab_(ss, payload);
   writeExecutiveViewTab_(ss, payload);
+  writeLookerExportTab_(ss, payload);
   SpreadsheetApp.getActiveSpreadsheet().toast(
-    'Updated ' + MODEL_TAB_NAME + ' + ' + EXECUTIVE_TAB_NAME,
+    'Updated ' + MODEL_TAB_NAME + ', ' + EXECUTIVE_TAB_NAME + ', ' + LOOKER_EXPORT_TAB_NAME,
     'HQ Dashboard',
     5
   );
