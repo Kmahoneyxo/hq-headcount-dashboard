@@ -32,6 +32,7 @@
       <button type="button" class="dash-tab active" data-tab="markets">Markets</button>
       <button type="button" class="dash-tab" data-tab="book-health">Book health</button>
       <button type="button" class="dash-tab" data-tab="methodology">Methodology</button>
+      <button type="button" class="dash-tab" data-tab="sources">Show our work</button>
     </nav>
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
   </header>
@@ -305,12 +306,166 @@
         <p class="caption refresh-note" id="refresh-note"></p>
       </section>
     </div>
+
+    <div id="tab-sources" class="tab-panel hidden">
+      <section class="panel sources-panel">
+        <h2>Show our work</h2>
+        <p class="caption">Data sources, SQL → JSON mapping, and build pipeline — transparency / audit trail for this snapshot.</p>
+
+        <div id="sources-snapshot" class="sources-snapshot" aria-live="polite"></div>
+
+        <details class="methodology-details" open>
+          <summary>Warehouse — Trino / Quest prod</summary>
+          <div class="methodology-body">
+            <p>Queries run on <strong>Quest prod</strong> (Trino) against the Indeed datalake. Key tables:</p>
+            <ul class="notes">
+              <li><code>datalake.imhotep_iceberg.jobactivitymetrics</code> — PCIDs, revenue, jobs (<code>agg_job_id</code>), team assignment</li>
+              <li><code>datalake.sales_data_strategy_dsa.current_parent_rep_assignment</code> — rep → market metadata</li>
+              <li><code>datalake.sales_data_strategy_dsa.rep_activity_sales</code> — <code>impact_calls</code> (coverage)</li>
+              <li><code>datalake.sales_data_strategy_dsa.sales_book_summary_v2</code> — FY26 book build score</li>
+              <li><code>datalake.scss.client_attributes_dim_parent_attributes_current</code> — SBS / unassigned parents (sql/16)</li>
+            </ul>
+            <p><strong>Partition windows</strong> (sql/16, sql/17 — update before refresh):</p>
+            <ul class="notes">
+              <li>JAM filter: <code>dl__yyyymmdd_cst BETWEEN '20260128' AND '20260725'</code></li>
+              <li>Current 90d revenue: <code>20260427</code>–<code>20260725</code></li>
+              <li>Prior PQR: <code>20260128</code>–<code>20260426</code></li>
+              <li>Impact calls: <code>rep_activity_sales.date</code> between <code>2026-04-27</code> and <code>2026-07-25</code></li>
+            </ul>
+            <p><strong>GTM v2 segment logic:</strong> <code>sql/_sales_segment_v2.sql</code> (inline in sql/16, sql/17). Country × segment from <code>current_sales_team_name</code>; excludes S/XL employer-size segments and Agency teams. Market rollups: DE/AT/CH → DACH, BE/NL/LU → BNL, GB → UK.</p>
+          </div>
+        </details>
+
+        <details class="methodology-details" open>
+          <summary>SQL queries → outputs</summary>
+          <div class="methodology-body">
+            <div class="table-wrap">
+              <table class="methodology-table sources-table">
+                <thead>
+                  <tr>
+                    <th>Query</th>
+                    <th>File</th>
+                    <th>Output JSON</th>
+                    <th>Runtime?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>16</td>
+                    <td><code>sql/16_dashboard_export.sql</code></td>
+                    <td><code>docs/data/headcount.json</code></td>
+                    <td><span class="sources-badge sources-yes">Yes</span></td>
+                  </tr>
+                  <tr>
+                    <td>17</td>
+                    <td><code>sql/17_rep_book_profile.sql</code></td>
+                    <td><code>docs/data/book_health.json</code></td>
+                    <td><span class="sources-badge sources-yes">Yes</span></td>
+                  </tr>
+                  <tr>
+                    <td>17a</td>
+                    <td><code>sql/17_rep_book_profile_all.sql</code></td>
+                    <td><code>docs/data/rep_book.json</code></td>
+                    <td><span class="sources-badge sources-build">Build only</span></td>
+                  </tr>
+                  <tr>
+                    <td>18</td>
+                    <td><code>sql/18_impact_coverage_all_reps.sql</code></td>
+                    <td><code>docs/data/impact_coverage_all_reps.json</code></td>
+                    <td><span class="sources-badge sources-build">Export</span></td>
+                  </tr>
+                  <tr>
+                    <td>22</td>
+                    <td><code>sql/22_book_threshold_analysis.sql</code></td>
+                    <td><code>docs/data/book_threshold_reps.json</code></td>
+                    <td><span class="sources-badge sources-build">Analysis</span></td>
+                  </tr>
+                  <tr>
+                    <td>23</td>
+                    <td><code>sql/23_product_mix_by_bucket.sql</code></td>
+                    <td><code>docs/data/product_mix_by_bucket.json</code> → merged into headcount</td>
+                    <td><span class="sources-badge sources-yes">Yes</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="caption">Companion exports: <code>sql/16_growth_by_bucket_export.sql</code> (growth curve buckets), <code>sql/21_jv_by_bucket.sql</code>, <code>sql/24_coverage_by_bucket.sql</code>.</p>
+          </div>
+        </details>
+
+        <details class="methodology-details">
+          <summary>Build pipeline (ordered)</summary>
+          <div class="methodology-body">
+            <ol class="sources-pipeline">
+              <li><code>scripts/json-from-mcp-results.py</code> — Quest export → <code>headcount.json</code></li>
+              <li><code>scripts/merge-rep-book.py</code> — sql/17a → <code>rep_book.json</code> (curves, JV, coverage by bucket)</li>
+              <li><code>scripts/merge-book-health.py</code> — sql/17 flagged → <code>book_health.json</code></li>
+              <li><code>scripts/merge-bucket-exports.py</code> — sql/23 / sql/24 → merge into headcount</li>
+              <li><code>scripts/analyze-book-thresholds.py</code> — sql/22 → threshold workbook + summary</li>
+              <li><code>scripts/build_market_summary.py</code> — narratives, HC gating, enrich headcount</li>
+            </ol>
+          </div>
+        </details>
+
+        <details class="methodology-details">
+          <summary>Formulas — Layer 1 &amp; Layer 2</summary>
+          <div class="methodology-body">
+            <table class="methodology-table">
+              <thead>
+                <tr><th>Layer</th><th>Formula / rule</th><th>Fields</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>1 — Ideal PCID</strong></td>
+                  <td>Reps bucketed by PCID (1–10 … 150+). Median rev growth (current 90d vs prior PQR) per bucket. <strong>85% rule:</strong> largest bucket within 85% of segment peak growth. Fallbacks: relaxed curve (≥5 reps/bucket), peer-segment ideal, segment median.</td>
+                  <td><code>ideal_pcid</code>, <code>perfect_book_source</code>, <code>growth_by_bucket</code></td>
+                </tr>
+                <tr>
+                  <td><strong>1 — Book health</strong></td>
+                  <td>Too big = PCID or PQR above segment avg + weak coverage (&lt;90% segment avg) or rev &lt; PQR. Too little = PCID below ideal.</td>
+                  <td><code>reps_too_big</code>, <code>reps_too_little</code>, <code>pct_reps_healthy</code></td>
+                </tr>
+                <tr>
+                  <td><strong>2 — Headcount</strong></td>
+                  <td><code>optimal_headcount = assigned_accounts ÷ ideal_pcid</code>. Gap = current reps − optimal. Hire / Hold / Optimize from gap thresholds.</td>
+                  <td><code>ideal_headcount</code>, <code>headcount_gap</code>, <code>headcount_recommendation</code></td>
+                </tr>
+                <tr>
+                  <td><strong>2 — Curve gating</strong></td>
+                  <td>Hire/Optimize held to <strong>Hold</strong> when ideal PCID is not validated by growth curve (<code>curve_strict</code> or <code>curve_relaxed</code> with positive growth).</td>
+                  <td><code>hc_curve_validated</code>, <code>hc_curve_gate_reason</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+
+        <details class="methodology-details">
+          <summary>Data files &amp; validation</summary>
+          <div class="methodology-body">
+            <p>Runtime dashboard loads <code>headcount.json</code> and <code>book_health.json</code>. Build-time files include <code>rep_book.json</code>, <code>impact_coverage_all_reps.json</code>, <code>book_threshold_reps.json</code>.</p>
+            <p><strong>Validation:</strong> User CSV exports <code>docs/data/query17_all.csv</code> and <code>docs/data/query17_flagged.csv</code> can validate <code>rep_book.json</code> / <code>book_health.json</code> via <code>merge-rep-book.py</code> and <code>merge-book-health.py</code>.</p>
+          </div>
+        </details>
+
+        <details class="methodology-details">
+          <summary>Refresh runbook &amp; references</summary>
+          <div class="methodology-body">
+            <ul class="notes">
+              <li><a href="./project-overview.md">docs/project-overview.md</a> — two-layer methodology (book health → headcount)</li>
+              <li><a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard/blob/main/sql/README.md" target="_blank" rel="noopener noreferrer">sql/README.md</a> — SQL runbook and dashboard refresh steps</li>
+              <li><strong>iDash note:</strong> workspace RTPDA69FDDY uses legacy employer-size segments — use repo <code>sql/16_dashboard_export.sql</code> with GTM v2 logic instead.</li>
+            </ul>
+          </div>
+        </details>
+      </section>
+    </div>
   </main>
 
   <footer class="footer">
     <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a> · <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">Connect PTD</a></p>
   </footer>
 
-  <script src="app.js?v=20260901b"></script>
+  <script src="app.js?v=20260902a"></script>
 </body>
 </html>

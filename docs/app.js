@@ -264,6 +264,48 @@ function renderMeta() {
     : "Reload snapshot re-fetches the published JSON from GitHub Pages (use after git push). It does not query Quest. " +
       QUEST_REFRESH_STEPS;
   updateRefreshButton();
+  renderSources();
+}
+
+function renderSources() {
+  const el = document.getElementById("sources-snapshot");
+  if (!el || !payload) return;
+
+  const marketCount = payload.markets?.length ?? 0;
+  const bookUpdated = bookHealth?.updated_at;
+  const query = payload.query || "sql/16_dashboard_export.sql";
+  const window = payload.window || "—";
+
+  const curveSources = {};
+  for (const m of payload.markets || []) {
+    const src = m.perfect_book_source || "unknown";
+    curveSources[src] = (curveSources[src] || 0) + 1;
+  }
+  const curveSummary = Object.entries(curveSources)
+    .sort((a, b) => b[1] - a[1])
+    .map(([src, n]) => `${src}: ${n}`)
+    .join(" · ") || "—";
+
+  const gated = (payload.markets || []).filter((m) => m.hc_curve_validated === false).length;
+
+  el.innerHTML = `
+    <div class="sources-meta-grid">
+      <div class="sources-meta-card">
+        <div class="sources-meta-label">headcount.json snapshot</div>
+        <div class="sources-meta-value">${payload.updated_at || "—"}</div>
+        <div class="sources-meta-detail">${marketCount} markets · ${window}</div>
+      </div>
+      <div class="sources-meta-card">
+        <div class="sources-meta-label">Source query</div>
+        <div class="sources-meta-value"><code>${query}</code></div>
+        <div class="sources-meta-detail">book_health.json${bookUpdated ? ` · ${bookUpdated}` : ""}</div>
+      </div>
+      <div class="sources-meta-card">
+        <div class="sources-meta-label">Ideal PCID sources</div>
+        <div class="sources-meta-value sources-meta-small">${curveSummary}</div>
+        <div class="sources-meta-detail">${gated} market(s) HC-gated (curve not validated)</div>
+      </div>
+    </div>`;
 }
 
 function renderHeadline() {
@@ -1650,8 +1692,13 @@ function bindEvents() {
       document.getElementById("tab-book-health").classList.toggle("active", id === "book-health");
       document.getElementById("tab-methodology").classList.toggle("hidden", id !== "methodology");
       document.getElementById("tab-methodology").classList.toggle("active", id === "methodology");
+      document.getElementById("tab-sources").classList.toggle("hidden", id !== "sources");
+      document.getElementById("tab-sources").classList.toggle("active", id === "sources");
       if (id === "book-health") {
         renderBookHealthCharts();
+      }
+      if (id === "sources") {
+        renderSources();
       }
     });
   });
