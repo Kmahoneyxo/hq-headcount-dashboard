@@ -576,7 +576,7 @@ function renderSources() {
       <div class="methodology-body">
         <p>Ideal book per segment loads live from <strong>${refLabel}</strong> via Google Apps Script. Warehouse KPIs stay on <code>headcount.json</code> until you reload snapshot.</p>
         <ol>
-          <li>Deploy <code>docs/google-apps-script/HeadcountDashboard.gs</code> as a Web app (see <code>docs/APPS-SCRIPT-DEPLOY.md</code>).</li>
+          <li>Deploy <code>docs/google-apps-script/ReferenceCheck.gs</code> as a Web app (see <code>docs/APPS-SCRIPT-DEPLOY.md</code>).</li>
           <li>Paste Web app URL into <code>reference_apps_script_url</code> in <code>config.json</code>.</li>
           <li>Click <strong>Reload sheet reference</strong> — Overview shows live ideal book + why trends per segment.</li>
         </ol>
