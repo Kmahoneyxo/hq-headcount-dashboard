@@ -495,6 +495,33 @@ h2 {
   text-align: center;
 }
 
+.ref-live-ok {
+  color: #0d7a4d;
+  font-weight: 600;
+}
+
+.ref-live-warn {
+  color: #b45309;
+  font-size: 0.8125rem;
+  margin: 0.5rem 0 0;
+}
+
+.ref-source-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.workbook-check-subheading {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+}
+
 .ref-sync-instructions {
   margin-top: 1rem;
 }

@@ -1,8 +1,30 @@
 {
   "refresh_api": null,
   "live_refresh": false,
+  "reference_sheet_live": true,
+  "reference_sheet_id": "1Hq64TSm77FVH4hLxME2wrs1bJbT8Qi9Puk4FWMdkGsw",
   "reference_sheet_url": "https://docs.google.com/spreadsheets/d/1Hq64TSm77FVH4hLxME2wrs1bJbT8Qi9Puk4FWMdkGsw/edit",
   "reference_workbook": "reference-workbook.xlsx",
   "reference_workbook_label": "Global Sales Rep Headcount (1)",
-  "reference_workbook_path": "docs/data/reference-workbook.xlsx"
+  "reference_workbook_path": "docs/data/reference-workbook.xlsx",
+  "reference_sheet_csv_urls": [
+    {
+      "role": "capacity",
+      "name": "Capacity_Dashboard",
+      "gid": "0",
+      "note": "Required for all markets — country rep counts. Copy gid from tab URL (#gid=…)."
+    }
+  ],
+  "reference_sheet_tabs": {
+    "Capacity_Dashboard": {
+      "required": true,
+      "covers": "All country×segment markets (country-level rep sum vs dashboard current_reps)",
+      "gid_hint": "First tab — open tab in browser, copy #gid= from URL into reference_sheet_csv_urls"
+    },
+    "Rep_Level": {
+      "required": false,
+      "covers": "Optional rep-level PCID cross-check (not used for Findings Sheet column)",
+      "gid_hint": "Publish separately if needed; add second entry to reference_sheet_csv_urls with role rep_level"
+    }
+  }
 }

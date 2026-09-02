@@ -142,6 +142,44 @@ After deploy, copy the Prototypes project URL and share with HQ / Sales Ops. Acc
 
 ---
 
+## Live Google Sheet reference (all markets)
+
+The dashboard cross-checks **every country×segment** in `headcount.json` against the stakeholder workbook [**Global Sales Rep Headcount (1)**](https://docs.google.com/spreadsheets/d/1Hq64TSm77FVH4hLxME2wrs1bJbT8Qi9Puk4FWMdkGsw/edit).
+
+| What | Detail |
+|------|--------|
+| **Check type** | Country-level rep count: sheet `Capacity_Dashboard` vs sum of segment `current_reps` in dashboard JSON |
+| **All markets** | Each segment (US-M, US-L, CA-UMM, …) inherits its country's check; Findings **Sheet** column shows ✓/≠ per row |
+| **Live fetch** | `docs/reference-live.js` fetches published CSV when `reference_sheet_live: true` in `config.json` |
+| **Fallback** | `docs/data/reference_check.json` (from `python3 scripts/sync-reference-workbook.py`) when live fetch fails |
+
+### Publish tabs for live CSV
+
+1. In Google Sheets: **File → Share → Publish to web**
+2. Publish **Capacity_Dashboard** (required) — choose **Comma-separated values (.csv)**
+3. Open the `Capacity_Dashboard` tab; copy the gid from the URL (`#gid=123456789`)
+4. Set in `docs/data/config.json`:
+
+```json
+"reference_sheet_live": true,
+"reference_sheet_csv_urls": [
+  { "role": "capacity", "name": "Capacity_Dashboard", "gid": "YOUR_GID_HERE" }
+]
+```
+
+**Multiple tabs:** add more objects to `reference_sheet_csv_urls` (or pass full CSV URLs as strings). Only `capacity` / `capacity_dashboard` roles drive the country cross-check.
+
+**Workbook tabs (for offline sync):** `Capacity_Dashboard`, `Rep_Level`, `Rep_Level PIvot Table`, `Model_Engine`, `Data_PCID Level`, … — see `scripts/sync-reference-workbook.py`. For live all-market coverage, **Capacity_Dashboard alone is sufficient**.
+
+### In-app controls
+
+- **Reload sheet reference** — re-fetch published CSV (no warehouse pull)
+- **Reload snapshot** — re-fetch bundled JSON after git push
+
+Live CSV may require Indeed SSO in the browser even when the sheet is “published to web”; if fetch returns 401, the UI falls back to `reference_check.json` and shows a warning.
+
+---
+
 ## Troubleshooting
 
 | Issue | Fix |

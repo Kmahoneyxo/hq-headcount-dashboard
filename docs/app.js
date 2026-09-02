@@ -1,6 +1,9 @@
 let payload = null;
 let bookHealth = null;
 let referenceCheck = null;
+let referenceCheckCached = null;
+let referenceCheckSource = "none";
+let referenceLiveError = null;
 let config = { refresh_api: null, live_refresh: false };
 let segmentFilter = "all";
 let recFilter = "all";
@@ -109,10 +112,43 @@ async function loadData() {
   }
   try {
     const ref = await fetch(`./data/reference_check.json?${cacheBust}`, { cache: "no-store" });
-    referenceCheck = ref.ok ? await ref.json() : null;
+    referenceCheckCached = ref.ok ? await ref.json() : null;
+    referenceCheck = referenceCheckCached;
+    referenceCheckSource = referenceCheckCached ? "cached" : "none";
   } catch {
+    referenceCheckCached = null;
     referenceCheck = null;
+    referenceCheckSource = "none";
   }
+}
+
+async function loadLiveReference() {
+  referenceLiveError = null;
+  if (!config.reference_sheet_live || typeof ReferenceLive === "undefined") {
+    referenceCheck = referenceCheckCached;
+    referenceCheckSource = referenceCheckCached ? "cached" : "none";
+    return;
+  }
+  try {
+    const result = await ReferenceLive.fetchLiveReferenceCheck(
+      config,
+      payload?.markets || [],
+      referenceCheckCached,
+    );
+    referenceCheck = result.check;
+    referenceCheckSource = result.source;
+    referenceLiveError = result.error;
+  } catch (err) {
+    referenceCheck = referenceCheckCached;
+    referenceCheckSource = referenceCheckCached ? "cached" : "none";
+    referenceLiveError = err.message || String(err);
+  }
+}
+
+function referenceSourceLabel() {
+  if (referenceCheckSource === "live") return "Live Google Sheet";
+  if (referenceCheckSource === "cached") return "Cached reference_check.json";
+  return "No reference";
 }
 
 function dataFingerprint() {
@@ -175,6 +211,34 @@ function updateRefreshButton(loading = isRefreshing) {
 const QUEST_REFRESH_STEPS =
   "For new warehouse data: iDash sql/16 (prod) → export JSON → run scripts → git push → Reload snapshot.";
 
+async function reloadSheetReference() {
+  const btn = document.getElementById("ref-sheet-btn");
+  const label = document.getElementById("ref-sheet-label");
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  if (label) label.textContent = "Loading sheet…";
+  try {
+    await loadLiveReference();
+    renderAll();
+    if (referenceCheckSource === "live") {
+      const sum = countryReferenceSummary();
+      showToast(
+        `Live sheet loaded — ${sum?.countriesMatch ?? "?"}/${sum?.countriesWithData ?? "?"} countries match across ${sum?.marketsTotal ?? "?"} markets.`,
+        "ok",
+      );
+    } else if (referenceLiveError) {
+      showToast(`Live sheet fetch failed: ${referenceLiveError}. Using cached reference_check.json.`, "warn");
+    } else {
+      showToast("Reference check updated from cache.", "ok");
+    }
+  } catch (err) {
+    showToast(err.message || "Sheet reference reload failed", "err");
+  } finally {
+    btn.disabled = false;
+    if (label) label.textContent = "Reload sheet reference";
+  }
+}
+
 async function refreshData() {
   if (isRefreshing) return;
   updateRefreshButton(true);
@@ -189,6 +253,7 @@ async function refreshData() {
       }
     }
     await loadData();
+    await loadLiveReference();
     lastReloadedAt = lastLoadedAt;
     renderAll();
     const pageReloadTime = formatPageReloadTime(lastReloadedAt);
@@ -270,12 +335,12 @@ function renderMeta() {
       ? ` · Page loaded ${formatPageReloadTime(lastLoadedAt)}`
       : "";
   const live = config.live_refresh ? " · Live warehouse refresh on" : "";
-  const refSum = referenceCheckSummary();
   const wbSum = referenceCheck?.workbook_summary;
+  const refSum = countryReferenceSummary();
   const refNote = wbSum
     ? ` · Workbook: ${fmtNum(wbSum.rows_matched)} match, ${fmtNum(wbSum.rows_mismatched)} differ`
     : refSum
-      ? ` · Sheet check: ${refSum.matched}/${refSum.withRef} match`
+      ? ` · Sheet: ${refSum.countriesMatch}/${refSum.countriesWithData} countries · ${refSum.marketsMatch}/${refSum.marketsTotal} markets`
       : referenceCheck
         ? " · Sheet check loaded"
         : "";
@@ -310,15 +375,14 @@ function renderSources() {
     .join(" · ") || "—";
 
   const gated = (payload.markets || []).filter((m) => m.hc_curve_validated === false).length;
-  const refSum = referenceCheckSummary();
-  const refLabel = referenceLabel();
+  const refSum = countryReferenceSummary();
   const refLabel = referenceLabel();
   const refDetail = referenceCheck
-    ? referenceCheck.source_type === "workbook"
-      ? `${refLabel} · ${referenceCheck.imported_at || "—"} · ${referenceCheck.workbook_summary?.sheets_compared ?? "—"} tabs`
-      : `${referenceCheck.imported_at || "—"} · ${referenceCheck.row_count ?? Object.keys(referenceCheck.markets || {}).length} markets`
+    ? `${referenceSourceLabel()} · ${referenceCheck.imported_at || "—"}`
     : `Place file at docs/data/reference-workbook.xlsx and run sync-reference-workbook.py`;
-  const refMatch = refSum ? `${refSum.matched} match · ${refSum.mismatched} differ` : "—";
+  const refMatch = refSum
+    ? `${refSum.countriesMatch}/${refSum.countriesWithData} countries match · ${refSum.marketsMatch}/${refSum.marketsTotal} markets`
+    : "—";
 
   el.innerHTML = `
     <div class="sources-meta-grid">
@@ -341,19 +405,21 @@ function renderSources() {
         <div class="sources-meta-label">${refLabel}</div>
         <div class="sources-meta-value sources-meta-small">${refMatch}</div>
         <div class="sources-meta-detail">${refDetail}</div>
-        <p class="sources-meta-link"><code>docs/data/reference-workbook.xlsx</code></p>
+        <p class="sources-meta-link"><code>docs/data/reference-workbook.xlsx</code> (offline sync)</p>
+        ${referenceLiveError && referenceCheckSource !== "live" ? `<p class="sources-meta-link ref-live-warn">Live sheet: ${referenceLiveError}</p>` : ""}
+        ${referenceCheckSource === "live" ? `<p class="sources-meta-link ref-live-ok">✓ Live CSV loaded for all countries</p>` : ""}
         ${config.reference_sheet_url || referenceCheck?.source_url ? `<p class="sources-meta-link">${referenceDocLink()}</p>` : ""}
       </div>
     </div>
     <details class="methodology-details ref-sync-instructions">
       <summary>Sync ${referenceLabel()}</summary>
       <div class="methodology-body">
-        <p>Canonical reference: <code>docs/data/reference-workbook.xlsx</code> (${referenceLabel()}).</p>
+        <p>Canonical reference: <strong>${referenceLabel()}</strong>. Live fetch uses published CSV when <code>reference_sheet_live</code> is true; falls back to <code>reference_check.json</code>.</p>
         <ol>
-          <li>Update from Google: download .xlsx from ${referenceDocLink()}.</li>
-          <li>Replace <code>docs/data/reference-workbook.xlsx</code> (or copy from Downloads).</li>
-          <li><code>python3 scripts/sync-reference-workbook.py</code></li>
-          <li>Hard-refresh dashboard — Overview + Reference tabs cross-check against this file.</li>
+          <li>Publish tabs to web in Google Sheets (Capacity_Dashboard required for country rep counts).</li>
+          <li>Set <code>reference_sheet_csv_urls</code> gids in <code>config.json</code> (one per tab).</li>
+          <li>Click <strong>Reload sheet reference</strong> or hard-refresh — all markets cross-check by country.</li>
+          <li>Offline: replace <code>reference-workbook.xlsx</code> → <code>python3 scripts/sync-reference-workbook.py</code></li>
         </ol>
       </div>
     </details>`;
@@ -364,16 +430,58 @@ function renderWorkbookCheck() {
   const el = document.getElementById("workbook-check-wrap");
   if (!el) return;
   const label = referenceLabel();
+  const sourceLine =
+    referenceCheckSource === "live"
+      ? `<span class="ref-live-ok">Live Google Sheet</span>${referenceCheck?.live_fetched_at ? ` · ${new Date(referenceCheck.live_fetched_at).toLocaleString()}` : ""}`
+      : referenceCheck
+        ? `<span class="ref-source-badge">${referenceSourceLabel()}</span> · ${referenceCheck.imported_at || "—"}`
+        : "";
 
-  if (!referenceCheck?.sheets?.length) {
+  if (!referenceCheck?.sheets?.length && !referenceCheck?.country_checks) {
     el.innerHTML = `
       <h3 class="workbook-check-heading">Check vs ${label}</h3>
-      <p class="caption">Copy <strong>Global Sales Rep Headcount (1)</strong> to <code>docs/data/reference-workbook.xlsx</code>, then run <code>python3 scripts/sync-reference-workbook.py</code>.</p>`;
+      <p class="caption">Publish <strong>Capacity_Dashboard</strong> to web, set gid in <code>config.json</code>, or copy workbook to <code>docs/data/reference-workbook.xlsx</code> and run <code>python3 scripts/sync-reference-workbook.py</code>.</p>`;
     return;
   }
 
   const sum = referenceCheck.workbook_summary || {};
-  const rows = referenceCheck.sheets
+  const countryRows = referenceCheck.country_checks
+    ? Object.entries(referenceCheck.country_checks)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([country, cc]) => {
+          const ok = cc.match;
+          const dash = cc.dashboard_reps;
+          const sheet = cc.sheet_reps;
+          const status =
+            sheet == null
+              ? "—"
+              : dash == null
+                ? "dash —"
+                : ok
+                  ? "✓"
+                  : "≠";
+          return `<tr class="${ok ? "workbook-row-ok" : sheet != null && dash != null ? "workbook-row-warn" : ""}">
+            <td><strong>${country}</strong></td>
+            <td class="num">${sheet != null ? fmtNum(sheet) : "—"}</td>
+            <td class="num">${dash != null ? fmtNum(dash) : "—"}</td>
+            <td>${status}</td>
+          </tr>`;
+        })
+        .join("")
+    : "";
+
+  const countryTable = countryRows
+    ? `<h4 class="workbook-check-subheading">Country rep counts (all markets)</h4>
+    <p class="caption">Each country×segment in headcount.json inherits its country's check. Dashboard reps = sum of segment <code>current_reps</code>.</p>
+    <div class="table-wrap">
+      <table class="workbook-check-table workbook-country-table">
+        <thead><tr><th>Country</th><th class="num">${label}</th><th class="num">Dashboard</th><th></th></tr></thead>
+        <tbody>${countryRows}</tbody>
+      </table>
+    </div>`
+    : "";
+
+  const rows = (referenceCheck.sheets || [])
     .filter((s) => !s.skipped)
     .map((s) => {
       const ok = s.mismatched === 0 && (s.missing_in_dashboard ?? 0) === 0;
@@ -390,7 +498,7 @@ function renderWorkbookCheck() {
 
   const skipped = (sum.sheets_skipped || []).map((n) => `<li>${n}</li>`).join("");
 
-  const mismatchDetails = referenceCheck.sheets
+  const mismatchDetails = (referenceCheck.sheets || [])
     .flatMap((s) =>
       (s.mismatch_samples || []).slice(0, 5).map((m) => ({
         sheet: s.name,
@@ -415,14 +523,16 @@ function renderWorkbookCheck() {
 
   el.innerHTML = `
     <h3 class="workbook-check-heading">Check vs ${label}</h3>
-    <p class="caption">Source: <code>docs/data/reference-workbook.xlsx</code> · Compared <strong>${sum.sheets_compared ?? referenceCheck.sheets.length}</strong> tabs vs warehouse JSON (snapshot ${referenceCheck.dashboard_snapshot || payload?.updated_at || "—"}). Imported ${referenceCheck.imported_at || "—"}.</p>
-    <p class="workbook-check-totals"><strong>${fmtNum(sum.rows_matched)}</strong> rows match · <strong>${fmtNum(sum.rows_mismatched)}</strong> row differences</p>
+    <p class="caption">${sourceLine} · Snapshot ${referenceCheck.dashboard_snapshot || payload?.updated_at || "—"} · <strong>${fmtNum(sum.rows_matched)}</strong> countries match · <strong>${fmtNum(sum.rows_mismatched)}</strong> differ</p>
+    ${referenceLiveError && referenceCheckSource !== "live" ? `<p class="ref-live-warn">Live fetch: ${referenceLiveError}</p>` : ""}
+    ${countryTable}
+    ${rows ? `<h4 class="workbook-check-subheading">Published tabs</h4>
     <div class="table-wrap">
       <table class="workbook-check-table">
         <thead><tr><th>Tab</th><th class="num">Sheet rows</th><th class="num">Match</th><th class="num">Differ</th><th class="num">Missing in dash</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
-    </div>
+    </div>` : ""}
     ${skipped ? `<p class="caption">Tabs not compared (no mapping):</p><ul class="notes">${skipped}</ul>` : ""}
     ${detailHtml}`;
 }
@@ -583,7 +693,44 @@ function compareMarketToReference(m) {
   return { key, ref, rows, allMatch, missing: false };
 }
 
+function countryReferenceForMarket(m) {
+  if (!referenceCheck?.country_checks || !m?.country) return null;
+  return referenceCheck.country_checks[m.country] || null;
+}
+
+/** All markets: segment rows inherit country-level sheet check. */
+function countryReferenceSummary() {
+  if (!referenceCheck?.country_checks || !payload?.markets) return null;
+  const dashTotals = ReferenceLive
+    ? ReferenceLive.dashboardCountryRepTotals(payload.markets)
+    : {};
+  let marketsMatch = 0;
+  let marketsTotal = 0;
+  const countrySeen = {};
+  for (const m of payload.markets) {
+    if (hideJapan && isJapan(m)) continue;
+    marketsTotal += 1;
+    const cc = countryReferenceForMarket(m);
+    if (!cc || cc.sheet_reps == null || cc.dashboard_reps == null) continue;
+    if (cc.match) marketsMatch += 1;
+    countrySeen[m.country] = cc;
+  }
+  const countries = Object.values(countrySeen);
+  const countriesWithData = countries.filter((c) => c.sheet_reps != null && c.dashboard_reps != null).length;
+  const countriesMatch = countries.filter((c) => c.match).length;
+  return {
+    marketsMatch,
+    marketsTotal,
+    countriesMatch,
+    countriesWithData,
+    imported_at: referenceCheck.imported_at,
+    source: referenceCheckSource,
+  };
+}
+
 function referenceCheckSummary() {
+  const countrySum = countryReferenceSummary();
+  if (countrySum) return countrySum;
   if (!referenceCheck?.markets || !payload?.markets) return null;
   let matched = 0;
   let withRef = 0;
@@ -602,32 +749,45 @@ function referenceCheckHtml(m) {
   const label = referenceLabel();
   const sheetUrl = config.reference_sheet_url || referenceCheck?.source_url;
 
-  if (referenceCheck?.workbook_format === "global_headcount") {
+  if (referenceCheck?.workbook_format === "global_headcount" || referenceCheck?.country_checks) {
     const country = m.country;
-    const cc = referenceCheck.country_checks?.[country];
+    const cc = countryReferenceForMarket(m);
     const repSheet = referenceCheck.sheets?.find((s) => s.role === "global_rep_level");
     const repNote = repSheet
       ? `${fmtNum(repSheet.matched)} rep PCIDs match · ${fmtNum(repSheet.mismatched)} differ · ${fmtNum(repSheet.missing_in_dashboard ?? 0)} reps only in ${label}`
       : "";
+    const liveNote =
+      referenceCheckSource === "live"
+        ? `<span class="ref-live-ok">Live Google Sheet</span> · ${referenceCheck.live_fetched_at ? new Date(referenceCheck.live_fetched_at).toLocaleString() : "now"}`
+        : referenceCheck.source_live
+          ? ""
+          : `Cached ${referenceCheck.imported_at || "—"} from reference_check.json`;
     const countryRow = cc
       ? `<tr class="${cc.match ? "ref-row-match" : "ref-row-mismatch"}">
-          <td>${country} rep count (Capacity_Dashboard)</td>
+          <td>${country} rep count (all ${label} segments → ${fmtNum(cc.dashboard_reps)} in dashboard)</td>
           <td class="num">${fmtNum(cc.sheet_reps)}</td>
           <td class="num">${fmtNum(cc.dashboard_reps)}</td>
           <td>${cc.match ? "✓" : "≠"}</td>
         </tr>`
-      : "";
-    const segmentNote = `<tr><td colspan="4" class="ref-check-segment-note">${m.country}-${m.segment}: segment-level ideal PCID / HC only in dashboard JSON — ${label} uses country + rep grain (Rep_Level, Capacity_Dashboard).</td></tr>`;
+      : `<tr><td colspan="4" class="ref-check-segment-note">${country}: no rep count in published sheet — dashboard has ${fmtNum(m.current_reps)} reps in ${m.country}-${m.segment}.</td></tr>`;
+    const segmentRow = `<tr class="ref-row-segment">
+          <td>${m.country}-${m.segment} segment reps (dashboard only)</td>
+          <td class="num">—</td>
+          <td class="num">${fmtNum(m.current_reps)}</td>
+          <td>—</td>
+        </tr>`;
+    const statusClass = cc && !cc.match ? "ref-warn" : cc ? "ref-ok" : "ref-check-empty";
     return `
-    <section class="ref-check-panel ${cc && !cc.match ? "ref-warn" : "ref-ok"}" aria-label="Reference workbook check">
-      <h3 class="ref-check-title">Check vs <strong>${label}</strong></h3>
-      <p class="ref-check-lead">Cross-check imported ${referenceCheck.imported_at || "—"} from <code>docs/data/reference-workbook.xlsx</code>. ${repNote}</p>
+    <section class="ref-check-panel ${statusClass}" aria-label="Reference workbook check">
+      <h3 class="ref-check-title">Check vs <strong>${label}</strong> <span class="ref-source-badge">${referenceSourceLabel()}</span></h3>
+      <p class="ref-check-lead">${liveNote || repNote}. Country-level check applies to every segment in ${country}.</p>
       <div class="table-wrap ref-check-table-wrap">
         <table class="ref-check-table">
           <thead><tr><th>Field</th><th>${label}</th><th>Dashboard</th><th></th></tr></thead>
-          <tbody>${countryRow}${segmentNote}</tbody>
+          <tbody>${countryRow}${segmentRow}</tbody>
         </table>
       </div>
+      ${referenceLiveError && referenceCheckSource !== "live" ? `<p class="ref-live-warn">Live fetch failed: ${referenceLiveError}. Showing cached data if available.</p>` : ""}
       ${sheetUrl ? `<p class="ref-check-link">${referenceDocLink()} (Google Sheet source)</p>` : ""}
     </section>`;
   }
@@ -696,6 +856,8 @@ function referenceDocLink() {
     : label;
 }
 
+/** 2–4 sentence summary: ideal book, HC math, curve gate, inflection signals. */
+function buildRecommendationWhyParagraph(m) {
   const ideal = idealPcid(m);
   const rec = hcRecLabel(m);
   const sentences = [];
@@ -1918,6 +2080,12 @@ function findingsMarkets() {
 }
 
 function referenceCheckBadge(m) {
+  const cc = countryReferenceForMarket(m);
+  if (cc && cc.sheet_reps != null && cc.dashboard_reps != null) {
+    return cc.match
+      ? '<span class="ref-badge ref-badge-ok" title="Country rep count matches sheet">✓</span>'
+      : '<span class="ref-badge ref-badge-warn" title="Country rep count differs from sheet">≠</span>';
+  }
   const cmp = compareMarketToReference(m);
   if (!referenceCheck) return "—";
   if (!cmp || cmp.missing) return "—";
@@ -2184,6 +2352,8 @@ function bindEvents() {
     renderAll();
   });
   document.getElementById("refresh-btn").addEventListener("click", refreshData);
+  const refSheetBtn = document.getElementById("ref-sheet-btn");
+  if (refSheetBtn) refSheetBtn.addEventListener("click", reloadSheetReference);
   document.getElementById("lookup-country").addEventListener("change", (e) => {
     lookupCountry = e.target.value;
     renderAll();
@@ -2257,6 +2427,7 @@ async function init() {
   try {
     await loadConfig();
     await loadData();
+    await loadLiveReference();
   } catch (err) {
     document.querySelector(".container").innerHTML =
       `<div class="error"><strong>Failed to load dashboard data.</strong> ${err.message}</div>`;
