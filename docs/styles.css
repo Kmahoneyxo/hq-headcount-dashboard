@@ -413,6 +413,51 @@ h2 {
   margin: 0;
 }
 
+.ideal-book-live {
+  margin: 16px 0 20px;
+  padding: 16px 18px;
+  border: 1px solid #b8d4f0;
+  border-radius: 6px;
+  background: #f0f7ff;
+}
+
+.ideal-book-live-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+
+.ideal-book-live-summary {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.ideal-book-why {
+  margin: 0 0 10px;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.ideal-book-live-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.live-dot {
+  color: #1d6fb8;
+  font-size: 0.65rem;
+  margin-left: 2px;
+  vertical-align: super;
+}
+
+.ref-live-ok {
+  color: #0d7a4d;
+  font-weight: 600;
+}
+
 .ref-sheet-actions {
   margin: 12px 0 0;
 }
