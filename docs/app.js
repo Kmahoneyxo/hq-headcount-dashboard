@@ -308,10 +308,10 @@ function referenceSourceLabel() {
 
 function appsScriptSourceBadge() {
   if (appsScriptSource !== "live") {
-    return `<span class="ref-source-badge">Warehouse snapshot</span> · headcount.json ${payload?.updated_at || "—"}`;
+    return `Snapshot · ${payload?.updated_at || "—"}`;
   }
   const ts = appsScriptData?.updated_at;
-  return `<span class="ref-live-ok">Live from Apps Script</span>${ts ? ` · ${new Date(ts).toLocaleString()}` : ""}`;
+  return ts ? `Sheet · ${new Date(ts).toLocaleString()}` : "Sheet";
 }
 
 function appsScriptIdealBookHtml(m) {
@@ -1008,7 +1008,7 @@ function idealBookSummaryHtml(m) {
       <h3 class="ideal-book-title">Ideal book for ${m.country}-${m.segment}</h3>
       <div class="ideal-book-headline">
         <span class="ideal-book-pcid">${live.ideal_pcid != null ? `${fmtNum(live.ideal_pcid)} PCIDs` : "—"}</span>
-        <span class="ideal-book-meta">${live.ideal_band || "—"} band · ${appsScriptSource === "live" ? "Apps Script" : "sheet"}</span>
+        <span class="ideal-book-meta">${live.ideal_band || "—"} band</span>
       </div>
       <p class="ideal-book-lead">${live.ideal_book_summary || "—"}</p>
       ${bullets.length ? `<ul class="ideal-book-trends">${bullets.map((b) => `<li>${b}</li>`).join("")}</ul>` : ""}
@@ -2070,7 +2070,7 @@ function renderLookup() {
       <span class="rec lookup-rec-badge rec-${recClass}">${hcRecLabel(m)}</span>
     </div>
 
-    ${appsScriptIdealBookHtml(m)}
+    ${idealBookSummaryHtml(m)}
 
     <details class="lookup-details">
       <summary>Headcount recommendation &amp; book health</summary>

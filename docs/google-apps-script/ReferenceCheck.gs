@@ -14,11 +14,20 @@
  * 6. Paste URL into docs/data/config.json → reference_apps_script_url
  * 7. Ensure reference_sheet_live is true → Reload sheet reference in dashboard
  *
+ * OUTPUT TABS (no Web app deploy required):
+ * - Run refreshDashboardSummary → menu HQ Dashboard → Refresh dashboards
+ * - HC_Model        — full formulas, inputs, and recommendation logic (analyst)
+ * - Executive_View  — clean summary table + charts for presenting
+ * - Looker_Export   — flat table for Looker Studio (one row per market, no charts)
+ *
  * Returns JSON: country rep cross-check (Capacity_Dashboard), Rep_Level rows,
  * Model_Engine regional stats, and per country×segment recommendations (segments[]).
  */
 
 var SHEET_LABEL = 'Global Sales Rep Headcount (1)';
+var MODEL_TAB_NAME = 'HC_Model';
+var EXECUTIVE_TAB_NAME = 'Executive_View';
+var LOOKER_EXPORT_TAB_NAME = 'Looker_Export';
 var KNOWN_SEGMENTS = ['M', 'UMM', 'ACC', 'L', 'NAM', 'DCA', 'ISDCA', 'NAMDCA'];
 
 var PCID_BANDS = [
@@ -36,15 +45,15 @@ var PCID_BANDS = [
   { low: 151, high: 9999, label: '150+', mid: 175 },
 ];
 
-function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+/** Build full payload from current sheet data. */
+function buildDashboardPayload_(ss) {
   var marketsTab = readMarketsTab_(ss);
   var repRows = readRepLevel_(ss);
   var capacity = readCapacityDashboard_(ss);
   var modelEngine = readModelEngine_(ss);
   var segments = buildSegments_(repRows, marketsTab, modelEngine);
 
-  var payload = {
+  return {
     updated_at: new Date().toISOString(),
     label: SHEET_LABEL,
     segments: segments,
@@ -53,10 +62,521 @@ function doGet(e) {
     rep_level_count: repRows.length,
     model_engine: modelEngine,
   };
+}
 
+function doGet(e) {
+  var payload = buildDashboardPayload_(SpreadsheetApp.getActiveSpreadsheet());
   return ContentService
     .createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/** Run from editor or HQ Dashboard menu — rebuilds HC_Model + Executive_View. */
+function refreshDashboardSummary() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var payload = buildDashboardPayload_(ss);
+  writeHcModelTab_(ss, payload);
+  writeExecutiveViewTab_(ss, payload);
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    'Updated ' + MODEL_TAB_NAME + ' + ' + EXECUTIVE_TAB_NAME,
+    'HQ Dashboard',
+    5
+  );
+}
+
+function onOpen() {
+  SpreadsheetApp.getActiveSpreadsheet()
+    .addMenu('HQ Dashboard', [
+      { name: 'Refresh dashboards', functionName: 'refreshDashboardSummary' },
+    ]);
+}
+
+function removeCharts_(sheet) {
+  var charts = sheet.getCharts();
+  for (var i = 0; i < charts.length; i++) {
+    sheet.removeChart(charts[i]);
+  }
+}
+
+function prepareSheet_(ss, name) {
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+  } else {
+    removeCharts_(sheet);
+    sheet.clear();
+    sheet.clearConditionalFormatRules();
+  }
+  return sheet;
+}
+
+/** Analyst tab — every formula and input visible. */
+function writeHcModelTab_(ss, payload) {
+  var sheet = prepareSheet_(ss, MODEL_TAB_NAME);
+  var segments = (payload.segments || []).slice();
+  segments.sort(function (a, b) {
+    return String(a.market).localeCompare(String(b.market));
+  });
+
+  var updated = payload.updated_at || new Date().toISOString();
+  var updatedDisplay = Utilities.formatDate(new Date(updated), Session.getScriptTimeZone(), 'MMM d, yyyy h:mm a');
+
+  var rows = [];
+  rows.push(['HC Model — formulas & calculations (analyst view)']);
+  rows.push(['Updated', updatedDisplay, 'Rep_Level rows', payload.rep_level_count || 0]);
+  rows.push([]);
+  rows.push(['FORMULAS (Layer 2 headcount)']);
+  rows.push(['Optimal HC', 'SUM(PCID Count) ÷ Ideal PCID  — assigned accounts per rep at ideal book size']);
+  rows.push(['HC gap', 'Current reps − Optimal HC  (negative = under-staffed)']);
+  rows.push(['Heads to add', 'MAX(0, Optimal HC − Current reps)']);
+  rows.push(['Reps above model', 'MAX(0, Current reps − Optimal HC)']);
+  rows.push(['Ideal PCID', 'Midpoint of PCID band containing segment median book (or Markets tab override)']);
+  rows.push(['Recommendation', 'Hire if current < 90% optimal · Optimize if current > 110% optimal · else Hold']);
+  rows.push([]);
+
+  var headerRow = rows.length + 1;
+  rows.push([
+    'Market', 'Source',
+    'Rep count', 'Sum PCIDs (assigned)',
+    'Median PCID', 'Avg PCID',
+    'Ideal PCID', 'Band',
+    'Optimal HC (calc)', 'Optimal HC formula',
+    'Current reps', 'Gap (calc)', 'Gap formula',
+    'Heads to add', 'Add formula',
+    'Reps over', 'Over formula',
+    'Rec rule', 'Recommendation',
+    'Ideal book — why', 'HC — why',
+  ]);
+
+  var dataStart = rows.length + 1;
+  segments.forEach(function (s) {
+    var assigned = s.assigned_accounts;
+    var ideal = s.ideal_pcid;
+    var cur = s.current_reps;
+    var opt = s.optimal_hc;
+    rows.push([
+      s.market || '',
+      s.source || '',
+      s.current_reps != null ? s.current_reps : '',
+      assigned != null ? assigned : '',
+      s.median_book != null ? s.median_book : '',
+      s.current_avg_book != null ? s.current_avg_book : '',
+      ideal != null ? ideal : '',
+      s.ideal_band || '',
+      opt != null ? opt : '',
+      optimalHcFormulaText_(assigned, ideal, opt),
+      cur != null ? cur : '',
+      s.hc_gap != null ? s.hc_gap : '',
+      gapFormulaText_(cur, opt, s.hc_gap),
+      s.heads_to_add != null && s.heads_to_add > 0 ? s.heads_to_add : 0,
+      addFormulaText_(opt, cur, s.heads_to_add),
+      s.heads_over != null && s.heads_over > 0 ? s.heads_over : 0,
+      overFormulaText_(cur, opt, s.heads_over),
+      recommendationRuleText_(cur, opt),
+      s.recommendation || '',
+      (s.ideal_why_detail || s.ideal_book_summary || '').replace(/\n/g, ' · '),
+      (s.hc_rec_why || '').replace(/\n/g, ' · '),
+    ]);
+  });
+
+  var numCols = 21;
+  var numRows = rows.length;
+  sheet.getRange(1, 1, numRows, numCols).setValues(padRows_(rows, numCols));
+
+  sheet.getRange(1, 1, 1, numCols).merge()
+    .setBackground('#3d4451').setFontColor('#ffffff').setFontWeight('bold').setFontSize(13);
+  sheet.getRange(4, 1, 4, numCols).merge().setFontWeight('bold').setBackground('#f5f5f6');
+  sheet.getRange(headerRow, 1, headerRow, numCols)
+    .setBackground('#f0f1f3').setFontWeight('bold').setFontSize(9);
+  sheet.setFrozenRows(headerRow);
+
+  if (segments.length > 0) {
+    sheet.getRange(dataStart, 1, numRows, numCols).setWrap(true).setVerticalAlignment('top');
+    sheet.getRange(dataStart, 10, numRows, 10).setFontFamily('Courier New').setFontSize(8);
+    sheet.getRange(dataStart, 13, numRows, 17).setFontFamily('Courier New').setFontSize(8);
+    for (var r = dataStart; r <= numRows; r++) {
+      var rec = String(sheet.getRange(r, 19).getValue() || '').toLowerCase();
+      var recCell = sheet.getRange(r, 19);
+      if (rec.indexOf('hire') >= 0) {
+        recCell.setBackground('#f4f7f5').setFontColor('#3d6b52').setFontWeight('normal');
+      } else if (rec.indexOf('optimize') >= 0) {
+        recCell.setBackground('#f8f6f1').setFontColor('#8a6a2a').setFontWeight('normal');
+      }
+    }
+  }
+
+  sheet.setColumnWidth(1, 80);
+  sheet.setColumnWidth(10, 200);
+  sheet.setColumnWidth(13, 160);
+  sheet.setColumnWidth(15, 160);
+  sheet.setColumnWidth(17, 160);
+  sheet.setColumnWidth(20, 280);
+  sheet.setColumnWidth(21, 280);
+}
+
+/** Presentation tab — short table + charts. */
+function writeExecutiveViewTab_(ss, payload) {
+  var sheet = prepareSheet_(ss, EXECUTIVE_TAB_NAME);
+  var segments = (payload.segments || []).slice();
+
+  var totalAdd = 0;
+  var totalOver = 0;
+  var hire = 0;
+  var hold = 0;
+  var optimize = 0;
+  segments.forEach(function (s) {
+    if (s.heads_to_add) totalAdd += s.heads_to_add;
+    if (s.heads_over) totalOver += s.heads_over;
+    var r = String(s.recommendation || '').toLowerCase();
+    if (r.indexOf('hire') >= 0) hire += 1;
+    else if (r.indexOf('optimize') >= 0) optimize += 1;
+    else hold += 1;
+  });
+
+  segments.sort(function (a, b) {
+    var addB = b.heads_to_add || 0;
+    var addA = a.heads_to_add || 0;
+    if (addB !== addA) return addB - addA;
+    return recSortOrder_(a.recommendation) - recSortOrder_(b.recommendation);
+  });
+
+  var updated = payload.updated_at || new Date().toISOString();
+  var updatedDisplay = Utilities.formatDate(new Date(updated), Session.getScriptTimeZone(), 'MMM d, yyyy h:mm a');
+
+  var rows = [];
+  rows.push(['Executive headcount summary']);
+  rows.push(['Updated', updatedDisplay]);
+  rows.push([
+    'Total heads to add', totalAdd,
+    'Hire', hire,
+    'Hold', hold,
+    'Optimize', optimize,
+  ]);
+  rows.push([]);
+
+  var tableHeaderRow = rows.length + 1;
+  rows.push(['Market', 'Recommendation', 'Heads to add', 'Ideal PCID', 'Action']);
+
+  var tableStart = rows.length + 1;
+  segments.forEach(function (s) {
+    var action = s.action_note || '';
+    if (action.length > 90) action = action.slice(0, 87) + '…';
+    rows.push([
+      s.market || '',
+      s.recommendation || '',
+      s.heads_to_add > 0 ? s.heads_to_add : '',
+      s.ideal_pcid != null ? s.ideal_pcid : '',
+      action,
+    ]);
+  });
+  var tableEnd = rows.length;
+
+  var chartHeaderRow = tableEnd + 2;
+  rows.push([]);
+  rows.push(['', '', '', 'Chart — heads to add', '', 'Market', 'Heads']);
+  var chartDataStart = rows.length + 1;
+  var chartMarkets = segments.filter(function (s) { return (s.heads_to_add || 0) > 0; }).slice(0, 15);
+  if (!chartMarkets.length) {
+    chartMarkets = segments.slice(0, 10);
+  }
+  chartMarkets.forEach(function (s) {
+    rows.push(['', '', '', '', '', s.market, s.heads_to_add > 0 ? s.heads_to_add : 0]);
+  });
+  var chartDataEnd = rows.length;
+
+  var recChartStart = chartDataEnd + 2;
+  rows.push(['', '', '', 'Chart — recommendations', '', 'Type', 'Count']);
+  var recDataStart = rows.length + 1;
+  rows.push(['', '', '', '', '', 'Hire', hire]);
+  rows.push(['', '', '', '', '', 'Hold', hold]);
+  rows.push(['', '', '', '', '', 'Optimize', optimize]);
+  var recDataEnd = rows.length;
+
+  var numCols = 7;
+  var numRows = rows.length;
+  sheet.getRange(1, 1, numRows, numCols).setValues(padRows_(rows, numCols));
+
+  sheet.getRange(1, 1, 1, 5).merge()
+    .setBackground('#3d4451').setFontColor('#ffffff').setFontWeight('bold').setFontSize(15);
+  sheet.setRowHeight(1, 36);
+  sheet.getRange(3, 1, 3, numCols)
+    .setBackground('#f5f5f6').setFontWeight('normal').setFontSize(10);
+  sheet.getRange(3, 2).setFontSize(16).setHorizontalAlignment('center').setFontWeight('bold');
+  sheet.getRange(3, 4).setFontSize(13).setHorizontalAlignment('center');
+  sheet.getRange(3, 6).setFontSize(13).setHorizontalAlignment('center');
+
+  sheet.getRange(tableHeaderRow, 1, tableHeaderRow, 5)
+    .setBackground('#f0f1f3').setFontWeight('bold');
+  sheet.setFrozenRows(tableHeaderRow);
+
+  if (segments.length > 0) {
+    for (var r = tableStart; r <= tableEnd; r++) {
+      var rec = String(sheet.getRange(r, 2).getValue() || '').toLowerCase();
+      var recCell = sheet.getRange(r, 2);
+      if (rec.indexOf('hire') >= 0) {
+        recCell.setBackground('#f4f7f5').setFontColor('#3d6b52').setFontWeight('normal');
+      } else if (rec.indexOf('optimize') >= 0) {
+        recCell.setBackground('#f8f6f1').setFontColor('#8a6a2a').setFontWeight('normal');
+      }
+      var addCell = sheet.getRange(r, 3);
+      if (addCell.getValue() !== '' && Number(addCell.getValue()) > 0) {
+        addCell.setBackground('#f4f7f5').setFontWeight('bold').setFontSize(11).setHorizontalAlignment('center');
+      }
+    }
+  }
+
+  sheet.setColumnWidth(1, 90);
+  sheet.setColumnWidth(2, 110);
+  sheet.setColumnWidth(3, 100);
+  sheet.setColumnWidth(4, 80);
+  sheet.setColumnWidth(5, 360);
+  sheet.setColumnWidth(6, 80);
+  sheet.setColumnWidth(7, 60);
+
+  if (chartDataEnd >= chartDataStart) {
+    var barChart = sheet.newChart()
+      .setChartType(Charts.ChartType.BAR)
+      .addRange(sheet.getRange(chartDataStart, 6, chartDataEnd, 7))
+      .setPosition(1, 5, 0, 0)
+      .setOption('title', 'Heads to add by market')
+      .setOption('legend', { position: 'none' })
+      .setOption('height', 340)
+      .setOption('width', 520)
+      .setOption('colors', ['#5c6b5e'])
+      .setOption('hAxis', { title: 'Heads to add' })
+      .build();
+    sheet.insertChart(barChart);
+  }
+
+  if (recDataEnd >= recDataStart) {
+    var pieChart = sheet.newChart()
+      .setChartType(Charts.ChartType.PIE)
+      .addRange(sheet.getRange(recDataStart, 6, recDataEnd, 7))
+      .setPosition(10, 5, 0, 0)
+      .setOption('title', 'Hire / Hold / Optimize')
+      .setOption('height', 300)
+      .setOption('width', 420)
+      .setOption('colors', ['#5c6b5e', '#9aa0a6', '#a89888'])
+      .setOption('pieSliceText', 'value')
+      .build();
+    sheet.insertChart(pieChart);
+  }
+
+  sheet.hideColumns(6, 2);
+  if (chartHeaderRow > 0 && chartDataEnd >= chartHeaderRow) {
+    sheet.hideRows(chartHeaderRow, chartDataEnd - chartHeaderRow + 1);
+  }
+  if (recChartStart > 0 && recDataEnd >= recChartStart) {
+    sheet.hideRows(recChartStart, recDataEnd - recChartStart + 1);
+  }
+}
+
+/** Flat export for Looker Studio — one row per market, header row 1, no charts. */
+function writeLookerExportTab_(ss, payload) {
+  var sheet = prepareSheet_(ss, LOOKER_EXPORT_TAB_NAME);
+  var segments = (payload.segments || []).slice();
+  var updated = payload.updated_at || new Date().toISOString();
+
+  segments.sort(function (a, b) {
+    var addB = b.heads_to_add || 0;
+    var addA = a.heads_to_add || 0;
+    if (addB !== addA) return addB - addA;
+    return String(a.market).localeCompare(String(b.market));
+  });
+
+  var headers = [
+    'updated_at', 'market', 'country', 'segment', 'region', 'recommendation',
+    'heads_to_add', 'heads_over', 'hc_gap', 'current_reps', 'optimal_hc',
+    'ideal_pcid', 'ideal_band', 'median_book', 'avg_pcid', 'assigned_pcids', 'action_short',
+  ];
+
+  var rows = [headers];
+  segments.forEach(function (s) {
+    rows.push([
+      updated,
+      s.market || '',
+      s.country || '',
+      s.segment || '',
+      countryToRegion_(s.country),
+      s.recommendation || '',
+      s.heads_to_add != null ? s.heads_to_add : '',
+      s.heads_over != null ? s.heads_over : '',
+      s.hc_gap != null ? s.hc_gap : '',
+      s.current_reps != null ? s.current_reps : '',
+      s.optimal_hc != null ? s.optimal_hc : '',
+      s.ideal_pcid != null ? s.ideal_pcid : '',
+      s.ideal_band || '',
+      s.median_book != null ? s.median_book : '',
+      s.current_avg_book != null ? s.current_avg_book : '',
+      s.assigned_accounts != null ? s.assigned_accounts : '',
+      actionShort_(s.action_note),
+    ]);
+  });
+
+  if (rows.length > 0) {
+    sheet.getRange(1, 1, rows.length, headers.length).setValues(rows);
+  }
+
+  sheet.getRange(1, 1, 1, headers.length)
+    .setBackground('#e8f0fe')
+    .setFontWeight('bold');
+  sheet.setFrozenRows(1);
+  sheet.setColumnWidth(1, 180);
+  sheet.setColumnWidth(2, 90);
+  sheet.setColumnWidth(17, 320);
+}
+
+function actionShort_(text) {
+  var s = String(text || '').replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (s.length > 80) return s.slice(0, 77) + '…';
+  return s;
+}
+
+function padRows_(rows, numCols) {
+  return rows.map(function (r) {
+    var out = [];
+    for (var c = 0; c < numCols; c++) {
+      out.push(r[c] != null ? r[c] : '');
+    }
+    return out;
+  });
+}
+
+function optimalHcFormulaText_(assigned, ideal, result) {
+  if (assigned == null || ideal == null) return '—';
+  return 'ROUND(' + Math.round(assigned) + ' ÷ ' + ideal + ') = ' + (result != null ? result : '?');
+}
+
+function gapFormulaText_(current, optimal, result) {
+  if (current == null || optimal == null) return '—';
+  return current + ' − ' + optimal + ' = ' + (result != null ? result : '?');
+}
+
+function addFormulaText_(optimal, current, result) {
+  if (optimal == null || current == null) return '—';
+  return 'MAX(0, ' + optimal + ' − ' + current + ') = ' + (result != null ? result : 0);
+}
+
+function overFormulaText_(current, optimal, result) {
+  if (current == null || optimal == null) return '—';
+  return 'MAX(0, ' + current + ' − ' + optimal + ') = ' + (result != null ? result : 0);
+}
+
+function recommendationRuleText_(current, optimal) {
+  if (current == null || optimal == null) return '—';
+  if (current < optimal * 0.90) return 'current < 90% of optimal → Hire';
+  if (current > optimal * 1.10) return 'current > 110% of optimal → Optimize';
+  return 'within ±10% of optimal → Hold';
+}
+
+function recSortOrder_(rec) {
+  var r = String(rec || '').toLowerCase();
+  if (r.indexOf('hire') >= 0) return 0;
+  if (r.indexOf('optimize') >= 0) return 1;
+  return 2;
+}
+
+/** Multi-line explanation of why ideal PCID is the target. */
+function buildIdealBookWhyDetail_(idealPcid, band, avgBook, medianBook, currentReps, assigned, tab, rollup, country, modelEngine) {
+  var lines = [];
+
+  if (tab.ideal_pcid != null) {
+    lines.push('SOURCE: Markets tab override — ideal ' + tab.ideal_pcid + ' PCIDs (analyst/warehouse target, not Rep_Level median).');
+    if (tab.optimal_book_primary) {
+      lines.push(String(tab.optimal_book_primary));
+    }
+  } else if (idealPcid && band && medianBook != null) {
+    lines.push(
+      'SOURCE: Rep_Level median book → PCID bucket → band midpoint.',
+      'Median book across ' + (rollup.rep_count || currentReps || '?') + ' reps = ' + medianBook + ' PCIDs.',
+      'That falls in the ' + band.label + ' band → ideal target = band midpoint ' + idealPcid + ' PCIDs.',
+      'We use median (not average) so a few very large books do not pull the target up.'
+    );
+    if (avgBook != null && Math.abs(avgBook - medianBook) >= 5) {
+      lines.push(
+        'Avg book (' + Math.round(avgBook * 10) / 10 + ') differs from median (' + medianBook + ') — a few outsized books are skewing the mean.'
+      );
+    }
+  } else if (!idealPcid) {
+    lines.push('No ideal PCID — add Rep_Level rows or ideal_pcid on a Markets tab.');
+    return lines;
+  }
+
+  if (tab.growth_peak_accounts != null && tab.growth_peak_pct != null) {
+    lines.push(
+      'GROWTH: Revenue growth peaks around ' + tab.growth_peak_accounts + ' PCIDs/rep (' +
+      formatPct_(tab.growth_peak_pct) + ' median quarterly)' +
+      (tab.growth_decline_above_pcid ? '; softens above ~' + tab.growth_decline_above_pcid + ' PCIDs.' : '.')
+    );
+  } else if (idealPcid && band) {
+    lines.push('GROWTH: Ideal ' + idealPcid + ' sits in ' + band.label + ' — largest bucket before growth typically plateaus (add growth_peak_* on Markets tab for exact curve).');
+  }
+
+  if (tab.jv_plateau_book_max != null && tab.jv_plateau_rev_per_job != null) {
+    lines.push('$/JOB: Plateaus near ' + tab.jv_plateau_book_max + ' PCIDs (~$' + Math.round(tab.jv_plateau_rev_per_job * 100) / 100 + '/job) — bigger books add little job value.');
+  }
+
+  if (tab.coverage_peak_accounts != null) {
+    lines.push('COVERAGE: Impact calls/account peak near ~' + tab.coverage_peak_accounts + ' PCIDs/rep.');
+  }
+
+  if (avgBook != null && idealPcid != null && currentReps != null) {
+    var delta = Math.round((avgBook - idealPcid) * 10) / 10;
+    if (delta > 5) {
+      lines.push('TODAY: Avg ' + avgBook + ' PCIDs/rep is ' + delta + ' above ideal — segment books are oversized vs target.');
+    } else if (delta < -5) {
+      lines.push('TODAY: Avg ' + avgBook + ' PCIDs/rep is ' + Math.abs(delta) + ' below ideal — room to grow books toward target.');
+    } else {
+      lines.push('TODAY: Avg ' + avgBook + ' PCIDs/rep is near ideal ' + idealPcid + ' across ' + currentReps + ' reps.');
+    }
+  }
+
+  if (!tab.growth_peak_accounts && modelEngine && modelEngine.length && country) {
+    var region = countryToRegion_(country);
+    for (var i = 0; i < modelEngine.length; i++) {
+      if (modelEngine[i].region === region && modelEngine[i].avg_growth != null) {
+        lines.push('REGION (' + region + '): avg growth ' + formatPct_(modelEngine[i].avg_growth) + ' from Model_Engine.');
+        break;
+      }
+    }
+  }
+
+  return lines;
+}
+
+/** Explains Hire / Hold / Optimize from the math in the sheet. */
+function buildHcRecWhy_(rec, currentReps, optimalHc, hcGap, assigned, idealPcid) {
+  var lines = [];
+  if (assigned != null && idealPcid) {
+    lines.push('Math: ' + Math.round(assigned) + ' assigned PCIDs ÷ ' + idealPcid + ' ideal = ' + (optimalHc != null ? optimalHc : '?') + ' optimal HC.');
+  } else if (optimalHc != null) {
+    lines.push('Optimal HC = ' + optimalHc + ' reps (from Markets tab or assigned ÷ ideal).');
+  }
+  if (currentReps != null && optimalHc != null && hcGap != null) {
+    lines.push('Current ' + currentReps + ' reps − optimal ' + optimalHc + ' = gap ' + hcGap + '.');
+  }
+  var r = String(rec || 'Hold');
+  if (hcGap != null) {
+    if (hcGap < -5 || (currentReps != null && optimalHc != null && currentReps < optimalHc * 0.90)) {
+      lines.push('Rule: under model (gap negative or current < 90% of optimal) → Hire. Recommendation: ' + r + '.');
+    } else if (hcGap > 5 || (currentReps != null && optimalHc != null && currentReps > optimalHc * 1.10)) {
+      lines.push('Rule: over model (gap positive or current > 110% of optimal) → Optimize — peel/grow books before hiring. Recommendation: ' + r + '.');
+    } else {
+      lines.push('Rule: within ±10% of optimal → Hold. Recommendation: ' + r + '.');
+    }
+  } else {
+    lines.push('Recommendation: ' + r + ' (gap not computed — check assigned PCIDs and ideal).');
+  }
+  return lines.join('\n');
+}
+
+function sumSegmentRepsByCountry_(segments) {
+  var totals = {};
+  segments.forEach(function (s) {
+    if (!s.country || s.current_reps == null) return;
+    totals[s.country] = (totals[s.country] || 0) + Number(s.current_reps);
+  });
+  return totals;
 }
 
 /** Optional Markets / Dashboard tab with warehouse-style segment fields. */
@@ -166,7 +686,14 @@ function buildSegments_(repRows, marketsTab, modelEngine) {
     if (hcGap == null && currentReps != null && optimalHc != null) {
       hcGap = Math.round(currentReps - optimalHc);
     }
-    var rec = tab.recommendation || recommendFromGap_(hcGap, parts.country, modelEngine);
+    var rec = tab.recommendation || recommendFromHeadcount_(currentReps, optimalHc, tab, parts.country, modelEngine);
+    var hcAction = computeHeadcountAction_(currentReps, optimalHc);
+    var medianBook = rollup.median_pcid != null ? Math.round(rollup.median_pcid * 10) / 10 : null;
+    var idealWhyLines = buildIdealBookWhyDetail_(
+      idealPcid, band, avgBook, medianBook, currentReps, assigned, tab, rollup, parts.country, modelEngine
+    );
+    var hcRecWhy = buildHcRecWhy_(rec, currentReps, optimalHc, hcGap, assigned, idealPcid);
+    var actionNote = buildActionNote_(rec, hcAction, currentReps, optimalHc);
 
     segments.push({
       market: key,
@@ -175,15 +702,23 @@ function buildSegments_(repRows, marketsTab, modelEngine) {
       ideal_pcid: idealPcid,
       ideal_band: band ? band.label : null,
       ideal_book_summary: buildIdealSummary_(idealPcid, band, tab, rollup),
+      ideal_why_detail: idealWhyLines.join('\n'),
       why_trends: buildWhyTrends_(idealPcid, band, avgBook, currentReps, tab, rollup, modelEngine, parts.country),
+      median_book: medianBook,
+      assigned_accounts: assigned != null ? Math.round(assigned) : null,
       current_avg_book: avgBook != null ? Math.round(avgBook * 10) / 10 : null,
       current_reps: currentReps != null ? Math.round(currentReps) : null,
       optimal_hc: optimalHc != null ? Math.round(optimalHc) : null,
       optimal_headcount: optimalHc != null ? Math.round(optimalHc) : null,
       hc_gap: hcGap != null ? Math.round(hcGap) : null,
       headcount_gap: hcGap != null ? Math.round(hcGap) : null,
+      heads_to_add: hcAction.heads_to_add,
+      heads_over: hcAction.heads_over,
+      net_hc_delta: hcAction.net_delta,
       recommendation: rec,
       headcount_recommendation: rec,
+      hc_rec_why: hcRecWhy,
+      action_note: actionNote,
       source: tab.ideal_pcid != null ? 'markets_tab' : 'rep_level_rollup',
     });
   });
@@ -326,6 +861,59 @@ function buildWhyTrends_(idealPcid, band, avgBook, currentReps, tab, rollup, mod
   }
 
   return bullets.slice(0, 3);
+}
+
+function computeHeadcountAction_(currentReps, optimalHc) {
+  if (currentReps == null || optimalHc == null) {
+    return { heads_to_add: null, heads_over: null, net_delta: null };
+  }
+  var cur = Math.round(currentReps);
+  var opt = Math.round(optimalHc);
+  var net = opt - cur;
+  return {
+    heads_to_add: net > 0 ? net : 0,
+    heads_over: net < 0 ? -net : 0,
+    net_delta: net,
+  };
+}
+
+function buildActionNote_(rec, hcAction, currentReps, optimalHc) {
+  var r = String(rec || 'Hold').toLowerCase();
+  var add = hcAction.heads_to_add || 0;
+  var over = hcAction.heads_over || 0;
+  if (r.indexOf('hire') >= 0 && add > 0) {
+    return 'Add ' + add + ' rep(s) to reach optimal HC ' + optimalHc + ' (currently ' + currentReps + ').';
+  }
+  if (r.indexOf('optimize') >= 0 && over > 0) {
+    return over + ' rep(s) above model — optimize/peel books before any new hires.';
+  }
+  if (add > 0) {
+    return 'Under model by ' + add + ' rep(s) — recommendation is ' + rec + '.';
+  }
+  if (over > 0) {
+    return over + ' rep(s) above model — recommendation is ' + rec + '.';
+  }
+  return 'Headcount near model (' + currentReps + ' vs optimal ' + optimalHc + ') — no add needed.';
+}
+
+/** Warehouse-aligned: gap = current − optimal; Hire when under 90% of optimal. */
+function recommendFromHeadcount_(currentReps, optimalHc, tab, country, modelEngine) {
+  if (currentReps != null && optimalHc != null && optimalHc > 0) {
+    var growthOk = true;
+    if (tab.growth_peak_pct != null && Number(tab.growth_peak_pct) <= 0) growthOk = false;
+    if (currentReps < optimalHc * 0.90 && growthOk) return 'Hire';
+    if (currentReps > optimalHc * 1.10) return 'Optimize';
+    return 'Hold';
+  }
+  if (modelEngine && modelEngine.length && country) {
+    var region = countryToRegion_(country);
+    for (var i = 0; i < modelEngine.length; i++) {
+      if (modelEngine[i].region === region && modelEngine[i].recommendation) {
+        return String(modelEngine[i].recommendation);
+      }
+    }
+  }
+  return 'Hold';
 }
 
 function recommendFromGap_(gap, country, modelEngine) {

@@ -1,34 +1,38 @@
-/* Minimal — ultra-clean, generous whitespace, single blue accent */
+/* Minimal — neutral, restrained, easy on the eyes */
 :root {
-  --bg: #fafbfc;
+  --bg: #f5f5f6;
   --surface: #ffffff;
-  --surface-2: #f6f7f9;
-  --border: #e8eaed;
-  --text: #1f2328;
-  --muted: #6e7781;
-  --accent: #0969da;
-  --hire: #1a7f37;
-  --optimize: #9a6700;
-  --hold: #0969da;
-  --dnh: #cf222e;
-  --radius: 10px;
+  --surface-2: #f0f1f3;
+  --border: #e2e4e8;
+  --text: #24262b;
+  --muted: #6b7280;
+  --accent: #4b5563;
+  --hire: #3d6b52;
+  --optimize: #8a6a2a;
+  --hold: #5c6578;
+  --dnh: #9b3d4a;
+  --hire-bg: #f4f7f5;
+  --optimize-bg: #f8f6f1;
+  --hold-bg: #f4f5f7;
+  --dnh-bg: #faf4f5;
+  --radius: 6px;
   --font: system-ui, -apple-system, "Segoe UI", sans-serif;
   --shadow: none;
   --header-shadow: none;
-  --table-header-bg: #f6f7f9;
-  --highlight-bg: #f0f6ff;
-  --highlight-border: #c8d9f0;
-  --chip-active-bg: #ddf4ff;
-  --spacing-panel: 28px;
-  --spacing-container: 28px;
+  --table-header-bg: #f0f1f3;
+  --highlight-bg: #f7f8fa;
+  --highlight-border: #e2e4e8;
+  --chip-active-bg: #f0f1f3;
+  --spacing-panel: 24px;
+  --spacing-container: 24px;
   --font-size-base: 14px;
-  --table-cell-padding: 12px 16px;
+  --table-cell-padding: 10px 14px;
   --table-font-size: 0.8125rem;
 }
 
 body {
   font-size: var(--font-size-base);
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 .header {
@@ -38,7 +42,7 @@ body {
 
 .container {
   padding: var(--spacing-container);
-  gap: 28px;
+  gap: 24px;
   max-width: 1080px;
 }
 
@@ -50,16 +54,16 @@ body {
 }
 
 .lookup-panel {
-  border-radius: 12px;
+  border-radius: var(--radius);
 }
 
 .lookup-controls {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .lookup-market-title {
-  font-weight: 500;
-  letter-spacing: -0.02em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .lookup-stat-card {
@@ -73,9 +77,8 @@ body {
 }
 
 .btn {
-  border-radius: 8px;
+  border-radius: 4px;
   font-weight: 500;
-  letter-spacing: 0;
 }
 
 .dash-tabs {
@@ -83,11 +86,11 @@ body {
 }
 
 .dash-tab {
-  padding: 12px 18px;
+  padding: 10px 16px;
 }
 
 .table-wrap {
-  border-radius: 8px;
+  border-radius: var(--radius);
   border-color: var(--border);
 }
 
@@ -106,6 +109,8 @@ th, td {
 
 .chip.active {
   background: var(--chip-active-bg);
+  border-color: var(--border);
+  color: var(--text);
 }
 
 tr.lookup-row td,
@@ -120,7 +125,7 @@ tr.findings-us-row td.sticky-col {
 
 .threshold-callout {
   background: var(--highlight-bg);
-  border-color: var(--highlight-border);
+  border-color: var(--border);
 }
 
 .footer {
