@@ -20,6 +20,9 @@ let bhJvChart = null;
 let lastLoadedAt = null;
 let lastReloadedAt = null;
 let isRefreshing = false;
+let findingsSortCol = "revenue_90d";
+let findingsSortDir = "desc";
+let findingsAmerOnly = false;
 
 const AMER_MARKETS = ["US", "CA", "UK", "DACH", "BNL"];
 
@@ -1443,6 +1446,91 @@ function bookGapPct(m) {
   return Math.round((m.current_avg_book / m.perfect_book_target) * 100);
 }
 
+function keyFinding(m) {
+  return m.recommendation_primary || m.hc_reason_primary || m.summary_primary || "—";
+}
+
+function curveValidatedLabel(m) {
+  const validated = m.hc_curve_validated !== false;
+  const src = m.perfect_book_source || "—";
+  return validated ? `Yes · ${src}` : `No · ${src}`;
+}
+
+function findingsMarkets() {
+  return (payload?.markets ?? [])
+    .filter((m) => {
+      if (hideJapan && isJapan(m)) return false;
+      if (findingsAmerOnly && !amerMarkets().includes(m.country)) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const col = findingsSortCol;
+      const dir = findingsSortDir === "asc" ? 1 : -1;
+      if (col === "market") {
+        const ak = marketKey(a);
+        const bk = marketKey(b);
+        return ak.localeCompare(bk) * dir;
+      }
+      if (col === "headcount_recommendation" || col === "hc_curve_validated") {
+        const av = col === "hc_curve_validated" ? curveValidatedLabel(a) : a.headcount_recommendation || "";
+        const bv = col === "hc_curve_validated" ? curveValidatedLabel(b) : b.headcount_recommendation || "";
+        return av.localeCompare(bv) * dir;
+      }
+      const av =
+        col === "avg_pcid"
+          ? a.avg_pcid_per_rep ?? a.current_avg_book
+          : col === "ideal_pcid"
+            ? idealPcid(a)
+            : a[col];
+      const bv =
+        col === "avg_pcid"
+          ? b.avg_pcid_per_rep ?? b.current_avg_book
+          : col === "ideal_pcid"
+            ? idealPcid(b)
+            : b[col];
+      const an = Number(av);
+      const bn = Number(bv);
+      if (!Number.isNaN(an) && !Number.isNaN(bn)) return (an - bn) * dir;
+      return String(av ?? "").localeCompare(String(bv ?? "")) * dir;
+    });
+}
+
+function renderFindings() {
+  const tbody = document.getElementById("findings-body");
+  if (!tbody || !payload) return;
+  const amer = amerMarkets();
+  tbody.innerHTML = findingsMarkets()
+    .map((m) => {
+      const gap = m.headcount_gap;
+      const gapStr = gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
+      const recClass = hcRecClass(m);
+      const avgPcid = m.avg_pcid_per_rep ?? m.current_avg_book;
+      const ideal = idealPcid(m);
+      const usRow = m.country === "US" ? " findings-us-row" : "";
+      const amerRow = amer.includes(m.country) ? " findings-amer-row" : "";
+      const validated = m.hc_curve_validated !== false;
+      return `<tr class="${usRow}${amerRow}">
+        <td class="sticky-col"><strong>${m.country}-${m.segment}</strong></td>
+        <td class="num">${fmtMoney(m.revenue_90d)}</td>
+        <td class="num">${fmtNum(m.current_reps)}</td>
+        <td class="num">${fmtNum(avgPcid)}</td>
+        <td class="num">${fmtNum(ideal)}</td>
+        <td class="num">${fmtNum(m.optimal_headcount)}</td>
+        <td class="num">${gapStr}</td>
+        <td><span class="rec rec-${recClass}">${hcRecLabel(m)}</span></td>
+        <td><span class="curve-validated curve-validated-${validated ? "yes" : "no"}">${curveValidatedLabel(m)}</span></td>
+        <td class="num">${fmtNum(m.growth_peak_accounts)}</td>
+        <td class="findings-narrative">${keyFinding(m)}</td>
+      </tr>`;
+    })
+    .join("");
+
+  document.querySelectorAll("#findings-table th.sortable").forEach((th) => {
+    th.classList.toggle("sort-asc", th.dataset.sort === findingsSortCol && findingsSortDir === "asc");
+    th.classList.toggle("sort-desc", th.dataset.sort === findingsSortCol && findingsSortDir === "desc");
+  });
+}
+
 function renderTable() {
   const tbody = document.getElementById("market-body");
   tbody.innerHTML = filteredMarkets()
@@ -1627,6 +1715,7 @@ function renderAll() {
   renderKpis();
   renderFilters();
   renderTable();
+  renderFindings();
   renderCharts();
 }
 
@@ -1635,6 +1724,28 @@ function bindEvents() {
     hideJapan = e.target.checked;
     renderAll();
   });
+  const findingsAmerEl = document.getElementById("findings-amer-only");
+  if (findingsAmerEl) {
+    findingsAmerEl.addEventListener("change", (e) => {
+      findingsAmerOnly = e.target.checked;
+      renderFindings();
+    });
+  }
+  const findingsTable = document.getElementById("findings-table");
+  if (findingsTable) {
+    findingsTable.querySelector("thead").addEventListener("click", (e) => {
+      const th = e.target.closest("th.sortable");
+      if (!th) return;
+      const col = th.dataset.sort;
+      if (findingsSortCol === col) {
+        findingsSortDir = findingsSortDir === "asc" ? "desc" : "asc";
+      } else {
+        findingsSortCol = col;
+        findingsSortDir = col === "market" || col === "headcount_recommendation" || col === "hc_curve_validated" ? "asc" : "desc";
+      }
+      renderFindings();
+    });
+  }
   document.getElementById("sort-by").addEventListener("change", (e) => {
     sortBy = e.target.value;
     renderAll();
@@ -1688,6 +1799,8 @@ function bindEvents() {
       document.querySelectorAll(".dash-tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === id));
       document.getElementById("tab-markets").classList.toggle("hidden", id !== "markets");
       document.getElementById("tab-markets").classList.toggle("active", id === "markets");
+      document.getElementById("tab-findings").classList.toggle("hidden", id !== "findings");
+      document.getElementById("tab-findings").classList.toggle("active", id === "findings");
       document.getElementById("tab-book-health").classList.toggle("hidden", id !== "book-health");
       document.getElementById("tab-book-health").classList.toggle("active", id === "book-health");
       document.getElementById("tab-methodology").classList.toggle("hidden", id !== "methodology");
@@ -1732,6 +1845,7 @@ async function init() {
     renderKpis();
     renderFilters();
     renderTable();
+    renderFindings();
   } catch (err) {
     showToast(err.message || "Dashboard render failed", "err");
     return;

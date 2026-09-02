@@ -145,6 +145,23 @@ SUMMARY_FIELD_LABELS: dict[str, str] = {
 
 SUMMARY_KEY_ORDER = list(SUMMARY_FIELD_LABELS.keys())
 
+FINDINGS_FIELD_LABELS: dict[str, str] = {
+    "market": "Market",
+    "revenue_90d": "Revenue 90d",
+    "current_reps": "Current reps",
+    "avg_pcid_per_rep": "Avg PCID",
+    "ideal_pcid": "Ideal PCID",
+    "optimal_headcount": "Optimal HC",
+    "headcount_gap": "HC gap",
+    "headcount_recommendation": "HC recommendation",
+    "hc_curve_validated": "Curve validated",
+    "perfect_book_source": "Perfect book source",
+    "growth_peak_accounts": "Growth peak",
+    "key_finding": "Key finding (narrative)",
+}
+
+FINDINGS_KEY_ORDER = list(FINDINGS_FIELD_LABELS.keys())
+
 MARKET_KEY_ORDER = list(MARKET_FIELD_LABELS.keys())
 
 BOOK_HEALTH_FIELD_LABELS: dict[str, str] = {
@@ -255,6 +272,33 @@ def market_row(market: dict) -> dict:
 
 def flatten_markets(payload: dict) -> list[dict]:
     return [market_row(m) for m in payload.get("markets", [])]
+
+
+def findings_row(market: dict) -> dict:
+    row = market_row(market)
+    row["key_finding"] = (
+        row.get("recommendation_primary")
+        or row.get("hc_reason_primary")
+        or row.get("summary_primary")
+        or ""
+    )
+    if row.get("hc_curve_validated") is False:
+        row["hc_curve_validated"] = "No"
+    elif row.get("hc_curve_validated") is True:
+        row["hc_curve_validated"] = "Yes"
+    else:
+        row["hc_curve_validated"] = ""
+    if row.get("avg_pcid_per_rep") is None and row.get("current_avg_book") is not None:
+        row["avg_pcid_per_rep"] = row["current_avg_book"]
+    if row.get("ideal_pcid") is None and row.get("perfect_book_target") is not None:
+        row["ideal_pcid"] = row["perfect_book_target"]
+    return row
+
+
+def flatten_findings(payload: dict) -> list[dict]:
+    rows = [findings_row(m) for m in payload.get("markets", [])]
+    rows.sort(key=lambda r: r.get("revenue_90d") or 0, reverse=True)
+    return rows
 
 
 def market_column_keys(markets: list[dict]) -> list[str]:
@@ -405,6 +449,27 @@ def append_sheet(wb, title: str, keys: list[str], labels: dict[str, str], rows: 
     return ws
 
 
+def write_findings_sheet(wb, payload: dict, bold) -> None:
+    from openpyxl.utils import get_column_letter
+
+    rows = flatten_findings(payload)
+    ws = wb.active
+    ws.title = "Findings"
+    keys = FINDINGS_KEY_ORDER
+    ws.append([label_for(k, FINDINGS_FIELD_LABELS) for k in keys])
+    style_header_row(ws, bold)
+    for row in rows:
+        ws.append([row.get(k) for k in keys])
+    for col_idx, key in enumerate(keys, start=1):
+        label = label_for(key, FINDINGS_FIELD_LABELS)
+        width = 18 if key == "key_finding" else min(max(len(str(label)) + 2, 12), 36)
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+    ws.column_dimensions[get_column_letter(len(keys))].width = 72
+    ws.freeze_panes = "A2"
+    if rows:
+        ws.auto_filter.ref = ws.dimensions
+
+
 def write_xlsx(
     payload: dict,
     book_health: dict,
@@ -422,10 +487,11 @@ def write_xlsx(
     wb = Workbook()
     bold = Font(bold=True)
 
+    write_findings_sheet(wb, payload, bold)
+
     markets = flatten_markets(payload)
     market_keys = market_column_keys(markets)
-    ws_markets = wb.active
-    ws_markets.title = "Markets"
+    ws_markets = wb.create_sheet("Markets", 1)
     ws_markets.append([label_for(k, MARKET_FIELD_LABELS) for k in market_keys])
     style_header_row(ws_markets, bold)
     for market in markets:

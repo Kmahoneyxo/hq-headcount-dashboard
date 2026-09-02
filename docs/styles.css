@@ -1059,6 +1059,61 @@ th.sticky-col {
   max-width: 200px;
 }
 
+.findings-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 12px;
+}
+
+.findings-header h2 { margin: 0 0 4px; }
+
+.findings-toggle { font-size: 0.85rem; }
+
+.table-wrap-findings { max-height: 70vh; }
+
+.findings-narrative-col {
+  min-width: 280px;
+}
+
+.findings-narrative {
+  white-space: normal;
+  max-width: 420px;
+  font-size: 0.8rem;
+  color: #c8d8f0;
+  line-height: 1.35;
+}
+
+tr.findings-us-row td {
+  background: rgba(76, 139, 245, 0.08);
+}
+
+tr.findings-us-row td.sticky-col {
+  background: #1a2438;
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable:hover { color: var(--text); }
+
+th.sortable.sort-asc::after { content: " ▲"; font-size: 0.65rem; }
+th.sortable.sort-desc::after { content: " ▼"; font-size: 0.65rem; }
+
+.curve-validated {
+  display: inline-block;
+  font-size: 0.75rem;
+  white-space: normal;
+  max-width: 140px;
+}
+
+.curve-validated-yes { color: var(--hire); }
+.curve-validated-no { color: var(--optimize); }
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);

@@ -30,6 +30,7 @@
     </div>
     <nav class="dash-tabs" aria-label="Dashboard sections">
       <button type="button" class="dash-tab active" data-tab="markets">Markets</button>
+      <button type="button" class="dash-tab" data-tab="findings">Findings</button>
       <button type="button" class="dash-tab" data-tab="book-health">Book health</button>
       <button type="button" class="dash-tab" data-tab="methodology">Methodology</button>
       <button type="button" class="dash-tab" data-tab="sources">Show our work</button>
@@ -131,6 +132,41 @@
           <div class="chart-panel">
             <canvas id="gap-chart"></canvas>
           </div>
+        </div>
+      </section>
+    </div>
+
+    <div id="tab-findings" class="tab-panel hidden">
+      <section class="panel findings-panel">
+        <div class="findings-header">
+          <div>
+            <h2>Executive findings</h2>
+            <p class="caption">All markets · GTM v2 country × segment · sorted by revenue (90d)</p>
+          </div>
+          <label class="toggle findings-toggle">
+            <input type="checkbox" id="findings-amer-only" />
+            AMER focus only
+          </label>
+        </div>
+        <div class="table-wrap table-wrap-findings">
+          <table id="findings-table">
+            <thead>
+              <tr>
+                <th class="sticky-col sortable" data-sort="market">Market</th>
+                <th class="num sortable" data-sort="revenue_90d">Revenue 90d</th>
+                <th class="num sortable" data-sort="current_reps">Current reps</th>
+                <th class="num sortable" data-sort="avg_pcid">Avg PCID</th>
+                <th class="num sortable" data-sort="ideal_pcid">Ideal PCID</th>
+                <th class="num sortable" data-sort="optimal_headcount">Optimal HC</th>
+                <th class="num sortable" data-sort="headcount_gap">HC gap</th>
+                <th class="sortable" data-sort="headcount_recommendation">HC recommendation</th>
+                <th class="sortable" data-sort="hc_curve_validated">Curve validated</th>
+                <th class="num sortable" data-sort="growth_peak_accounts">Growth peak</th>
+                <th class="findings-narrative-col">Key finding</th>
+              </tr>
+            </thead>
+            <tbody id="findings-body"></tbody>
+          </table>
         </div>
       </section>
     </div>
@@ -466,6 +502,6 @@
     <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a> · <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">Connect PTD</a></p>
   </footer>
 
-  <script src="app.js?v=20260902a"></script>
+  <script src="app.js?v=20260902b"></script>
 </body>
 </html>
