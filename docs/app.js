@@ -249,14 +249,23 @@ async function loadAppsScript() {
   const url = (config.reference_apps_script_url || "").trim();
   if (url) {
     try {
-      const fetchUrl = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
-      const res = await fetch(fetchUrl, { cache: "no-store", redirect: "follow" });
-      const text = await res.text();
-      if (!res.ok || text.trimStart().startsWith("<")) {
-        throw new Error("Apps Script returned HTML — redeploy with Who has access: Anyone");
+      const result =
+        typeof ReferenceLive !== "undefined" && ReferenceLive.fetchAppsScriptPayload
+          ? await ReferenceLive.fetchAppsScriptPayload(config)
+          : await (async () => {
+              const fetchUrl = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+              const res = await fetch(fetchUrl, { cache: "no-store", redirect: "follow" });
+              const text = await res.text();
+              if (!res.ok || text.trimStart().startsWith("<")) {
+                throw new Error("Apps Script returned HTML — redeploy with Who has access: Anyone");
+              }
+              return { data: JSON.parse(text), error: null };
+            })();
+      if (result.error) throw new Error(result.error);
+      if (result.data) {
+        ingestAppsScriptPayload(result.data);
+        return;
       }
-      ingestAppsScriptPayload(JSON.parse(text));
-      return;
     } catch (err) {
       referenceLiveError = err.message || String(err);
     }

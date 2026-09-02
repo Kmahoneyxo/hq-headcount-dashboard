@@ -292,7 +292,24 @@
     return { check, source: "live", error: errors.length ? errors.join("; ") : null };
   }
 
+  async function fetchAppsScriptPayload(config) {
+    const url = (config.reference_apps_script_url || "").trim();
+    if (!url) return { data: null, error: "No reference_apps_script_url in config" };
+    try {
+      const fetchUrl = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+      const res = await fetch(fetchUrl, { cache: "no-store", redirect: "follow" });
+      const text = await res.text();
+      if (!res.ok || text.trimStart().startsWith("<")) {
+        throw new Error("Apps Script returned HTML — redeploy with Who has access: Anyone");
+      }
+      return { data: JSON.parse(text), error: null };
+    } catch (e) {
+      return { data: null, error: e.message || String(e) };
+    }
+  }
+
   global.ReferenceLive = {
+    fetchAppsScriptPayload,
     fetchLiveReferenceCheck,
     dashboardCountryRepTotals,
     buildCountryChecks,
