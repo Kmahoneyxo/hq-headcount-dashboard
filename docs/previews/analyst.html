@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Full findings table — HQ Headcount</title>
+  <link rel="stylesheet" href="preview-common.css" />
+  <style>
+    body { background: #fff; font-size: 12px; }
+    .page { max-width: none; padding: 0.75rem 1rem 2rem; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding: 0.5rem 0 0.75rem;
+      border-bottom: 2px solid #1a1f2e;
+      margin-bottom: 0.5rem;
+    }
+    .toolbar h1 { font-size: 1rem; margin: 0; font-weight: 700; }
+    .toolbar-right { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .excel-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.85rem;
+      background: #217346;
+      color: #fff !important;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.8125rem;
+    }
+    .excel-btn:hover { background: #1a5c38; text-decoration: none; }
+    .table-wrap {
+      overflow: auto;
+      max-height: calc(100vh - 80px);
+      border: 1px solid #c8ced8;
+    }
+    th, td { padding: 0.3rem 0.45rem; border-color: #d4d8e0; }
+    th { position: sticky; top: 0; z-index: 2; background: #e8eaed; }
+    .sticky-col {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background: #fff;
+      box-shadow: 2px 0 4px rgba(0,0,0,0.04);
+    }
+    th.sticky-col { z-index: 3; background: #e8eaed; }
+    tr:hover .sticky-col { background: #fafbfc; }
+    .narrative { min-width: 200px; max-width: 360px; }
+    .count { font-size: 0.75rem; color: #5c6578; }
+    tr.findings-us-row td { background: #f0f5fc; }
+    tr.findings-us-row td.sticky-col { background: #e8f2fa; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="toolbar">
+      <div>
+        <h1>HQ Headcount — Full findings</h1>
+        <span class="count" id="count"></span>
+      </div>
+      <div class="toolbar-right">
+        <label class="toggle">
+          <input type="checkbox" id="amer-only" />
+          AMER focus only
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="hide-japan" checked />
+          Hide Japan
+        </label>
+        <a class="excel-btn" href="../data/headcount-dashboard.xlsx" download>⬇ Download Excel</a>
+        <a href="index.html">Options</a>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="findings-table">
+        <thead>
+          <tr>
+            <th class="sticky-col sortable" data-sort="market">Market</th>
+            <th class="num sortable" data-sort="revenue_90d">Revenue 90d</th>
+            <th class="num sortable" data-sort="current_reps">Current reps</th>
+            <th class="num sortable" data-sort="avg_pcid">Avg PCID</th>
+            <th class="num sortable" data-sort="ideal_pcid">Ideal PCID</th>
+            <th class="num sortable" data-sort="optimal_headcount">Optimal HC</th>
+            <th class="num sortable" data-sort="headcount_gap">HC gap</th>
+            <th class="sortable" data-sort="headcount_recommendation">HC rec</th>
+            <th class="sortable" data-sort="hc_curve_validated">Curve validated</th>
+            <th class="num sortable" data-sort="growth_peak_accounts">Growth peak</th>
+            <th class="narrative">Key finding</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="preview-common.js"></script>
+  <script>
+    let sortCol = "revenue_90d";
+    let sortDir = "desc";
+    let amerOnly = false;
+    let hideJapan = true;
+
+    function filteredMarkets() {
+      return (payload?.markets ?? [])
+        .filter((m) => {
+          if (hideJapan && isJapan(m)) return false;
+          if (amerOnly && !amerMarkets().includes(m.country)) return false;
+          return true;
+        })
+        .sort((a, b) => {
+          const dir = sortDir === "asc" ? 1 : -1;
+          if (sortCol === "market") return marketKey(a).localeCompare(marketKey(b)) * dir;
+          if (sortCol === "headcount_recommendation" || sortCol === "hc_curve_validated") {
+            const av = sortCol === "hc_curve_validated" ? curveValidatedLabel(a) : (a.headcount_recommendation || "");
+            const bv = sortCol === "hc_curve_validated" ? curveValidatedLabel(b) : (b.headcount_recommendation || "");
+            return av.localeCompare(bv) * dir;
+          }
+          const av = sortCol === "avg_pcid" ? (a.avg_pcid_per_rep ?? a.current_avg_book)
+            : sortCol === "ideal_pcid" ? idealPcid(a) : a[sortCol];
+          const bv = sortCol === "avg_pcid" ? (b.avg_pcid_per_rep ?? b.current_avg_book)
+            : sortCol === "ideal_pcid" ? idealPcid(b) : b[sortCol];
+          const an = Number(av), bn = Number(bv);
+          if (!Number.isNaN(an) && !Number.isNaN(bn)) return (an - bn) * dir;
+          return String(av ?? "").localeCompare(String(bv ?? "")) * dir;
+        });
+    }
+
+    function render() {
+      const amer = amerMarkets();
+      const tbody = document.getElementById("tbody");
+      const markets = filteredMarkets();
+      document.getElementById("count").textContent =
+        `${markets.length} markets · snapshot ${payload.updated_at}`;
+
+      tbody.innerHTML = markets.map((m) => {
+        const gap = m.headcount_gap;
+        const recClass = hcRecClass(m);
+        const validated = m.hc_curve_validated !== false;
+        const usRow = m.country === "US" ? " findings-us-row" : "";
+        return `<tr class="${usRow}">
+          <td class="sticky-col"><strong>${m.country}-${m.segment}</strong></td>
+          <td class="num">${fmtMoney(m.revenue_90d)}</td>
+          <td class="num">${fmtNum(m.current_reps)}</td>
+          <td class="num">${fmtNum(m.avg_pcid_per_rep ?? m.current_avg_book)}</td>
+          <td class="num">${fmtNum(idealPcid(m))}</td>
+          <td class="num">${fmtNum(m.optimal_headcount)}</td>
+          <td class="num ${gapClass(gap)}">${gapStr(gap)}</td>
+          <td><span class="badge rec-${recClass}">${hcRecLabel(m)}</span></td>
+          <td><span class="curve-${validated ? "yes" : "no"}">${curveValidatedLabel(m)}</span></td>
+          <td class="num">${fmtNum(m.growth_peak_accounts)}</td>
+          <td class="narrative">${keyFinding(m)}</td>
+        </tr>`;
+      }).join("");
+
+      document.querySelectorAll("#findings-table th.sortable").forEach((th) => {
+        th.classList.toggle("sort-asc", th.dataset.sort === sortCol && sortDir === "asc");
+        th.classList.toggle("sort-desc", th.dataset.sort === sortCol && sortDir === "desc");
+      });
+    }
+
+    loadPreviewData().then(() => {
+      render();
+      document.getElementById("amer-only").addEventListener("change", (e) => {
+        amerOnly = e.target.checked;
+        render();
+      });
+      document.getElementById("hide-japan").addEventListener("change", (e) => {
+        hideJapan = e.target.checked;
+        render();
+      });
+      document.querySelector("#findings-table thead").addEventListener("click", (e) => {
+        const th = e.target.closest("th.sortable");
+        if (!th) return;
+        const col = th.dataset.sort;
+        if (sortCol === col) sortDir = sortDir === "asc" ? "desc" : "asc";
+        else {
+          sortCol = col;
+          sortDir = ["market", "headcount_recommendation", "hc_curve_validated"].includes(col) ? "asc" : "desc";
+        }
+        render();
+      });
+    }).catch((err) => {
+      document.getElementById("tbody").innerHTML =
+        `<tr><td colspan="11" class="error">${err.message}</td></tr>`;
+    });
+  </script>
+</body>
+</html>

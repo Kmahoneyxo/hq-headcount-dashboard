@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Executive brief — HQ Headcount</title>
+  <link rel="stylesheet" href="preview-common.css" />
+  <style>
+    body { background: #fff; }
+    .page { max-width: 960px; }
+    .proto-label { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.08em; color: #8b95a5; font-weight: 600; }
+    .hero {
+      background: linear-gradient(135deg, #f0f5fc 0%, #fff 100%);
+      border: 1px solid #dde1e8;
+      border-radius: 12px;
+      padding: 1.75rem 2rem;
+      margin-bottom: 2rem;
+    }
+    .hero-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+    .hero h1 { font-size: 2rem; font-weight: 600; margin: 0; letter-spacing: -0.02em; }
+    .hero-rec .badge { font-size: 0.8125rem; padding: 0.35rem 0.75rem; }
+    .hero-action {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #0f172a;
+      margin: 0 0 1rem;
+      line-height: 1.4;
+    }
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin: 1.25rem 0;
+    }
+    .stat-label { font-size: 0.75rem; color: #5c6578; text-transform: uppercase; letter-spacing: 0.04em; }
+    .stat-value { font-size: 1.75rem; font-weight: 600; margin-top: 0.15rem; }
+    .stat-value.highlight { color: #1d6fb8; }
+    .hero-why {
+      padding-top: 1rem;
+      border-top: 1px solid #e8ecf1;
+    }
+    .hero-why-label {
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5c6578;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+    }
+    .exec-bullets {
+      margin: 0;
+      padding-left: 1.2rem;
+      color: #2d3748;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+    .exec-bullets li { margin-bottom: 0.35rem; }
+    .exec-reason-single {
+      margin: 0;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      color: #2d3748;
+    }
+    .section-title {
+      font-size: 0.8125rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5c6578;
+      margin: 0 0 0.75rem;
+      font-weight: 600;
+    }
+    .table-wrap { border: 1px solid #dde1e8; border-radius: 8px; overflow: hidden; }
+    .narrative { max-width: 380px; font-size: 0.8125rem; color: #4a5568; line-height: 1.45; }
+    .narrative-action { font-weight: 600; color: #0f172a; margin-bottom: 0.35rem; }
+    .narrative-bullets {
+      margin: 0.35rem 0 0;
+      padding-left: 1rem;
+      list-style: disc;
+    }
+    .narrative-bullets li { margin-bottom: 0.2rem; }
+    .snapshot { font-size: 0.75rem; color: #8b95a5; }
+    .gate-note { font-size: 0.8125rem; color: #b45309; margin-top: 0.35rem; }
+    .boss-qa {
+      margin: 0;
+      font-size: 0.875rem;
+      line-height: 1.45;
+    }
+    .boss-qa dt {
+      font-weight: 600;
+      color: #1d6fb8;
+      margin-top: 0.65rem;
+    }
+    .boss-qa dt:first-child { margin-top: 0; }
+    .boss-qa dd {
+      margin: 0.25rem 0 0;
+      color: #2d3748;
+    }
+    .talk-track {
+      margin-top: 1.25rem;
+      padding: 1rem 1.15rem;
+      background: #fff;
+      border: 1px solid #dde1e8;
+      border-radius: 8px;
+    }
+    .evidence-footnote {
+      font-size: 0.75rem;
+      color: #8b95a5;
+      margin: 0.75rem 0 0;
+    }
+    .ideal-evidence {
+      margin-top: 1.25rem;
+      padding: 1rem 1.15rem;
+      background: #fff;
+      border: 1px solid #dde1e8;
+      border-radius: 8px;
+    }
+    .ideal-evidence-title { font-size: 0.9375rem; margin: 0 0 0.5rem; }
+    .ideal-evidence-lead { font-size: 0.875rem; margin: 0 0 0.5rem; color: #2d3748; }
+    .evidence-context { font-size: 0.8125rem; color: #5c6578; margin: 0 0 0.75rem; }
+    .evidence-table-wrap { overflow-x: auto; border: 1px solid #e2e6ed; border-radius: 6px; }
+    .evidence-table { font-size: 0.8125rem; margin: 0; }
+    .evidence-table th { background: #eef1f5; }
+    .evidence-ideal-row td { background: #e8f2fa; }
+    .evidence-flag { font-size: 0.75rem; color: #5c6578; max-width: 140px; }
+    .evidence-dips { margin: 0.75rem 0 0; padding-left: 1.15rem; font-size: 0.8125rem; line-height: 1.5; }
+    .evidence-threshold { font-size: 0.8125rem; margin: 0.75rem 0 0; color: #4a5568; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="top-nav">
+      <div>
+        <span class="proto-label">Option A · Executive brief</span><br />
+        <a href="index.html">All options</a> · <a href="../index.html">Main dashboard</a>
+      </div>
+      <span class="snapshot" id="meta"></span>
+    </nav>
+
+    <div id="content" class="loading">Loading data…</div>
+  </div>
+
+  <script src="preview-common.js?v=6"></script>
+  <script>
+    function gateNote(m) {
+      if (m.hc_curve_validated === false && m.hc_curve_gate_reason) {
+        return `<p class="gate-note">${m.hc_curve_gate_reason}</p>`;
+      }
+      return "";
+    }
+
+    function renderHero(m) {
+      const gap = m.headcount_gap;
+      const badgeClass = hcRecBadgeClass(m);
+      return `
+        <section class="hero">
+          <div class="hero-top">
+            <h1>${m.country}-${m.segment}</h1>
+            <div class="hero-rec"><span class="badge ${badgeClass}">${hcRecLabel(m)}</span></div>
+          </div>
+          <p class="hero-action">${execActionLabel(m)}</p>
+          ${gateNote(m)}
+          <div class="hero-stats">
+            <div>
+              <div class="stat-label">Optimal HC</div>
+              <div class="stat-value highlight">${fmtNum(m.optimal_headcount)}</div>
+            </div>
+            <div>
+              <div class="stat-label">Current reps</div>
+              <div class="stat-value">${fmtNum(m.current_reps)}</div>
+            </div>
+            <div>
+              <div class="stat-label">Gap</div>
+              <div class="stat-value ${gapClass(gap)}">${gapStr(gap)}</div>
+            </div>
+          </div>
+          <div class="hero-why">
+            <p class="hero-why-label">Supporting detail</p>
+            ${execReasonHtml(m)}
+          </div>
+          <div class="talk-track">
+            <p class="talk-track-title">If your boss asks — why this recommendation?</p>
+            ${execBossAnswerHtml(m)}
+          </div>
+          ${idealPcidEvidenceHtml(m)}
+        </section>`;
+    }
+
+    function renderTableNarrative(m) {
+      const bullets = execReasonBullets(m);
+      const action = execActionLabel(m);
+      const rest = bullets.filter((b) => b !== m.hc_reason_primary);
+      const lead = m.hc_reason_primary || bullets[0] || "—";
+      const more = rest.length ? rest : bullets.slice(1);
+      return `
+        <div class="narrative">
+          <div class="narrative-action">${action}</div>
+          <div>${lead}</div>
+          ${more.length ? `<ul class="narrative-bullets">${more.slice(0, 2).map((b) => `<li>${b}</li>`).join("")}</ul>` : ""}
+        </div>`;
+    }
+
+    function renderTable(markets) {
+      const rows = markets
+        .map((m) => {
+          const badgeClass = hcRecBadgeClass(m);
+          const gap = m.headcount_gap;
+          return `<tr>
+            <td><strong>${m.country}-${m.segment}</strong></td>
+            <td class="num">${fmtMoney(m.revenue_90d)}</td>
+            <td class="num">${fmtNum(m.optimal_headcount)}</td>
+            <td class="num ${gapClass(gap)}">${gapStr(gap)}</td>
+            <td><span class="badge ${badgeClass}">${hcRecLabel(m)}</span></td>
+            <td>${renderTableNarrative(m)}</td>
+          </tr>`;
+        })
+        .join("");
+
+      return `
+        <h2 class="section-title">Top 10 markets by revenue (90d)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Market</th>
+                <th class="num">Revenue 90d</th>
+                <th class="num">Optimal HC</th>
+                <th class="num">Gap</th>
+                <th>HC verdict</th>
+                <th>Recommendation &amp; why</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    loadPreviewData()
+      .then(() => {
+        const hero = defaultMarket();
+        const top10 = [...(payload.markets ?? [])]
+          .filter((m) => !isJapan(m))
+          .sort((a, b) => (b.revenue_90d || 0) - (a.revenue_90d || 0))
+          .slice(0, 10);
+
+        document.getElementById("meta").textContent =
+          `Snapshot ${payload.updated_at} · Japan hidden`;
+
+        document.getElementById("content").innerHTML =
+          renderHero(hero) + renderTable(top10);
+      })
+      .catch((err) => {
+        document.getElementById("content").className = "error";
+        document.getElementById("content").textContent = err.message;
+      });
+  </script>
+</body>
+</html>

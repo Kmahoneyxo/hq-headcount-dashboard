@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard layout options — HQ Headcount</title>
+  <link rel="stylesheet" href="preview-common.css?v=3" />
+  <style>
+    body { background: linear-gradient(160deg, #eef2f8 0%, #f8f9fb 50%, #fff 100%); min-height: 100vh; }
+    .hub-header { text-align: center; margin-bottom: 2rem; }
+    .hub-header h1 { font-size: 1.75rem; font-weight: 600; margin: 0 0 0.5rem; color: #0f172a; }
+    .hub-header p { color: #5c6578; margin: 0; max-width: 540px; margin-inline: auto; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #dde1e8;
+      border-radius: 10px;
+      padding: 1.25rem 1.35rem;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.15s, border-color 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .card:hover {
+      border-color: #1d6fb8;
+      box-shadow: 0 6px 20px rgba(29, 111, 184, 0.12);
+    }
+    .card-tag {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #1d6fb8;
+    }
+    .card h2 { font-size: 1.125rem; margin: 0; font-weight: 600; }
+    .card p { margin: 0; font-size: 0.875rem; color: #4a5568; flex: 1; }
+    .card-cta { font-size: 0.8125rem; font-weight: 600; color: #1d6fb8; margin-top: 0.25rem; }
+    .main-link {
+      display: inline-block;
+      padding: 0.6rem 1.1rem;
+      background: #1d6fb8;
+      color: #fff !important;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    .main-link:hover { background: #145a96; text-decoration: none; }
+    .hub-footer { text-align: center; }
+    .meta { font-size: 0.75rem; color: #8b95a5; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="top-nav">
+      <a href="../index.html">← Main dashboard</a>
+      <span class="meta" id="data-meta"></span>
+    </nav>
+
+    <header class="hub-header">
+      <h1>Dashboard layout options</h1>
+      <p>Four prototypes using live <code>headcount.json</code> data. Open each in a new tab to compare layouts for stakeholder presentation.</p>
+    </header>
+
+    <div class="cards">
+      <a class="card" href="executive.html" target="_blank" rel="noopener">
+        <span class="card-tag">Option A</span>
+        <h2>Executive brief</h2>
+        <p>Leadership · 2-min read. Hero market + top 10 by revenue. No charts or methodology.</p>
+        <span class="card-cta">Open prototype →</span>
+      </a>
+
+      <a class="card" href="analyst.html" target="_blank" rel="noopener">
+        <span class="card-tag">Option B</span>
+        <h2>Full findings table</h2>
+        <p>Ops / sales ops · spreadsheet-style. All markets, sortable columns, Excel download.</p>
+        <span class="card-cta">Open prototype →</span>
+      </a>
+
+      <a class="card" href="market-card.html" target="_blank" rel="noopener">
+        <span class="card-tag">Option C</span>
+        <h2>Single market deep dive</h2>
+        <p>Segment lead · one market at a time. Book health, curves, HC rationale, flagged reps.</p>
+        <span class="card-cta">Open prototype →</span>
+      </a>
+
+      <a class="card" href="capacity.html" target="_blank" rel="noopener">
+        <span class="card-tag">Option D</span>
+        <h2>Headcount capacity model</h2>
+        <p>HC planning · gap-focused KPIs, top gaps chart, filterable market table.</p>
+        <span class="card-cta">Open prototype →</span>
+      </a>
+    </div>
+
+    <footer class="hub-footer">
+      <a class="main-link" href="../index.html">Back to full dashboard</a>
+      <p class="meta">Preview locally: <code>python3 scripts/dashboard-server.py</code> → <code>http://localhost:8080/previews/</code></p>
+    </footer>
+  </div>
+
+  <script src="preview-common.js?v=5"></script>
+  <script>
+    loadPreviewData()
+      .then(() => {
+        document.getElementById("data-meta").textContent =
+          `Snapshot ${payload.updated_at} · ${payload.markets?.length ?? 0} markets`;
+      })
+      .catch(() => {
+        document.getElementById("data-meta").textContent = "Could not load data";
+      });
+  </script>
+</body>
+</html>

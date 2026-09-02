@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Headcount capacity model — HQ Headcount</title>
+  <link rel="stylesheet" href="preview-common.css?v=3" />
+  <style>
+    body { background: #eef1f5; }
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    @media (max-width: 700px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+    .kpi {
+      background: #fff;
+      border: 1px solid #dde1e8;
+      border-radius: 8px;
+      padding: 1rem 1.15rem;
+      text-align: center;
+    }
+    .kpi .val { font-size: 1.75rem; font-weight: 700; color: #0f172a; }
+    .kpi .lbl { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; color: #5c6578; margin-top: 0.25rem; }
+    .kpi.hire .val { color: #0d7a4d; }
+    .kpi.optimize .val { color: #b45309; }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 1rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      background: #fff;
+      border: 1px solid #dde1e8;
+      border-radius: 8px;
+    }
+    .filters-label { font-size: 0.75rem; font-weight: 600; color: #5c6578; text-transform: uppercase; }
+    .panel {
+      background: #fff;
+      border: 1px solid #dde1e8;
+      border-radius: 8px;
+      padding: 1rem 1.15rem;
+      margin-bottom: 1rem;
+    }
+    .panel h2 { font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.05em; color: #5c6578; margin: 0 0 0.75rem; }
+    .gap-list { list-style: none; margin: 0; padding: 0; }
+    .gap-list li {
+      display: grid;
+      grid-template-columns: 100px 1fr 60px;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+      font-size: 0.8125rem;
+    }
+    .gap-bar-wrap { background: #e8ecf1; border-radius: 3px; height: 18px; overflow: hidden; }
+    .gap-bar { height: 100%; border-radius: 3px; min-width: 2px; }
+    .gap-bar.neg { background: #0d7a4d; }
+    .gap-bar.pos { background: #b45309; }
+    .chart-wrap { height: 280px; }
+    .table-wrap { overflow-x: auto; }
+    .highlight-gap { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="top-nav">
+      <div>
+        <span style="font-size:0.6875rem;text-transform:uppercase;letter-spacing:0.08em;color:#8b95a5;font-weight:600;">Option D · Capacity model</span><br />
+        <a href="index.html">All options</a> · <a href="../index.html">Main dashboard</a>
+      </div>
+      <span id="meta" style="font-size:0.75rem;color:#8b95a5;"></span>
+    </nav>
+
+    <div id="kpis" class="kpi-row"></div>
+
+    <div class="filters">
+      <span class="filters-label">Segment</span>
+      <span id="segment-chips"></span>
+      <span class="filters-label" style="margin-left:0.5rem;">Rec</span>
+      <span id="rec-chips"></span>
+      <label class="toggle" style="margin-left:auto;">
+        <input type="checkbox" id="hide-japan" checked />
+        Hide Japan
+      </label>
+    </div>
+
+    <div class="panel">
+      <h2>Top 15 markets by |headcount gap|</h2>
+      <div id="gap-viz"></div>
+    </div>
+
+    <div class="panel">
+      <h2>All markets <span id="table-count" style="font-weight:400;"></span></h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Market</th>
+              <th class="num">Current reps</th>
+              <th class="num">Optimal HC</th>
+              <th class="num">Gap</th>
+              <th>Rec</th>
+              <th>Curve validated</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="preview-common.js?v=5"></script>
+  <script>
+    let segmentFilter = "all";
+    let recFilter = "all";
+    let hideJapan = true;
+    let gapChart = null;
+
+    const SEGMENTS = ["all", "M", "L", "S", "XL", "NAM", "ACC", "DCA"];
+    const RECS = ["all", "Hire", "Hold", "Optimize"];
+
+    function filteredMarkets() {
+      return (payload?.markets ?? [])
+        .filter((m) => {
+          if (hideJapan && isJapan(m)) return false;
+          if (segmentFilter !== "all" && m.segment !== segmentFilter) return false;
+          if (recFilter !== "all" && m.headcount_recommendation !== recFilter) return false;
+          return true;
+        });
+    }
+
+    function renderKpis(markets) {
+      const hire = markets.filter((m) => m.headcount_recommendation === "Hire").length;
+      const optimize = markets.filter((m) => m.headcount_recommendation === "Optimize").length;
+      const gapSum = markets.reduce((s, m) => s + (m.headcount_gap || 0), 0);
+      document.getElementById("kpis").innerHTML = `
+        <div class="kpi"><div class="val">${markets.length}</div><div class="lbl">Markets shown</div></div>
+        <div class="kpi hire"><div class="val">${hire}</div><div class="lbl">Hire</div></div>
+        <div class="kpi optimize"><div class="val">${optimize}</div><div class="lbl">Optimize</div></div>
+        <div class="kpi"><div class="val ${gapSum < 0 ? "gap-neg" : gapSum > 0 ? "gap-pos" : ""}">${gapStr(gapSum)}</div><div class="lbl">Sum of gaps</div></div>`;
+    }
+
+    function renderGapList(top) {
+      const maxAbs = Math.max(...top.map((m) => Math.abs(m.headcount_gap || 0)), 1);
+      return `<ul class="gap-list">${top.map((m) => {
+        const gap = m.headcount_gap || 0;
+        const pct = (Math.abs(gap) / maxAbs) * 100;
+        const cls = gap >= 0 ? "pos" : "neg";
+        return `<li>
+          <span><strong>${m.country}-${m.segment}</strong></span>
+          <div class="gap-bar-wrap"><div class="gap-bar ${cls}" style="width:${pct}%"></div></div>
+          <span class="num highlight-gap ${gapClass(gap)}">${gapStr(gap)}</span>
+        </li>`;
+      }).join("")}</ul>`;
+    }
+
+    async function renderGapViz(markets) {
+      const top = [...markets]
+        .sort((a, b) => Math.abs(b.headcount_gap || 0) - Math.abs(a.headcount_gap || 0))
+        .slice(0, 15);
+      const el = document.getElementById("gap-viz");
+      if (!el) return;
+      if (!top.length) {
+        el.innerHTML = '<p class="missing">No markets match the current filters.</p>';
+        return;
+      }
+      try {
+        const ok = await ensureChartJs();
+        if (ok) {
+          el.innerHTML = '<div class="chart-wrap"><canvas id="gap-chart"></canvas></div>';
+          const ctx = document.getElementById("gap-chart");
+          if (!ctx) {
+            el.innerHTML = renderGapList(top);
+            return;
+          }
+          if (gapChart) gapChart.destroy();
+          gapChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: top.map((m) => `${m.country}-${m.segment}`),
+              datasets: [{
+                label: "Headcount gap",
+                data: top.map((m) => m.headcount_gap),
+                backgroundColor: top.map((m) =>
+                  (m.headcount_gap || 0) > 0 ? REC_COLORS.Optimize : REC_COLORS.Hire
+                ),
+              }],
+            },
+            options: {
+              indexAxis: "y",
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { title: { display: true, text: "Gap (reps)" } },
+              },
+            },
+          });
+        } else {
+          el.innerHTML = renderGapList(top);
+        }
+      } catch (err) {
+        el.innerHTML = renderGapList(top) + `<p class="missing">Chart unavailable (${err.message}).</p>`;
+      }
+    }
+
+    function renderTable(markets) {
+      const sorted = [...markets].sort((a, b) => Math.abs(b.headcount_gap || 0) - Math.abs(a.headcount_gap || 0));
+      document.getElementById("table-count").textContent = `(${sorted.length})`;
+      document.getElementById("tbody").innerHTML = sorted.map((m) => {
+        const gap = m.headcount_gap;
+        const recClass = hcRecBadgeClass(m);
+        const validated = m.hc_curve_validated !== false;
+        return `<tr>
+          <td><strong>${m.country}-${m.segment}</strong></td>
+          <td class="num">${fmtNum(m.current_reps)}</td>
+          <td class="num">${fmtNum(m.optimal_headcount)}</td>
+          <td class="num highlight-gap ${gapClass(gap)}">${gapStr(gap)}</td>
+          <td><span class="badge ${recClass}">${hcRecLabel(m)}</span></td>
+          <td><span class="curve-${validated ? "yes" : "no"}">${curveValidatedLabel(m)}</span></td>
+        </tr>`;
+      }).join("");
+    }
+
+    function renderChips() {
+      document.getElementById("segment-chips").innerHTML = SEGMENTS.map((s) =>
+        `<span class="chip${segmentFilter === s ? " active" : ""}" data-seg="${s}">${s === "all" ? "All" : s}</span>`
+      ).join("");
+      document.getElementById("rec-chips").innerHTML = RECS.map((r) =>
+        `<span class="chip${recFilter === r ? " active" : ""}" data-rec="${r}">${r === "all" ? "All" : r}</span>`
+      ).join("");
+    }
+
+    function renderAll() {
+      try {
+        const markets = filteredMarkets();
+        renderKpis(markets);
+        renderGapViz(markets);
+        renderTable(markets);
+      } catch (err) {
+        document.getElementById("kpis").innerHTML = `<div class="error">${err.message || "Could not render capacity view"}</div>`;
+      }
+    }
+
+    loadPreviewData().then(() => {
+      document.getElementById("meta").textContent = `Snapshot ${payload.updated_at}`;
+      renderChips();
+      renderAll();
+
+      document.getElementById("segment-chips").addEventListener("click", (e) => {
+        const chip = e.target.closest(".chip[data-seg]");
+        if (!chip) return;
+        segmentFilter = chip.dataset.seg;
+        renderChips();
+        renderAll();
+      });
+      document.getElementById("rec-chips").addEventListener("click", (e) => {
+        const chip = e.target.closest(".chip[data-rec]");
+        if (!chip) return;
+        recFilter = chip.dataset.rec;
+        renderChips();
+        renderAll();
+      });
+      document.getElementById("hide-japan").addEventListener("change", (e) => {
+        hideJapan = e.target.checked;
+        renderAll();
+      });
+    }).catch((err) => {
+      document.getElementById("kpis").innerHTML = `<div class="error">${err.message}</div>`;
+    });
+  </script>
+</body>
+</html>

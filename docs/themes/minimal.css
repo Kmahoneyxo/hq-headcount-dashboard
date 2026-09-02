@@ -1,0 +1,129 @@
+/* Minimal — ultra-clean, generous whitespace, single blue accent */
+:root {
+  --bg: #fafbfc;
+  --surface: #ffffff;
+  --surface-2: #f6f7f9;
+  --border: #e8eaed;
+  --text: #1f2328;
+  --muted: #6e7781;
+  --accent: #0969da;
+  --hire: #1a7f37;
+  --optimize: #9a6700;
+  --hold: #0969da;
+  --dnh: #cf222e;
+  --radius: 10px;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --shadow: none;
+  --header-shadow: none;
+  --table-header-bg: #f6f7f9;
+  --highlight-bg: #f0f6ff;
+  --highlight-border: #c8d9f0;
+  --chip-active-bg: #ddf4ff;
+  --spacing-panel: 28px;
+  --spacing-container: 28px;
+  --font-size-base: 14px;
+  --table-cell-padding: 12px 16px;
+  --table-font-size: 0.8125rem;
+}
+
+body {
+  font-size: var(--font-size-base);
+  letter-spacing: 0.01em;
+}
+
+.header {
+  box-shadow: var(--header-shadow);
+  border-bottom-color: var(--border);
+}
+
+.container {
+  padding: var(--spacing-container);
+  gap: 28px;
+  max-width: 1080px;
+}
+
+.lookup-panel,
+.panel {
+  padding: var(--spacing-panel);
+  box-shadow: var(--shadow);
+  border-color: var(--border);
+}
+
+.lookup-panel {
+  border-radius: 12px;
+}
+
+.lookup-controls {
+  margin-bottom: 28px;
+}
+
+.lookup-market-title {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.lookup-stat-card {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.lookup-stat-card.highlight {
+  background: var(--highlight-bg);
+  border-color: var(--highlight-border);
+}
+
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.dash-tabs {
+  gap: 0;
+}
+
+.dash-tab {
+  padding: 12px 18px;
+}
+
+.table-wrap {
+  border-radius: 8px;
+  border-color: var(--border);
+}
+
+th {
+  background: var(--table-header-bg);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+th, td {
+  padding: var(--table-cell-padding);
+  font-size: var(--table-font-size);
+  border-bottom-color: var(--border);
+}
+
+.chip.active {
+  background: var(--chip-active-bg);
+}
+
+tr.lookup-row td,
+tr.lookup-row td.sticky-col {
+  background: var(--highlight-bg);
+}
+
+tr.findings-us-row td,
+tr.findings-us-row td.sticky-col {
+  background: var(--highlight-bg);
+}
+
+.threshold-callout {
+  background: var(--highlight-bg);
+  border-color: var(--highlight-border);
+}
+
+.footer {
+  background: transparent;
+  border-top-color: var(--border);
+}

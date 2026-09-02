@@ -1,0 +1,128 @@
+/* Indeed — corporate professional, Indeed blues, balanced card density */
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #eef0f4;
+  --border: #dde1e8;
+  --text: #1a1d26;
+  --muted: #5c6578;
+  --accent: #2557a7;
+  --hire: #0d7a4d;
+  --optimize: #b45309;
+  --hold: #1d6fb8;
+  --dnh: #c41e3a;
+  --radius: 8px;
+  --font: "Indeed Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --shadow: 0 1px 3px rgba(26, 29, 38, 0.06);
+  --header-shadow: 0 1px 3px rgba(26, 29, 38, 0.06);
+  --table-header-bg: #eef0f4;
+  --highlight-bg: #f0f5fc;
+  --highlight-border: #c5d9f0;
+  --chip-active-bg: #e8f0fa;
+  --spacing-panel: 18px;
+  --spacing-container: 20px;
+  --font-size-base: 14px;
+  --table-cell-padding: 9px 12px;
+  --table-font-size: 0.8125rem;
+}
+
+.header {
+  box-shadow: var(--header-shadow);
+  border-bottom: 2px solid var(--accent);
+}
+
+h1 {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.container {
+  padding: var(--spacing-container);
+  gap: 20px;
+  max-width: 1100px;
+}
+
+.lookup-panel,
+.panel {
+  padding: var(--spacing-panel);
+  box-shadow: var(--shadow);
+  border-color: var(--border);
+  border-radius: var(--radius);
+}
+
+.lookup-market-title {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.lookup-stat-card.highlight {
+  background: var(--highlight-bg);
+  border-color: var(--highlight-border);
+}
+
+.lookup-stat-card.highlight .lookup-stat-value {
+  color: var(--accent);
+}
+
+.btn {
+  background: var(--accent);
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.btn:hover:not(:disabled) {
+  background: #1e4a8f;
+  filter: none;
+}
+
+.dash-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.chip.active {
+  background: var(--chip-active-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+th {
+  background: var(--table-header-bg);
+  color: var(--muted);
+}
+
+th.highlight-col,
+.highlight-col {
+  color: var(--accent);
+}
+
+tr.lookup-row td,
+tr.lookup-row td.sticky-col {
+  background: var(--highlight-bg);
+}
+
+tr.findings-us-row td,
+tr.findings-us-row td.sticky-col {
+  background: var(--highlight-bg);
+}
+
+.threshold-callout {
+  background: var(--highlight-bg);
+  border-color: var(--highlight-border);
+}
+
+.rec-Hire { background: #e6f4ed; color: var(--hire); }
+.rec-Optimize { background: #fef3e2; color: var(--optimize); }
+.rec-Hold { background: #e8f2fa; color: var(--hold); }
+.rec-Do\ Not\ Hire { background: #fce8eb; color: var(--dnh); }
+
+.sources-meta-card {
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+.footer a {
+  color: var(--accent);
+  font-weight: 500;
+}

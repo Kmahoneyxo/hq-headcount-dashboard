@@ -3,37 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HQ Headcount Capacity Model</title>
+  <title>HQ Headcount</title>
   <link rel="stylesheet" href="styles.css" />
+  <link id="theme-link" rel="stylesheet" href="themes/minimal.css" />
+  <script>
+    (function () {
+      var KEY = "hq-dash-theme";
+      var THEMES = ["minimal", "spreadsheet", "executive", "indeed"];
+      var saved = localStorage.getItem(KEY);
+      var theme = THEMES.indexOf(saved) >= 0 ? saved : "minimal";
+      document.documentElement.dataset.theme = theme;
+      var link = document.getElementById("theme-link");
+      if (link) link.href = "themes/" + theme + ".css";
+    })();
+  </script>
 </head>
 <body>
   <header class="header">
     <div class="header-inner">
       <div>
-        <h1>HQ Headcount Capacity Model</h1>
+        <h1>HQ Headcount</h1>
         <p class="subtitle" id="meta-line">Loading…</p>
       </div>
       <div class="header-actions">
+        <div class="theme-switcher" role="group" aria-label="Dashboard theme">
+          <span class="theme-switcher-label">Theme:</span>
+          <button type="button" class="theme-btn active" data-theme="minimal" aria-pressed="true">Minimal</button>
+          <button type="button" class="theme-btn" data-theme="spreadsheet" aria-pressed="false">Spreadsheet</button>
+          <button type="button" class="theme-btn" data-theme="executive" aria-pressed="false">Executive</button>
+          <button type="button" class="theme-btn" data-theme="indeed" aria-pressed="false">Indeed</button>
+        </div>
         <label class="toggle">
           <input type="checkbox" id="hide-jp" checked />
           Hide Japan
         </label>
-        <a href="./data/headcount-dashboard.xlsx" class="btn btn-secondary" download>Excel</a>
-        <a href="./data/headcount-dashboard.csv" class="btn btn-secondary" download>CSV</a>
-        <a href="./data/impact_coverage_all_reps.csv" class="btn btn-secondary" download title="All reps — impact calls/account from data lake (sql/18)">Impact coverage</a>
-        <a href="./data/hq_raw_data.xlsx" class="btn btn-secondary" download title="All raw data lake pulls — impact coverage, JV/JAM, PCID market (sql/18–20)">Download Excel (raw data)</a>
-        <a href="./data/book_size_threshold_analysis.xlsx" class="btn btn-secondary" download title="85% peak threshold analysis by PCID, std-dev, and rev quartile (sql/22)">Threshold analysis</a>
+        <details class="exports-menu">
+          <summary>Exports</summary>
+          <div class="exports-links">
+            <a href="./data/headcount-dashboard.xlsx" download>Excel summary</a>
+            <a href="./data/headcount-dashboard.csv" download>CSV summary</a>
+          </div>
+        </details>
         <button type="button" id="refresh-btn" class="btn" title="Re-fetch published JSON (after git push)">
           <span id="refresh-label">Reload snapshot</span>
         </button>
       </div>
     </div>
     <nav class="dash-tabs" aria-label="Dashboard sections">
-      <button type="button" class="dash-tab active" data-tab="markets">Markets</button>
+      <button type="button" class="dash-tab active" data-tab="overview">Overview</button>
       <button type="button" class="dash-tab" data-tab="findings">Findings</button>
-      <button type="button" class="dash-tab" data-tab="book-health">Book health</button>
-      <button type="button" class="dash-tab" data-tab="methodology">Methodology</button>
-      <button type="button" class="dash-tab" data-tab="sources">Show our work</button>
+      <button type="button" class="dash-tab" data-tab="curves">Curves</button>
+      <button type="button" class="dash-tab" data-tab="reference">Reference</button>
     </nav>
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
   </header>
@@ -41,12 +61,6 @@
   <main class="container">
     <div id="tab-markets" class="tab-panel active">
       <section class="lookup-panel" id="lookup-panel">
-        <div class="lookup-header">
-          <div>
-            <h2>Market lookup</h2>
-            <p class="caption">Country × segment → book health · HC reason · recommendations · SBS routing</p>
-          </div>
-        </div>
         <div class="lookup-controls">
           <label class="lookup-field">
             <span>Country</span>
@@ -69,43 +83,42 @@
         <div class="lookup-answer" id="lookup-answer"></div>
       </section>
 
-      <section class="panel hidden" id="flagged-reps-wrap">
-        <h2>Flagged reps</h2>
-        <p class="caption">Too big / too little · top 25 · full rep book in Excel export</p>
-        <div class="table-wrap table-wrap-sm">
-          <table>
-            <thead>
-              <tr>
-                <th>Rep ID</th>
-                <th class="num">PCIDs</th>
-                <th class="num">PQR</th>
-                <th class="num">Ideal</th>
-                <th>Flag</th>
-                <th class="num">Peel</th>
-                <th class="num">Grow</th>
-              </tr>
-            </thead>
-            <tbody id="flagged-reps-body"></tbody>
-          </table>
+      <details class="lookup-details hidden" id="flagged-reps-wrap">
+        <summary>Flagged reps (top 25)</summary>
+        <div class="lookup-details-body">
+          <div class="table-wrap table-wrap-sm">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rep ID</th>
+                  <th class="num">PCIDs</th>
+                  <th class="num">PQR</th>
+                  <th class="num">Ideal</th>
+                  <th>Flag</th>
+                  <th class="num">Peel</th>
+                  <th class="num">Grow</th>
+                </tr>
+              </thead>
+              <tbody id="flagged-reps-body"></tbody>
+            </table>
+          </div>
         </div>
-      </section>
-
-      <section class="kpi-grid kpi-grid-compact" id="kpis"></section>
-
-      <section class="filters">
-        <div class="filter-group" id="region-filters"></div>
-        <div class="filter-group" id="segment-filters"></div>
-        <div class="filter-group" id="rec-filters"></div>
-        <select id="sort-by" class="select">
-          <option value="ideal_hc">Sort: ideal HC</option>
-          <option value="gap">Sort: gap</option>
-          <option value="revenue">Sort: revenue</option>
-        </select>
-      </section>
+      </details>
 
       <section class="panel">
-        <h2>All markets</h2>
-        <p class="caption">HC verdict · gap · recommendation · avg vs ideal PCID</p>
+        <div class="panel-header">
+          <h2>All markets</h2>
+          <div class="filters-row">
+            <div class="filter-group" id="region-filters"></div>
+            <div class="filter-group" id="segment-filters"></div>
+            <div class="filter-group" id="rec-filters"></div>
+            <select id="sort-by" class="select">
+              <option value="ideal_hc">Sort: ideal HC</option>
+              <option value="gap">Sort: gap</option>
+              <option value="revenue">Sort: revenue</option>
+            </select>
+          </div>
+        </div>
         <div class="table-wrap">
           <table id="market-table">
             <thead>
@@ -122,16 +135,6 @@
             </thead>
             <tbody id="market-body"></tbody>
           </table>
-        </div>
-      </section>
-
-      <section class="charts-grid charts-grid-compact">
-        <div class="panel">
-          <h2>Headcount gap</h2>
-          <p class="caption">Top markets by |gap| · positive = over-staffed</p>
-          <div class="chart-panel">
-            <canvas id="gap-chart"></canvas>
-          </div>
         </div>
       </section>
     </div>
@@ -173,12 +176,7 @@
 
     <div id="tab-book-health" class="tab-panel hidden">
       <section class="lookup-panel" id="book-health-panel">
-        <div class="lookup-header">
-          <div>
-            <h2>Book health &amp; inflection curves</h2>
-            <p class="caption">When growth, JV, coverage, and products change as PCIDs move — find where books start to grow or decline</p>
-          </div>
-        </div>
+        <p class="caption">Growth, JV, coverage, and product mix by PCID bucket — same market as Overview.</p>
         <div class="lookup-controls">
           <label class="lookup-field">
             <span>Country</span>
@@ -225,12 +223,13 @@
           </div>
         </div>
         <div id="bh-detail" class="bh-detail"></div>
+        <div id="bh-evidence"></div>
       </section>
     </div>
 
-    <div id="tab-methodology" class="tab-panel hidden">
+    <div id="tab-reference" class="tab-panel hidden">
       <section class="panel methodology-panel">
-        <h2>HQ methodology</h2>
+        <h2>Methodology</h2>
         <p class="methodology-reference">
           <strong>Official reference (Indeed SSO):</strong>
           <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">Connect PTD — book &amp; headcount methodology</a>
@@ -341,11 +340,9 @@
 
         <p class="caption refresh-note" id="refresh-note"></p>
       </section>
-    </div>
 
-    <div id="tab-sources" class="tab-panel hidden">
       <section class="panel sources-panel">
-        <h2>Show our work</h2>
+        <h2>Data &amp; pipeline</h2>
         <p class="caption">Data sources, SQL → JSON mapping, and build pipeline — transparency / audit trail for this snapshot.</p>
 
         <div id="sources-snapshot" class="sources-snapshot" aria-live="polite"></div>
@@ -502,6 +499,29 @@
     <p>HQ Headcount Dashboard · Query 16 · <a href="https://github.com/Kmahoneyxo/hq-headcount-dashboard">GitHub</a> · <a href="https://connect-ptd.indeed.tech/content/7c14a602-80bf-4091-9072-b6861da49c77/" target="_blank" rel="noopener noreferrer">Connect PTD</a></p>
   </footer>
 
-  <script src="app.js?v=20260902b"></script>
+  <script>
+    (function () {
+      var KEY = "hq-dash-theme";
+      var THEMES = ["minimal", "spreadsheet", "executive", "indeed"];
+      function applyTheme(theme) {
+        if (THEMES.indexOf(theme) < 0) theme = "minimal";
+        document.body.className = "theme-" + theme;
+        document.getElementById("theme-link").href = "themes/" + theme + ".css";
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem(KEY, theme);
+        document.querySelectorAll(".theme-btn").forEach(function (btn) {
+          var on = btn.dataset.theme === theme;
+          btn.classList.toggle("active", on);
+          btn.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+      }
+      var saved = localStorage.getItem(KEY);
+      applyTheme(THEMES.indexOf(saved) >= 0 ? saved : "minimal");
+      document.querySelectorAll(".theme-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () { applyTheme(btn.dataset.theme); });
+      });
+    })();
+  </script>
+  <script src="app.js?v=20260902f"></script>
 </body>
 </html>

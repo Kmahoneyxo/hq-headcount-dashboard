@@ -1,0 +1,189 @@
+/* Spreadsheet — Excel / Google Sheets density, grid lines, green header row */
+:root {
+  --bg: #f3f3f3;
+  --surface: #ffffff;
+  --surface-2: #e8e8e8;
+  --border: #c6c6c6;
+  --text: #000000;
+  --muted: #444444;
+  --accent: #217346;
+  --hire: #107c41;
+  --optimize: #c55a11;
+  --hold: #2e75b6;
+  --dnh: #c00000;
+  --radius: 2px;
+  --font: "Segoe UI", Calibri, Arial, sans-serif;
+  --shadow: none;
+  --header-shadow: none;
+  --table-header-bg: #217346;
+  --table-header-color: #ffffff;
+  --highlight-bg: #e2efda;
+  --highlight-border: #a9d18e;
+  --chip-active-bg: #e2efda;
+  --spacing-panel: 12px;
+  --spacing-container: 12px;
+  --font-size-base: 12px;
+  --table-cell-padding: 4px 8px;
+  --table-font-size: 0.75rem;
+}
+
+body {
+  font-size: var(--font-size-base);
+}
+
+.header {
+  box-shadow: var(--header-shadow);
+  border-bottom: 2px solid var(--accent);
+}
+
+h1 {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.container {
+  padding: var(--spacing-container);
+  gap: 12px;
+  max-width: 100%;
+}
+
+.lookup-panel,
+.panel {
+  padding: var(--spacing-panel);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+  border-color: var(--border);
+}
+
+.lookup-market-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.lookup-stats {
+  gap: 6px;
+}
+
+.lookup-stat-card {
+  border-radius: 0;
+  padding: 6px 8px;
+}
+
+.lookup-stat-value {
+  font-size: 1rem;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.lookup-stat-label {
+  font-size: 0.65rem;
+}
+
+.btn {
+  border-radius: 2px;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  background: var(--accent);
+}
+
+.dash-tab {
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 0;
+}
+
+.dash-tab.active {
+  background: var(--highlight-bg);
+}
+
+.table-wrap {
+  border-radius: 0;
+  max-height: 600px;
+}
+
+table {
+  font-size: var(--table-font-size);
+  border: 1px solid var(--border);
+}
+
+th, td {
+  padding: var(--table-cell-padding);
+  border: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  background: var(--table-header-bg);
+  color: var(--table-header-color);
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: none;
+  letter-spacing: 0;
+  position: sticky;
+  top: 0;
+}
+
+td.num, th.num {
+  font-family: Consolas, "Courier New", monospace;
+  text-align: right;
+}
+
+.sticky-col,
+th.sticky-col {
+  background: var(--surface);
+}
+
+th.sticky-col {
+  background: var(--table-header-bg);
+  color: var(--table-header-color);
+}
+
+.chip {
+  border-radius: 2px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+}
+
+.chip.active {
+  background: var(--chip-active-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.select {
+  border-radius: 2px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
+.rec {
+  border-radius: 2px;
+  font-size: 0.7rem;
+}
+
+tr.lookup-row td,
+tr.lookup-row td.sticky-col {
+  background: var(--highlight-bg);
+}
+
+tr.findings-us-row td,
+tr.findings-us-row td.sticky-col {
+  background: #fff2cc;
+}
+
+.methodology-table th {
+  background: var(--table-header-bg);
+  color: var(--table-header-color);
+}
+
+.growth-row-ideal td { background: #e2efda; }
+.growth-row-inflection td { background: #fff2cc; }
+
+.footer {
+  font-size: 0.7rem;
+  padding: 8px;
+}

@@ -27,6 +27,47 @@ Relative paths (`./data/headcount.json`) work on Prototypes without changes.
 2. **Create project** → name e.g. `HQ Headcount Capacity Model`.
 3. Choose one deployment method:
 
+### Option C — `prototypes-publisher` script (recommended)
+
+Indeed Design Technology maintains [`@indeed/prototypes-publisher`](https://code.corp.indeed.com/design-technology/prototypes-publisher) (successor to `@indeed/design-tech-publisher`). It uploads a static output folder to [prototypes.indeed.com](https://prototypes.indeed.com) and records a new build on the project's **Builds** tab.
+
+**Requirements:** Node.js >= 24.11.0, npm >= 11.0.0
+
+**One-time config** — create `.dtpublishrc.json` in the repo root:
+
+```json
+{
+    "distPath": "docs",
+    "projectId": "6a983dc2bd8fe2c9a2eec495"
+}
+```
+
+(`headcount-dash` project; slug is set in Prototypes UI, not in this file.)
+
+**Deploy from repo root** (no build step — `docs/` is already the static site):
+
+```bash
+PUBLISHER_USERNAME=your-ldap npx @indeed/prototypes-publisher
+```
+
+You will be prompted for LDAP if `PUBLISHER_USERNAME` is unset. On success you should see per-file upload lines, `Files uploaded successfully.`, and `View your prototype at: https://prototypes.indeed.com/apps/headcount-dash` (browser opens in interactive mode).
+
+**GitLab CI** (optional, for deploy on push to `main`):
+
+```yaml
+publish-prototype:
+    stage: deploy
+    image: $JAVASCRIPT_BUILD_IMAGE:$JAVASCRIPT_BUILD_IMAGE_TAG
+    rules:
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    script:
+        - PUBLISHER_USERNAME=$GITLAB_USER_LOGIN npx @indeed/prototypes-publisher --ci
+```
+
+Repo: `https://code.corp.indeed.com/kmahoney/hq-headcount-dashboard` (branch `main`, publish dir `docs/`).
+
+> **Note:** The publisher only uploads whitelisted extensions (html, js, css, json, images, fonts, etc.). `data/*.csv` and `data/*.xlsx` are **skipped** — JSON data files upload fine; optional CSV/XLSX header downloads will 404 unless you use Option A zip upload or extend the publisher.
+
 ### Option A — Upload zip (fastest)
 
 From the repo root:
@@ -37,15 +78,15 @@ cd docs && zip -r ../hq-headcount-dashboard-prototypes.zip . -x "*.DS_Store"
 
 Upload `hq-headcount-dashboard-prototypes.zip` to the new Prototypes project.
 
-### Option B — Git-connected deploy (recommended for weekly refresh)
+### Option B — GitHub zip / manual upload
 
-If Prototypes supports connecting a GitHub repo:
+Legacy path if you are not on Indeed GitLab CI:
 
-- **Repository:** `Kmahoneyxo/hq-headcount-dashboard` (private)
-- **Branch:** `cursor/optimal-book-base-dataset-v1` (or `main` after merge)
+- **Repository:** `Kmahoneyxo/hq-headcount-dashboard` (private GitHub mirror)
+- **Branch:** `main`
 - **Root / publish directory:** `/docs`
 
-Each push to that branch redeploys automatically after you refresh data files.
+Re-upload zip or re-run Option C after refreshing data files.
 
 4. Restrict visibility to your team (Sales Ops / HQ stakeholders with Indeed SSO).
 

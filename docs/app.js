@@ -27,11 +27,15 @@ let findingsAmerOnly = false;
 const AMER_MARKETS = ["US", "CA", "UK", "DACH", "BNL"];
 
 const REC_COLORS = {
-  Hire: "#3ecf8e",
-  Optimize: "#f5a623",
-  Hold: "#6eb5ff",
-  "Do Not Hire": "#f07178",
+  Hire: "#0d7a4d",
+  Optimize: "#b45309",
+  Hold: "#1d6fb8",
+  "Do Not Hire": "#c41e3a",
 };
+
+const CHART_TICK = "#5c6578";
+const CHART_GRID = "#dde1e8";
+const CHART_LEGEND = "#5c6578";
 
 function hcRecLabel(m) {
   const rec = m.headcount_recommendation || "Hold";
@@ -316,16 +320,7 @@ function renderHeadline() {
 }
 
 function renderKpis() {
-  const markets = filteredMarkets();
-  const hire = markets.filter((m) => m.headcount_recommendation === "Hire").length;
-  const optimize = markets.filter((m) => m.headcount_recommendation === "Optimize").length;
-  const idealTotal = markets.reduce((s, m) => s + (m.optimal_headcount || 0), 0);
-  document.getElementById("kpis").innerHTML = `
-    <div class="kpi"><div class="kpi-value">${markets.length}</div><div class="kpi-label">Markets shown</div></div>
-    <div class="kpi hire"><div class="kpi-value">${hire}</div><div class="kpi-label">Hire</div></div>
-    <div class="kpi optimize"><div class="kpi-value">${optimize}</div><div class="kpi-label">Optimize</div></div>
-    <div class="kpi"><div class="kpi-value">${fmtNum(idealTotal)}</div><div class="kpi-label">Ideal HC (filtered)</div></div>
-  `;
+  /* KPI strip removed from Overview — table + lookup show essentials */
 }
 
 function allMarketsForLookup() {
@@ -346,6 +341,198 @@ function fmtPct(p) {
 function fmtJv(n) {
   if (n == null) return "—";
   return "$" + Number(n).toFixed(2) + "/job";
+}
+
+function fmtGrowthPct(n) {
+  if (n == null) return "—";
+  return (Number(n) * 100).toFixed(1) + "%";
+}
+
+function fmtCoverageCalls(n) {
+  if (n == null) return "—";
+  return Number(n).toFixed(1) + " calls/acct";
+}
+
+function mergeEvidenceBuckets(m) {
+  const map = new Map();
+  const ingest = (arr, kind) => {
+    for (const b of arr || []) {
+      const key = b.book_bucket || String(b.bucket_midpoint);
+      const row = map.get(key) || {
+        book_bucket: b.book_bucket,
+        bucket_midpoint: b.bucket_midpoint,
+        bucket_upper: b.bucket_upper,
+        bucket_order: b.bucket_order,
+        rep_count: b.rep_count,
+      };
+      if (kind === "growth") row.median_growth_pct = b.median_growth_pct;
+      if (kind === "coverage") row.median_impact_calls_per_account = b.median_impact_calls_per_account;
+      if (kind === "jv") row.median_rev_per_job = b.median_rev_per_job;
+      if (b.rep_count != null) row.rep_count = b.rep_count;
+      map.set(key, row);
+    }
+  };
+  ingest(m.growth_by_bucket, "growth");
+  ingest(m.coverage_by_bucket, "coverage");
+  ingest(m.jv_by_bucket, "jv");
+  return [...map.values()].sort(
+    (a, b) => (a.bucket_order ?? a.bucket_midpoint ?? 0) - (b.bucket_order ?? b.bucket_midpoint ?? 0),
+  );
+}
+
+function bucketSizeLabel(b) {
+  if (b.book_bucket?.includes(": ")) return b.book_bucket.split(": ")[1] + " PCIDs";
+  if (b.bucket_midpoint != null) return fmtNum(b.bucket_midpoint) + " PCIDs";
+  return b.book_bucket || "—";
+}
+
+function evidenceRowFlags(m, b, ideal) {
+  const flags = [];
+  if (ideal != null && b.bucket_midpoint === ideal) flags.push("Ideal book");
+  if (m.growth_peak_accounts != null && b.bucket_midpoint === m.growth_peak_accounts) flags.push("Growth peak");
+  if (ideal != null && b.bucket_midpoint != null && b.bucket_midpoint < ideal) flags.push("Below ideal");
+  if (ideal != null && b.bucket_upper != null && b.bucket_upper > ideal) flags.push("Above ideal");
+  return flags.join(" · ") || "—";
+}
+
+function gapStr(gap) {
+  if (gap == null) return "—";
+  return gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
+}
+
+/** 2–4 sentence summary: ideal book, HC math, curve gate, inflection signals. */
+function buildRecommendationWhyParagraph(m) {
+  const ideal = idealPcid(m);
+  const rec = hcRecLabel(m);
+  const sentences = [];
+
+  const bookWhy =
+    m.optimal_book_primary ||
+    (ideal != null
+      ? `Ideal PCID ${fmtNum(ideal)} from ${m.perfect_book_source || "sql/16"} — largest bucket within 85% of peak revenue growth.`
+      : "Ideal book size not available in this snapshot.");
+  sentences.push(`${rec} — ${bookWhy}`);
+
+  const assigned = m.assigned_accounts;
+  const optimal = m.optimal_headcount;
+  const current = m.current_reps;
+  const gap = m.headcount_gap;
+  if (assigned != null && ideal != null && optimal != null) {
+    let hcLine = `${fmtNum(assigned)} assigned PCIDs ÷ ${fmtNum(ideal)} ideal = ${fmtNum(optimal)} optimal HC`;
+    if (current != null) hcLine += ` vs ${fmtNum(current)} current`;
+    if (gap != null) hcLine += ` (gap ${gapStr(gap)})`;
+    sentences.push(hcLine + ".");
+  } else if (m.hc_reason_primary) {
+    sentences.push(m.hc_reason_primary);
+  }
+
+  if (m.hc_curve_validated === false) {
+    sentences.push(
+      m.hc_curve_gate_reason ||
+        "Ideal PCID isn't validated by the revenue growth curve — recommendation held to Hold until the curve is trusted.",
+    );
+  } else if (m.perfect_book_source) {
+    sentences.push(`Growth curve validated (${m.perfect_book_source}) — HC action is trusted.`);
+  }
+
+  const dipParts = [];
+  if (m.growth_peak_pct != null && m.growth_decline_above_pcid != null) {
+    dipParts.push(
+      `rev growth peaks at ~${fmtNum(m.growth_peak_accounts)} PCIDs (${fmtGrowthPct(m.growth_peak_pct)}) then softens above ~${fmtNum(m.growth_decline_above_pcid)}`,
+    );
+  }
+  if (m.jv_decline_above_pcid != null && m.jv_decline_median_rev_per_job != null) {
+    dipParts.push(
+      `$/job falls from ${fmtJv(m.jv_peak_rev_per_job ?? m.jv_plateau_rev_per_job)} toward ${fmtJv(m.jv_decline_median_rev_per_job)} above ~${fmtNum(m.jv_decline_above_pcid)} PCIDs`,
+    );
+  }
+  if (m.coverage_decline_above_pcid != null && m.coverage_decline_median_calls != null) {
+    dipParts.push(
+      `coverage drops from ${fmtCoverageCalls(m.coverage_peak_calls_per_account)} toward ${fmtCoverageCalls(m.coverage_decline_median_calls)} above ~${fmtNum(m.coverage_decline_above_pcid)} PCIDs`,
+    );
+  }
+  if (dipParts.length) {
+    sentences.push(`Inflection signals: ${dipParts.join("; ")}.`);
+  } else if (m.recommendation_primary && m.recommendation_primary !== m.hc_reason_primary) {
+    sentences.push(m.recommendation_primary);
+  }
+
+  return sentences.slice(0, 4).join(" ");
+}
+
+/** Hard-number table: growth, coverage, JV by book-size bucket (shared shape with preview-common.js). */
+function idealPcidEvidenceHtml(m) {
+  const ideal = idealPcid(m);
+  const rows = mergeEvidenceBuckets(m);
+  const avgBook = m.current_avg_book ?? m.avg_pcid_per_rep;
+
+  if (!rows.length) {
+    return `<div class="ideal-evidence"><p class="missing">No bucket-level numbers in this export — refresh sql/16 growth/JV/coverage merges.</p></div>`;
+  }
+
+  const tbody = rows
+    .map((b) => {
+      const isIdeal = ideal != null && b.bucket_midpoint === ideal;
+      return `<tr class="${isIdeal ? "evidence-ideal-row" : ""}">
+        <td><strong>${bucketSizeLabel(b)}</strong></td>
+        <td class="num">${fmtNum(b.rep_count)}</td>
+        <td class="num">${fmtGrowthPct(b.median_growth_pct)}</td>
+        <td class="num">${b.median_impact_calls_per_account != null ? fmtCoverageCalls(b.median_impact_calls_per_account) : "—"}</td>
+        <td class="num">${b.median_rev_per_job != null ? fmtJv(b.median_rev_per_job) : "—"}</td>
+        <td class="evidence-flag">${evidenceRowFlags(m, b, ideal)}</td>
+      </tr>`;
+    })
+    .join("");
+
+  const dips = [];
+  if (m.growth_peak_pct != null && m.growth_decline_above_pcid != null && m.growth_decline_median_pct != null) {
+    dips.push(
+      `<strong>Growth:</strong> peak ${fmtGrowthPct(m.growth_peak_pct)} at ~${fmtNum(m.growth_peak_accounts)} PCIDs → ` +
+        `${fmtGrowthPct(m.growth_decline_median_pct)} above ~${fmtNum(m.growth_decline_above_pcid)} PCIDs`,
+    );
+  }
+  if (m.coverage_peak_calls_per_account != null && m.coverage_decline_above_pcid != null) {
+    dips.push(
+      `<strong>Coverage:</strong> peak ${fmtCoverageCalls(m.coverage_peak_calls_per_account)} at ~${fmtNum(m.coverage_peak_accounts)} PCIDs → ` +
+        `${fmtCoverageCalls(m.coverage_decline_median_calls)} above ~${fmtNum(m.coverage_decline_above_pcid)} PCIDs`,
+    );
+  }
+  if (m.jv_plateau_rev_per_job != null && m.jv_decline_above_pcid != null && m.jv_decline_median_rev_per_job != null) {
+    dips.push(
+      `<strong>$/job:</strong> peak ${fmtJv(m.jv_peak_rev_per_job ?? m.jv_plateau_rev_per_job)} at ~${fmtNum(m.jv_peak_accounts ?? ideal)} PCIDs → ` +
+        `${fmtJv(m.jv_decline_median_rev_per_job)} above ~${fmtNum(m.jv_decline_above_pcid)} PCIDs`,
+    );
+  }
+
+  const context =
+    avgBook != null && ideal != null
+      ? `<p class="evidence-context">Today avg <strong>${fmtNum(avgBook)}</strong> PCIDs/rep vs ideal <strong>${fmtNum(ideal)}</strong> · segment avg <strong>${fmtNum(m.segment_avg_pcid)}</strong> · source <strong>${m.perfect_book_source || "sql/16"}</strong></p>`
+      : "";
+
+  return `
+    <div class="ideal-evidence">
+      <h3 class="ideal-evidence-title">Why ideal PCID ${fmtNum(ideal)}? (hard numbers)</h3>
+      <p class="ideal-evidence-lead">${m.optimal_book_primary || "—"}</p>
+      ${context}
+      <div class="evidence-table-wrap">
+        <table class="evidence-table">
+          <thead>
+            <tr>
+              <th>Book size</th>
+              <th class="num">Reps</th>
+              <th class="num">Median rev growth</th>
+              <th class="num">Impact coverage</th>
+              <th class="num">$/job</th>
+              <th>vs ideal</th>
+            </tr>
+          </thead>
+          <tbody>${tbody}</tbody>
+        </table>
+      </div>
+      ${dips.length ? `<ul class="evidence-dips">${dips.map((d) => `<li>${d}</li>`).join("")}</ul>` : ""}
+      ${m.threshold_analysis?.narrative ? `<p class="evidence-threshold"><strong>sql/22 threshold:</strong> ${m.threshold_analysis.narrative}</p>` : ""}
+      <p class="evidence-footnote">Windows: current 90d vs prior PQR · reps with PQR ≥ $5k in growth curve · median per bucket (sql/16–19).</p>
+    </div>`;
 }
 
 function flagPct(count, total) {
@@ -660,15 +847,15 @@ function renderGrowthChart(m) {
       },
       scales: {
         y: {
-          title: { display: true, text: "Median growth %", color: "#9aa3b5" },
+          title: { display: true, text: "Median growth %", color: CHART_TICK },
           ticks: {
-            color: "#9aa3b5",
+            color: CHART_TICK,
             callback: (v) => `${v}%`,
           },
-          grid: { color: "#2a3040" },
+          grid: { color: CHART_GRID },
         },
         x: {
-          ticks: { color: "#9aa3b5", font: { size: 10 }, maxRotation: 45 },
+          ticks: { color: CHART_TICK, font: { size: 10 }, maxRotation: 45 },
           grid: { display: false },
         },
       },
@@ -810,15 +997,15 @@ function renderJvChart(m) {
       },
       scales: {
         y: {
-          title: { display: true, text: "$/job", color: "#9aa3b5" },
+          title: { display: true, text: "$/job", color: CHART_TICK },
           ticks: {
-            color: "#9aa3b5",
+            color: CHART_TICK,
             callback: (v) => "$" + v,
           },
-          grid: { color: "#2a3040" },
+          grid: { color: CHART_GRID },
         },
         x: {
-          ticks: { color: "#9aa3b5", font: { size: 10 }, maxRotation: 45 },
+          ticks: { color: CHART_TICK, font: { size: 10 }, maxRotation: 45 },
           grid: { display: false },
         },
       },
@@ -999,6 +1186,11 @@ function renderBookHealth() {
       </div>`;
   }
 
+  const evidenceEl = document.getElementById("bh-evidence");
+  if (evidenceEl) {
+    evidenceEl.innerHTML = idealPcidEvidenceHtml(m);
+  }
+
   if (mixEmpty) {
     mixEmpty.classList.toggle("hidden", mix.buckets.length > 0);
   }
@@ -1066,26 +1258,26 @@ function renderInflectionComboChart(m) {
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { labels: { color: "#9aa3b5" } },
+        legend: { labels: { color: CHART_TICK } },
         tooltip: { enabled: true },
       },
       scales: {
         y: {
           type: "linear",
           position: "left",
-          title: { display: true, text: "Growth %", color: "#9aa3b5" },
-          ticks: { color: "#9aa3b5", callback: (v) => `${v}%` },
-          grid: { color: "#2a3040" },
+          title: { display: true, text: "Growth %", color: CHART_TICK },
+          ticks: { color: CHART_TICK, callback: (v) => `${v}%` },
+          grid: { color: CHART_GRID },
         },
         y1: {
           type: "linear",
           position: "right",
-          title: { display: true, text: "Calls / acct", color: "#9aa3b5" },
-          ticks: { color: "#9aa3b5" },
+          title: { display: true, text: "Calls / acct", color: CHART_TICK },
+          ticks: { color: CHART_TICK },
           grid: { drawOnChartArea: false },
         },
         x: {
-          ticks: { color: "#9aa3b5", font: { size: 10 }, maxRotation: 45 },
+          ticks: { color: CHART_TICK, font: { size: 10 }, maxRotation: 45 },
           grid: { display: false },
         },
       },
@@ -1123,8 +1315,8 @@ function renderBhJvChart(m) {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        y: { ticks: { color: "#9aa3b5" }, grid: { color: "#2a3040" } },
-        x: { ticks: { color: "#9aa3b5", font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
+        y: { ticks: { color: CHART_TICK }, grid: { color: CHART_GRID } },
+        x: { ticks: { color: CHART_TICK, font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
       },
     },
   });
@@ -1157,14 +1349,14 @@ function renderProductMixChart(m) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: "#9aa3b5" } } },
+      plugins: { legend: { labels: { color: CHART_TICK } } },
       scales: {
-        x: { stacked: true, ticks: { color: "#9aa3b5", font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
+        x: { stacked: true, ticks: { color: CHART_TICK, font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
         y: {
           stacked: true,
           max: 100,
-          ticks: { color: "#9aa3b5", callback: (v) => `${v}%` },
-          grid: { color: "#2a3040" },
+          ticks: { color: CHART_TICK, callback: (v) => `${v}%` },
+          grid: { color: CHART_GRID },
         },
       },
     },
@@ -1211,128 +1403,62 @@ function renderLookup() {
   }
 
   const gap = m.headcount_gap;
-  const gapStr = gap > 0 ? "+" + fmtNum(gap) : fmtNum(gap);
+  const gapLabel = gapStr(gap);
   const recClass = hcRecClass(m);
-  const hcStatus = m.summary_status || "—";
   const health = buildHealthFromMarket(m);
   const hcReason = buildHcReason(m);
   const sbs = buildSbsRouting(m);
   const recs = buildRecommendationsFromMarket(m);
   const ideal = idealPcid(m);
-  const { primary: optimalPrimary } = buildOptimalBookRationale(m);
-  const healthy = buildHealthyBook(m);
-  const growth = buildGrowthCurve(m);
-  const jv = buildJvCurve(m);
   const key = marketKey(m);
   const bh = bookHealth?.markets?.[key];
 
+  const sbsLine = sbs.hasOpp
+    ? sbs.opportunity || `SBS whitespace — ~${fmtNum(sbs.books)} books buildable`
+    : "No SBS whitespace in this country.";
+
   el.innerHTML = `
-    <div class="lookup-market">${m.country}-${m.segment}</div>
+    <div class="lookup-hero">
+      <h2 class="lookup-market-title">${m.country}-${m.segment}</h2>
+      <span class="rec lookup-rec-badge rec-${recClass}">${hcRecLabel(m)}</span>
+    </div>
 
-    <div class="lookup-section">
-      <h3 class="lookup-section-title">1. Book health</h3>
-      ${narrativeBlock(
-        "Books today",
-        health.status,
-        bookHealthStatusClass(health.status),
-        health.primary,
-        [],
-      )}
-      <div class="lookup-grid lookup-grid-compact">
-        <div class="lookup-stat primary">
-          <div class="lookup-stat-value">${fmtNum(m.current_avg_book)} / ${fmtNum(ideal)}</div>
-          <div class="lookup-stat-label">Avg vs ideal PCID</div>
-        </div>
-        <div class="lookup-stat primary">
-          <div class="lookup-stat-value">${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"}</div>
-          <div class="lookup-stat-label">Avg PQR / rep</div>
-        </div>
-        <div class="lookup-stat primary">
-          <div class="lookup-stat-value">${fmtNum(m.current_reps)} → ${fmtNum(m.optimal_headcount)}</div>
-          <div class="lookup-stat-label">Current → ideal HC</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${m.median_impact_calls_per_account != null ? m.median_impact_calls_per_account : "—"}</div>
-          <div class="lookup-stat-label">Impact calls / acct <span class="metric-tip" title="${IMPACT_COVERAGE_DEFINITION}">?</span></div>
-        </div>
-        <div class="lookup-stat primary">
-          <div class="lookup-stat-value">${jv.segmentAvg != null ? fmtJv(jv.segmentAvg) : "—"}</div>
-          <div class="lookup-stat-label">Segment avg JV <span class="metric-tip" title="${JV_DEFINITION}">?</span></div>
-        </div>
-        <div class="lookup-stat primary">
-          <div class="lookup-stat-value">${jv.plateauJv != null ? fmtJv(jv.plateauJv) : "—"}</div>
-          <div class="lookup-stat-label">JV at plateau (~${fmtNum(jv.plateauBook)} PCIDs)</div>
-        </div>
-        <div class="lookup-stat">
-          <div class="lookup-stat-value">${jv.vsPlateauPct != null ? (jv.vsPlateauPct >= 0 ? "+" : "") + jv.vsPlateauPct + "%" : "—"}</div>
-          <div class="lookup-stat-label">Segment JV vs plateau</div>
-        </div>
+    <div class="lookup-stats">
+      <div class="lookup-stat-card">
+        <div class="lookup-stat-value">${fmtNum(m.current_reps)}</div>
+        <div class="lookup-stat-label">Current reps</div>
       </div>
-      ${renderHealthyBookBlock(m, healthy)}
-      ${renderGrowthCurveBlock(m, growth)}
-      ${renderJvCurveBlock(m, jv)}
+      <div class="lookup-stat-card highlight">
+        <div class="lookup-stat-value">${fmtNum(m.optimal_headcount)}</div>
+        <div class="lookup-stat-label">Optimal HC</div>
+      </div>
+      <div class="lookup-stat-card">
+        <div class="lookup-stat-value">${gapLabel}</div>
+        <div class="lookup-stat-label">HC gap</div>
+      </div>
+      <div class="lookup-stat-card">
+        <div class="lookup-stat-value">${fmtNum(ideal)}</div>
+        <div class="lookup-stat-label">Ideal PCID</div>
+      </div>
     </div>
 
-    <div class="lookup-section lookup-hc-reason">
-      <h3 class="lookup-section-title">2. Why HC is ${hcStatus === "Under HC" ? "too low" : hcStatus === "Over HC" ? "too high" : "at target"}</h3>
-      ${narrativeBlock(
-        "Primary reason",
-        hcStatus,
-        hcStatusClass(hcStatus),
-        hcReason.primary,
-        [],
-      )}
-      <p class="lookup-formula">Ideal HC: ${fmtNum(m.assigned_accounts)} PCIDs ÷ ${fmtNum(ideal)} ideal PCID = ${fmtNum(m.optimal_headcount)} reps · gap ${gapStr} · <span class="rec rec-${recClass}">${hcRecLabel(m)}</span>${m.hc_curve_gate_reason && m.hc_curve_validated === false ? `<br><span class="gate-note">${m.hc_curve_gate_reason}</span>` : ""}</p>
-    </div>
+    <section class="rec-why-panel" aria-label="Recommendation rationale">
+      <h3 class="rec-why-title">Why <span class="rec rec-${recClass}">${hcRecLabel(m)}</span>?</h3>
+      <p class="rec-why-summary">${buildRecommendationWhyParagraph(m)}</p>
+      <p class="lookup-formula">${fmtNum(m.assigned_accounts)} PCIDs ÷ ${fmtNum(ideal)} ideal = ${fmtNum(m.optimal_headcount)} optimal HC · gap ${gapLabel}${m.hc_curve_gate_reason && m.hc_curve_validated === false ? ` · <span class="gate-note">${m.hc_curve_gate_reason}</span>` : ""}</p>
+    </section>
 
-    <div class="lookup-section">
-      <h3 class="lookup-section-title">3. Recommendations</h3>
-      ${narrativeBlock(
-        "Next step",
-        m.headcount_recommendation,
-        hcStatusClass(hcStatus),
-        recs.primary,
-        recs.bullets,
-      )}
-    </div>
+    ${idealPcidEvidenceHtml(m)}
 
-    <div class="lookup-section ${sbs.hasOpp ? "lookup-sbs-highlight" : ""}">
-      <h3 class="lookup-section-title">
-        4. SBS opportunity &amp; routing
-        <span class="metric-tip" title="${SBS_OPPORTUNITY_DEFINITION}">?</span>
-      </h3>
-      ${
-        sbs.hasOpp
-          ? `<p class="lookup-sbs-primary">${sbs.opportunity}</p>
-             <p class="lookup-sbs-routing"><strong>Routing:</strong> ${sbs.routing || "See country segments with grow slots."}</p>
-             ${
-               sbs.bullets.length
-                 ? `<ul class="market-summary-bullets">${sbs.bullets.filter(Boolean).map((b) => `<li>${b}</li>`).join("")}</ul>`
-                 : ""
-             }`
-          : `<p class="lookup-sbs-primary">No SBS whitespace in this country.</p>`
-      }
-    </div>
-
-    ${
-      optimalPrimary
-        ? `<details class="methodology-details lookup-optimal-details">
-            <summary>Methodology — ideal PCID ${fmtNum(ideal)} (sql/16)</summary>
-            <div class="methodology-body"><p>${optimalPrimary}</p><p class="caption">Revenue growth windows: current 20260427–20260725 vs prior PQR 20260128–20260426. Growth curve chart uses median rep growth per PCID bucket.</p></div>
-          </details>`
-        : ""
-    }
-    ${
-      m.threshold_analysis?.narrative
-        ? `<details class="methodology-details lookup-threshold-details">
-            <summary>Threshold analysis — 85% of peak (sql/22)</summary>
-            <div class="methodology-body">
-              <p>${m.threshold_analysis.narrative}</p>
-              <p class="caption"><a href="./data/book_size_threshold_analysis.xlsx" download>Download full analysis</a> — PCID buckets, std-dev bands, rev quartiles.</p>
-            </div>
-          </details>`
-        : ""
-    }
+    <details class="lookup-details">
+      <summary>More detail</summary>
+      <div class="lookup-details-body">
+        <p><strong>Book health:</strong> ${health.primary || "—"}</p>
+        <p>Avg ${fmtNum(m.current_avg_book)} PCIDs/rep vs ideal ${fmtNum(ideal)} · PQR ${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"} · ${fmtNum(m.reps_too_big ?? 0)} too big, ${fmtNum(m.reps_too_little ?? 0)} too little</p>
+        <p><strong>SBS:</strong> ${sbsLine}</p>
+        ${recs.bullets.length ? `<ul class="notes">${recs.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>` : ""}
+      </div>
+    </details>
   `;
   renderFlaggedRepsTable(key, bh);
 }
@@ -1558,10 +1684,11 @@ function renderTable() {
 
 function renderGapChart() {
   if (!chartsAvailable()) return;
+  const ctx = document.getElementById("gap-chart");
+  if (!ctx) return;
   const markets = [...filteredMarkets()]
     .sort((a, b) => Math.abs(b.headcount_gap) - Math.abs(a.headcount_gap))
     .slice(0, 12);
-  const ctx = document.getElementById("gap-chart");
   if (gapChart) gapChart.destroy();
   gapChart = new Chart(ctx, {
     type: "bar",
@@ -1584,11 +1711,11 @@ function renderGapChart() {
       plugins: { legend: { display: false } },
       scales: {
         x: {
-          title: { display: true, text: "Gap (reps)", color: "#9aa3b5" },
-          ticks: { color: "#9aa3b5" },
-          grid: { color: "#2a3040" },
+          title: { display: true, text: "Gap (reps)", color: CHART_TICK },
+          ticks: { color: CHART_TICK },
+          grid: { color: CHART_GRID },
         },
-        y: { ticks: { color: "#9aa3b5", font: { size: 11 } }, grid: { display: false } },
+        y: { ticks: { color: CHART_TICK, font: { size: 11 } }, grid: { display: false } },
       },
     },
   });
@@ -1612,7 +1739,7 @@ function renderRecChart() {
       datasets: [
         {
           data: labels.map((l) => counts[l]),
-          backgroundColor: ["#4c8bf5", "#3ecf8e", "#f5a623", "#6eb5ff", "#f07178", "#9aa3b5"],
+          backgroundColor: ["#4c8bf5", "#3ecf8e", "#f5a623", "#6eb5ff", "#f07178", CHART_TICK],
         },
       ],
     },
@@ -1620,7 +1747,7 @@ function renderRecChart() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: "bottom", labels: { color: "#9aa3b5", boxWidth: 10, font: { size: 10 } } },
+        legend: { position: "bottom", labels: { color: CHART_TICK, boxWidth: 10, font: { size: 10 } } },
       },
     },
   });
@@ -1652,11 +1779,11 @@ function renderSbsChart() {
       plugins: { legend: { display: false } },
       scales: {
         y: {
-          title: { display: true, text: "Unassigned accounts", color: "#9aa3b5" },
-          ticks: { color: "#9aa3b5" },
-          grid: { color: "#2a3040" },
+          title: { display: true, text: "Unassigned accounts", color: CHART_TICK },
+          ticks: { color: CHART_TICK },
+          grid: { color: CHART_GRID },
         },
-        x: { ticks: { color: "#9aa3b5", font: { size: 10 } }, grid: { display: false } },
+        x: { ticks: { color: CHART_TICK, font: { size: 10 } }, grid: { display: false } },
       },
     },
   });
@@ -1693,15 +1820,15 @@ function renderBookScoreChart() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { labels: { color: "#9aa3b5", font: { size: 11 } } },
+        legend: { labels: { color: CHART_TICK, font: { size: 11 } } },
       },
       scales: {
         y: {
-          title: { display: true, text: "Percent", color: "#9aa3b5" },
-          ticks: { color: "#9aa3b5" },
-          grid: { color: "#2a3040" },
+          title: { display: true, text: "Percent", color: CHART_TICK },
+          ticks: { color: CHART_TICK },
+          grid: { color: CHART_GRID },
         },
-        x: { ticks: { color: "#9aa3b5", font: { size: 10 } }, grid: { display: false } },
+        x: { ticks: { color: CHART_TICK, font: { size: 10 } }, grid: { display: false } },
       },
     },
   });
@@ -1797,20 +1924,19 @@ function bindEvents() {
     tab.addEventListener("click", () => {
       const id = tab.dataset.tab;
       document.querySelectorAll(".dash-tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === id));
-      document.getElementById("tab-markets").classList.toggle("hidden", id !== "markets");
-      document.getElementById("tab-markets").classList.toggle("active", id === "markets");
+      document.getElementById("tab-markets").classList.toggle("hidden", id !== "overview");
+      document.getElementById("tab-markets").classList.toggle("active", id === "overview");
       document.getElementById("tab-findings").classList.toggle("hidden", id !== "findings");
       document.getElementById("tab-findings").classList.toggle("active", id === "findings");
-      document.getElementById("tab-book-health").classList.toggle("hidden", id !== "book-health");
-      document.getElementById("tab-book-health").classList.toggle("active", id === "book-health");
-      document.getElementById("tab-methodology").classList.toggle("hidden", id !== "methodology");
-      document.getElementById("tab-methodology").classList.toggle("active", id === "methodology");
-      document.getElementById("tab-sources").classList.toggle("hidden", id !== "sources");
-      document.getElementById("tab-sources").classList.toggle("active", id === "sources");
-      if (id === "book-health") {
+      document.getElementById("tab-book-health").classList.toggle("hidden", id !== "curves");
+      document.getElementById("tab-book-health").classList.toggle("active", id === "curves");
+      document.getElementById("tab-reference").classList.toggle("hidden", id !== "reference");
+      document.getElementById("tab-reference").classList.toggle("active", id === "reference");
+      if (id === "curves") {
+        renderBookHealth();
         renderBookHealthCharts();
       }
-      if (id === "sources") {
+      if (id === "reference") {
         renderSources();
       }
     });
@@ -1819,12 +1945,6 @@ function bindEvents() {
 
 function renderCharts() {
   renderGapChart();
-  const lookup = findLookupMarket();
-  if (lookup) {
-    renderGrowthChart(lookup);
-    renderJvChart(lookup);
-    renderBookHealthCharts();
-  }
 }
 
 async function init() {

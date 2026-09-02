@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Market deep dive — HQ Headcount</title>
+  <link rel="stylesheet" href="preview-common.css?v=3" />
+  <style>
+    body { background: #f4f6f8; }
+    .picker {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+      padding: 0.85rem 1rem;
+      background: #fff;
+      border: 1px solid #dde1e8;
+      border-radius: 8px;
+    }
+    .picker label { font-size: 0.8125rem; font-weight: 600; color: #4a5568; }
+    .picker select {
+      padding: 0.35rem 0.6rem;
+      border: 1px solid #c8ced8;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+    .card-panel {
+      background: #fff;
+      border: 1px solid #dde1e8;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .card-header h1 { margin: 0; font-size: 1.5rem; }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .stat-box {
+      background: #f6f8fa;
+      border-radius: 6px;
+      padding: 0.75rem;
+    }
+    .stat-box .label { font-size: 0.6875rem; text-transform: uppercase; color: #5c6578; letter-spacing: 0.04em; }
+    .stat-box .value { font-size: 1.25rem; font-weight: 600; margin-top: 0.2rem; }
+    .stat-box.highlight { background: #e8f2fa; }
+    .insight-list { margin: 0; padding-left: 1.15rem; color: #4a5568; font-size: 0.875rem; }
+    .insight-list li { margin-bottom: 0.35rem; }
+    .section-h { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #5c6578; margin: 1rem 0 0.5rem; font-weight: 600; }
+    .one-liner { font-size: 0.875rem; color: #2d3748; margin: 0.25rem 0; }
+    .chart-wrap { height: 220px; margin: 0.75rem 0; }
+    .bucket-table { font-size: 0.8125rem; }
+    .bucket-table th { background: #f0f2f5; }
+    .hc-block {
+      background: #f0f5fc;
+      border-left: 4px solid #1d6fb8;
+      padding: 1rem 1.15rem;
+      border-radius: 0 6px 6px 0;
+      margin-top: 1rem;
+    }
+    .hc-block p { margin: 0 0 0.5rem; }
+    .flagged-wrap { margin-top: 1rem; }
+    .flagged-wrap h3 { font-size: 0.875rem; margin: 0 0 0.5rem; }
+    .missing { color: #8b95a5; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="top-nav">
+      <div>
+        <span style="font-size:0.6875rem;text-transform:uppercase;letter-spacing:0.08em;color:#8b95a5;font-weight:600;">Option C · Market deep dive</span><br />
+        <a href="index.html">All options</a> · <a href="../index.html">Main dashboard</a>
+      </div>
+      <span id="meta" style="font-size:0.75rem;color:#8b95a5;"></span>
+    </nav>
+
+    <div class="picker" id="picker" style="display:none;">
+      <label for="country">Country</label>
+      <select id="country"></select>
+      <label for="segment">Segment</label>
+      <select id="segment">
+        <option value="M">M</option>
+        <option value="L">L</option>
+        <option value="S">S</option>
+        <option value="XL">XL</option>
+        <option value="NAM">NAM</option>
+        <option value="ACC">ACC</option>
+        <option value="DCA">DCA</option>
+      </select>
+    </div>
+
+    <div id="content" class="loading">Loading data…</div>
+  </div>
+
+  <script src="preview-common.js?v=6"></script>
+  <script>
+    let lookupCountry = "US";
+    let lookupSegment = "M";
+    let growthChart = null;
+
+    function segmentsForCountry(country) {
+      return [...new Set((payload.markets ?? []).filter((m) => m.country === country).map((m) => m.segment))].sort();
+    }
+
+    function renderPicker() {
+      const countries = [...new Set((payload.markets ?? []).map((m) => m.country))].sort();
+      const countrySel = document.getElementById("country");
+      countrySel.innerHTML = countries.map((c) =>
+        `<option value="${c}"${c === lookupCountry ? " selected" : ""}>${c}</option>`
+      ).join("");
+      if (!countries.includes(lookupCountry)) {
+        lookupCountry = countries.includes("US") ? "US" : countries[0];
+        countrySel.value = lookupCountry;
+      }
+
+      const segs = segmentsForCountry(lookupCountry);
+      const segSel = document.getElementById("segment");
+      if (!segs.includes(lookupSegment)) lookupSegment = segs[0] || "M";
+      segSel.innerHTML = segs.map((s) =>
+        `<option value="${s}"${s === lookupSegment ? " selected" : ""}>${s}</option>`
+      ).join("");
+      segSel.value = lookupSegment;
+      document.getElementById("picker").style.display = "flex";
+    }
+
+    function renderBucketFallback(m) {
+      const buckets = m.growth_by_bucket || [];
+      if (!buckets.length) return '<p class="missing">No growth curve buckets for this market.</p>';
+      const rows = buckets.map((b) =>
+        `<tr>
+          <td>${b.book_bucket}</td>
+          <td class="num">${fmtNum(b.rep_count)}</td>
+          <td class="num">${b.median_growth_pct != null ? fmtPct(b.median_growth_pct) : "—"}</td>
+        </tr>`
+      ).join("");
+      return `<table class="bucket-table"><thead><tr><th>Bucket</th><th class="num">Reps</th><th class="num">Median growth</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    async function renderGrowthChart(m) {
+      const wrap = document.getElementById("growth-chart-area");
+      if (!wrap) return;
+      try {
+        const buckets = (m.growth_by_bucket || []).slice().sort((a, b) => (a.bucket_order || 0) - (b.bucket_order || 0));
+        if (!buckets.length) {
+          wrap.innerHTML = '<p class="missing">No growth curve data.</p>';
+          return;
+        }
+
+        const ok = await ensureChartJs();
+        if (!ok) {
+          wrap.innerHTML = renderBucketFallback(m);
+          return;
+        }
+
+        wrap.innerHTML = '<div class="chart-wrap"><canvas id="growth-chart"></canvas></div>';
+        const ctx = document.getElementById("growth-chart");
+        if (!ctx) return;
+        if (growthChart) growthChart.destroy();
+        growthChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: buckets.map((b) => bucketLabel(b)),
+            datasets: [{
+              label: "Median growth %",
+              data: buckets.map((b) => (b.median_growth_pct ?? 0) * 100),
+              backgroundColor: "#1d6fb8",
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                title: { display: true, text: "Growth %" },
+                ticks: { callback: (v) => v + "%" },
+              },
+            },
+          },
+        });
+      } catch (err) {
+        wrap.innerHTML = renderBucketFallback(m) + `<p class="missing">Chart unavailable (${err.message}).</p>`;
+      }
+    }
+
+    function renderFlaggedReps(key) {
+      const bh = bookHealth?.markets?.[key];
+      const reps = bh?.reps || [];
+      if (!reps.length) return "";
+      const rows = reps.slice(0, 15).map((r) =>
+        `<tr>
+          <td>${r.sales_rep_id}</td>
+          <td class="num">${fmtNum(r.pcid_count)}</td>
+          <td class="num">${r.pqr_90d != null ? fmtMoney(r.pqr_90d) : "—"}</td>
+          <td class="num">${fmtNum(r.ideal_pcid)}</td>
+          <td>${r.too_big ? '<span class="badge rec-Optimize">Too big</span>' : ""}${r.too_little ? '<span class="badge rec-Hire">Too little</span>' : ""}</td>
+          <td class="num">${r.peel_to_ideal ? fmtNum(r.peel_to_ideal) : "—"}</td>
+        </tr>`
+      ).join("");
+      return `
+        <div class="flagged-wrap">
+          <h3>Flagged reps (${bh.reps_flagged ?? reps.length} total)</h3>
+          <table>
+            <thead><tr><th>Rep ID</th><th class="num">PCIDs</th><th class="num">PQR</th><th class="num">Ideal</th><th>Flag</th><th class="num">Peel to ideal</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    function renderMarket() {
+      const m = findMarket(lookupCountry, lookupSegment);
+      const el = document.getElementById("content");
+      if (!el) return;
+      try {
+        if (!m) {
+          el.className = "";
+          el.innerHTML = `<div class="card-panel"><p class="missing">No data for ${lookupCountry}-${lookupSegment}.</p></div>`;
+          return;
+        }
+
+        const gap = m.headcount_gap;
+        const recClass = hcRecBadgeClass(m);
+        const validated = m.hc_curve_validated !== false;
+        const ideal = idealPcid(m);
+        const key = marketKey(m);
+        const bullets = m.recommendation_bullets || m.summary_bullets || [];
+
+        el.className = "";
+        el.innerHTML = `
+        <div class="card-panel">
+          <div class="card-header">
+            <h1>${m.country}-${m.segment}</h1>
+            <span class="badge ${recClass}">${hcRecLabel(m)}</span>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-box"><div class="label">Current reps</div><div class="value">${fmtNum(m.current_reps)}</div></div>
+            <div class="stat-box highlight"><div class="label">Optimal HC</div><div class="value">${fmtNum(m.optimal_headcount)}</div></div>
+            <div class="stat-box"><div class="label">HC gap</div><div class="value ${gapClass(gap)}">${gapStr(gap)}</div></div>
+            <div class="stat-box"><div class="label">Ideal PCID</div><div class="value">${fmtNum(ideal)}</div></div>
+            <div class="stat-box"><div class="label">Avg PCID / rep</div><div class="value">${fmtNum(m.avg_pcid_per_rep ?? m.current_avg_book)}</div></div>
+            <div class="stat-box"><div class="label">Revenue 90d</div><div class="value">${fmtMoney(m.revenue_90d)}</div></div>
+            <div class="stat-box"><div class="label">Too big / too little</div><div class="value">${fmtNum(m.reps_too_big)} / ${fmtNum(m.reps_too_little)}</div></div>
+            <div class="stat-box"><div class="label">Curve validated</div><div class="value curve-${validated ? "yes" : "no"}">${validated ? "Yes" : "No"}</div></div>
+            <div class="stat-box"><div class="label">Growth peak</div><div class="value">${fmtNum(m.growth_peak_accounts)} PCIDs</div></div>
+          </div>
+
+          <div id="market-evidence-host"></div>
+
+          <p class="one-liner"><strong>Book health:</strong> ${m.health_primary || m.summary_primary || "—"}</p>
+          <p class="one-liner"><strong>Growth:</strong> ${m.growth_curve_primary || "—"}</p>
+          <p class="one-liner"><strong>Coverage:</strong> ${m.coverage_curve_primary || m.coverage_status || "—"}</p>
+          <p class="one-liner"><strong>JV:</strong> ${m.jv_curve_primary || "—"}</p>
+
+          <div class="section-h">Revenue growth by PCID bucket</div>
+          <div id="growth-chart-area"></div>
+
+          <div class="hc-block">
+            <p><strong>HC recommendation:</strong> <span class="badge ${recClass}">${hcRecLabel(m)}</span></p>
+            <p>${m.hc_reason_primary || "—"}</p>
+            ${bullets.length ? `<ul class="insight-list">${bullets.map((b) => `<li>${b}</li>`).join("")}</ul>` : ""}
+          </div>
+
+          ${renderFlaggedReps(key)}
+        </div>`;
+
+        const evidenceHost = document.getElementById("market-evidence-host");
+        if (evidenceHost) evidenceHost.innerHTML = idealPcidEvidenceHtml(m);
+
+        renderGrowthChart(m);
+      } catch (err) {
+        el.className = "error";
+        el.textContent = err.message || "Could not render market view";
+      }
+    }
+
+    loadPreviewData().then(() => {
+      document.getElementById("meta").textContent = `Snapshot ${payload.updated_at}`;
+      renderPicker();
+      renderMarket();
+
+      document.getElementById("country").addEventListener("change", (e) => {
+        lookupCountry = e.target.value;
+        const segs = segmentsForCountry(lookupCountry);
+        if (!segs.includes(lookupSegment)) lookupSegment = segs[0];
+        renderPicker();
+        renderMarket();
+      });
+      document.getElementById("segment").addEventListener("change", (e) => {
+        lookupSegment = e.target.value;
+        renderMarket();
+      });
+    }).catch((err) => {
+      document.getElementById("content").className = "error";
+      document.getElementById("content").textContent = err.message;
+    });
+  </script>
+</body>
+</html>
