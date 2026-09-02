@@ -35,6 +35,24 @@ Merge scripts accept **JSON** (`query17_*_results.json`) or **CSV** (`query17_al
 
 Run **23** / **24** on prod → export JSON → `python3 scripts/merge-bucket-exports.py docs/data/product_mix_by_bucket.json` (and coverage file). Then `python3 scripts/build_market_summary.py docs/data/headcount.json` to refresh narratives.
 
+## Data grain and refresh alignment
+
+| Layer | Query | Grain | Runtime JSON |
+|-------|-------|-------|----------------|
+| Market HC + curves | sql/16 | country × segment | `headcount.json` (fetched) |
+| All reps | sql/17a | rep | `rep_book.json` (build / validation) |
+| Flagged reps | sql/17 | rep (`too_big` or `too_little`) | `book_health.json` (fetched) |
+
+**Refresh together:** Run sql/16 and sql/17/17a on the **same day** and merge before deploy. `headcount.json` `updated_at` can drift from `rep_book.json` if only sql/16 is re-exported.
+
+**`current_reps` vs `rep_book` row count:** sql/16 `market_accounts.current_reps` counts `rep_level` (any rep with job activity in the window). sql/17a / `rep_book.json` filters `revenue_prior >= $5,000`. Flag counts (`reps_too_big`, `reps_too_little`) use `rep_filtered` in sql/16 and align with `rep_book` when vintages match.
+
+**`current_avg_book`:** `assigned_accounts ÷ current_reps` (sql/16 denominator = `rep_level`), not mean PCID from `rep_book`.
+
+**Validation exports:** `query17_all.csv` / `query17_flagged.csv` are equivalent to MCP JSON when merged via `load_export_rows.py` (null/false booleans normalized). Flagged CSV omits `sales_team_name` and `impact_calls_90d` — use sql/17a export for full rep fields.
+
+**Product mix:** After sql/23 export, always run `merge-bucket-exports.py`; charts read `product_mix_by_bucket[]` on `headcount.json`, not the raw MCP file.
+
 ## Before running
 
 1. Update partition dates (`dl__yyyymmdd_cst`) to the latest available CST partition.

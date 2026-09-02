@@ -206,6 +206,7 @@ perfect_book_relaxed AS (
 ),
 
 market_accounts AS (
+  -- current_reps counts rep_level (all reps with activity); rep_book/sql/17 uses revenue_prior >= 5000
   SELECT
     segment,
     country,
