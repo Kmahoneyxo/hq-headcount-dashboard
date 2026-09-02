@@ -856,6 +856,99 @@ function referenceDocLink() {
     : label;
 }
 
+function perfectBookBand(m) {
+  if (m.healthy_book_thresholds?.perfect_book_band) return m.healthy_book_thresholds.perfect_book_band;
+  const pb = m.perfect_book_bucket;
+  if (!pb) return null;
+  const match = pb.match(/:\s*(.+)$/);
+  return match ? match[1] : pb;
+}
+
+/** Plain-English ideal book + 2–3 data-trend bullets per market. */
+function buildIdealBookSummary(m) {
+  const ideal = idealPcid(m);
+  const bucket = perfectBookBand(m) || "—";
+  const source = m.perfect_book_source || "sql/16";
+  const segAvg = m.segment_avg_pcid ?? m.avg_pcid_per_rep ?? m.current_avg_book;
+
+  const lead =
+    m.optimal_book_primary ||
+    (ideal != null
+      ? `Ideal PCID ${fmtNum(ideal)} (${bucket} band) from ${source} — largest bucket within 85% of peak revenue growth.`
+      : "Ideal book size not available in this snapshot.");
+
+  const bullets = [];
+
+  if (m.growth_curve_primary) {
+    bullets.push(m.growth_curve_primary);
+  } else if (m.growth_peak_accounts != null && m.growth_peak_pct != null) {
+    let line = `Revenue growth peaks at ~${fmtNum(m.growth_peak_accounts)} PCIDs (${fmtGrowthPct(m.growth_peak_pct)})`;
+    if (m.growth_decline_above_pcid != null) {
+      line += `, then softens above ~${fmtNum(m.growth_decline_above_pcid)}`;
+      if (m.growth_decline_median_pct != null) {
+        line += ` (toward ${fmtGrowthPct(m.growth_decline_median_pct)})`;
+      }
+    }
+    bullets.push(line + ".");
+  }
+
+  const soften = [];
+  if (m.jv_decline_above_pcid != null && m.jv_decline_median_rev_per_job != null) {
+    const peak = m.jv_peak_rev_per_job ?? m.jv_plateau_rev_per_job;
+    soften.push(
+      `$/job falls from ${fmtJv(peak)} toward ${fmtJv(m.jv_decline_median_rev_per_job)} above ~${fmtNum(m.jv_decline_above_pcid)} PCIDs`,
+    );
+  }
+  if (m.coverage_decline_above_pcid != null && m.coverage_decline_median_calls != null) {
+    const peak = m.coverage_peak_calls_per_account ?? m.coverage_at_inflection;
+    soften.push(
+      `impact coverage drops from ${fmtCoverageCalls(peak)} toward ${fmtCoverageCalls(m.coverage_decline_median_calls)} above ~${fmtNum(m.coverage_decline_above_pcid)} PCIDs`,
+    );
+  }
+  if (soften.length) bullets.push(soften.join("; ") + ".");
+
+  if (ideal != null && segAvg != null && Math.abs(ideal - segAvg) > 2) {
+    const dir = ideal > segAvg ? "above" : "below";
+    bullets.push(
+      `Not the segment average (${fmtNum(segAvg)} PCIDs/rep) — ideal ${fmtNum(ideal)} is ${dir} avg because inflection curves favor growth and coverage at the target bucket.`,
+    );
+  } else if (ideal != null && segAvg != null) {
+    bullets.push(`Segment avg (${fmtNum(segAvg)} PCIDs/rep) aligns with ideal ${fmtNum(ideal)} in this market.`);
+  }
+
+  const trimmed = bullets.slice(0, 3);
+  const text = [lead, ...trimmed].filter(Boolean).join(" ");
+
+  return { ideal, bucket, source, segAvg, lead, bullets: trimmed, text };
+}
+
+function idealBookSummaryHtml(m) {
+  const s = buildIdealBookSummary(m);
+  const avgBook = m.current_avg_book ?? m.avg_pcid_per_rep;
+  if (s.ideal == null) {
+    return `<section class="ideal-book-panel"><p class="lookup-missing">Ideal book not available for this market.</p></section>`;
+  }
+  return `
+    <section class="ideal-book-panel" aria-label="Ideal book">
+      <h3 class="ideal-book-title">Ideal book for ${m.country}-${m.segment}</h3>
+      <div class="ideal-book-headline">
+        <span class="ideal-book-pcid">${fmtNum(s.ideal)} PCIDs</span>
+        <span class="ideal-book-meta">${s.bucket} band · ${s.source}</span>
+      </div>
+      ${s.lead ? `<p class="ideal-book-lead">${s.lead}</p>` : ""}
+      ${
+        s.bullets.length
+          ? `<ul class="ideal-book-trends">${s.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`
+          : ""
+      }
+      ${
+        avgBook != null
+          ? `<p class="ideal-book-context">Today: avg <strong>${fmtNum(avgBook)}</strong> PCIDs/rep · segment avg <strong>${fmtNum(s.segAvg)}</strong></p>`
+          : ""
+      }
+    </section>`;
+}
+
 /** 2–4 sentence summary: ideal book, HC math, curve gate, inflection signals. */
 function buildRecommendationWhyParagraph(m) {
   const ideal = idealPcid(m);
@@ -917,7 +1010,8 @@ function buildRecommendationWhyParagraph(m) {
 }
 
 /** Hard-number table: growth, coverage, JV by book-size bucket (shared shape with preview-common.js). */
-function idealPcidEvidenceHtml(m) {
+function idealPcidEvidenceHtml(m, opts = {}) {
+  const compact = opts.compact === true;
   const ideal = idealPcid(m);
   const rows = mergeEvidenceBuckets(m);
   const avgBook = m.current_avg_book ?? m.avg_pcid_per_rep;
@@ -967,8 +1061,8 @@ function idealPcidEvidenceHtml(m) {
 
   return `
     <div class="ideal-evidence">
-      <h3 class="ideal-evidence-title">Why ideal PCID ${fmtNum(ideal)}? (hard numbers)</h3>
-      <p class="ideal-evidence-lead">${m.optimal_book_primary || "—"}</p>
+      ${compact ? "" : `<h3 class="ideal-evidence-title">Why ideal PCID ${fmtNum(ideal)}? (hard numbers)</h3>`}
+      ${compact ? "" : `<p class="ideal-evidence-lead">${m.optimal_book_primary || "—"}</p>`}
       ${context}
       <div class="evidence-table-wrap">
         <table class="evidence-table">
@@ -1879,42 +1973,45 @@ function renderLookup() {
       <span class="rec lookup-rec-badge rec-${recClass}">${hcRecLabel(m)}</span>
     </div>
 
-    <div class="lookup-stats">
-      <div class="lookup-stat-card">
-        <div class="lookup-stat-value">${fmtNum(m.current_reps)}</div>
-        <div class="lookup-stat-label">Current reps</div>
-      </div>
-      <div class="lookup-stat-card highlight">
-        <div class="lookup-stat-value">${fmtNum(m.optimal_headcount)}</div>
-        <div class="lookup-stat-label">Optimal HC</div>
-      </div>
-      <div class="lookup-stat-card">
-        <div class="lookup-stat-value">${gapLabel}</div>
-        <div class="lookup-stat-label">HC gap</div>
-      </div>
-      <div class="lookup-stat-card">
-        <div class="lookup-stat-value">${fmtNum(ideal)}</div>
-        <div class="lookup-stat-label">Ideal PCID</div>
-      </div>
-    </div>
-
-    <section class="rec-why-panel" aria-label="Recommendation rationale">
-      <h3 class="rec-why-title">Why <span class="rec rec-${recClass}">${hcRecLabel(m)}</span>?</h3>
-      <p class="rec-why-summary">${buildRecommendationWhyParagraph(m)}</p>
-      <p class="lookup-formula">${fmtNum(m.assigned_accounts)} PCIDs ÷ ${fmtNum(ideal)} ideal = ${fmtNum(m.optimal_headcount)} optimal HC · gap ${gapLabel}${m.hc_curve_gate_reason && m.hc_curve_validated === false ? ` · <span class="gate-note">${m.hc_curve_gate_reason}</span>` : ""}</p>
-    </section>
-
-    ${idealPcidEvidenceHtml(m)}
-
-    ${referenceCheckHtml(m)}
+    ${idealBookSummaryHtml(m)}
 
     <details class="lookup-details">
-      <summary>More detail</summary>
+      <summary>Headcount recommendation &amp; book health</summary>
       <div class="lookup-details-body">
+        <div class="lookup-stats">
+          <div class="lookup-stat-card">
+            <div class="lookup-stat-value">${fmtNum(m.current_reps)}</div>
+            <div class="lookup-stat-label">Current reps</div>
+          </div>
+          <div class="lookup-stat-card highlight">
+            <div class="lookup-stat-value">${fmtNum(m.optimal_headcount)}</div>
+            <div class="lookup-stat-label">Optimal HC</div>
+          </div>
+          <div class="lookup-stat-card">
+            <div class="lookup-stat-value">${gapLabel}</div>
+            <div class="lookup-stat-label">HC gap</div>
+          </div>
+          <div class="lookup-stat-card">
+            <div class="lookup-stat-value">${fmtNum(ideal)}</div>
+            <div class="lookup-stat-label">Ideal PCID</div>
+          </div>
+        </div>
+        <section class="rec-why-panel" aria-label="Recommendation rationale">
+          <h3 class="rec-why-title">Why <span class="rec rec-${recClass}">${hcRecLabel(m)}</span>?</h3>
+          <p class="rec-why-summary">${buildRecommendationWhyParagraph(m)}</p>
+          <p class="lookup-formula">${fmtNum(m.assigned_accounts)} PCIDs ÷ ${fmtNum(ideal)} ideal = ${fmtNum(m.optimal_headcount)} optimal HC · gap ${gapLabel}${m.hc_curve_gate_reason && m.hc_curve_validated === false ? ` · <span class="gate-note">${m.hc_curve_gate_reason}</span>` : ""}</p>
+        </section>
         <p><strong>Book health:</strong> ${health.primary || "—"}</p>
         <p>Avg ${fmtNum(m.current_avg_book)} PCIDs/rep vs ideal ${fmtNum(ideal)} · PQR ${m.avg_pqr_per_rep != null ? fmtMoney(m.avg_pqr_per_rep) : "—"} · ${fmtNum(m.reps_too_big ?? 0)} too big, ${fmtNum(m.reps_too_little ?? 0)} too little</p>
         <p><strong>SBS:</strong> ${sbsLine}</p>
         ${recs.bullets.length ? `<ul class="notes">${recs.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>` : ""}
+      </div>
+    </details>
+
+    <details class="lookup-details">
+      <summary>Bucket evidence (growth, coverage, $/job)</summary>
+      <div class="lookup-details-body">
+        ${idealPcidEvidenceHtml(m, { compact: true })}
       </div>
     </details>
   `;
@@ -2031,7 +2128,8 @@ function bookGapPct(m) {
 }
 
 function keyFinding(m) {
-  return m.recommendation_primary || m.hc_reason_primary || m.summary_primary || "—";
+  const s = buildIdealBookSummary(m);
+  return s.text || m.recommendation_primary || m.hc_reason_primary || "—";
 }
 
 function curveValidatedLabel(m) {
@@ -2114,13 +2212,12 @@ function renderFindings() {
         <td class="num">${fmtNum(m.current_reps)}</td>
         <td class="num">${fmtNum(avgPcid)}</td>
         <td class="num">${fmtNum(ideal)}</td>
+        <td class="findings-narrative">${keyFinding(m)}</td>
         <td class="num">${fmtNum(m.optimal_headcount)}</td>
         <td class="num">${gapStr}</td>
         <td><span class="rec rec-${recClass}">${hcRecLabel(m)}</span></td>
         <td><span class="curve-validated curve-validated-${validated ? "yes" : "no"}">${curveValidatedLabel(m)}</span></td>
         <td class="ref-check-col">${referenceCheckBadge(m)}</td>
-        <td class="num">${fmtNum(m.growth_peak_accounts)}</td>
-        <td class="findings-narrative">${keyFinding(m)}</td>
       </tr>`;
     })
     .join("");

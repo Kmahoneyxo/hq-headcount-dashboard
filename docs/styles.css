@@ -355,6 +355,68 @@ h2 {
   background: var(--surface-2);
 }
 
+.ideal-book-panel {
+  margin: 16px 0 20px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.ideal-book-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.ideal-book-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ideal-book-pcid {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.2;
+}
+
+.ideal-book-meta {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.ideal-book-lead {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  margin: 0 0 10px;
+  color: var(--text);
+}
+
+.ideal-book-trends {
+  margin: 0 0 10px;
+  padding-left: 1.2rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.ideal-book-context {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.ref-sheet-actions {
+  margin: 12px 0 0;
+}
+
 .rec-why-title {
   font-size: 0.9375rem;
   font-weight: 600;

@@ -47,9 +47,6 @@
         <button type="button" id="refresh-btn" class="btn" title="Re-fetch published JSON (after git push)">
           <span id="refresh-label">Reload snapshot</span>
         </button>
-        <button type="button" id="ref-sheet-btn" class="btn btn-secondary" title="Re-fetch published Google Sheet CSV for country cross-check">
-          <span id="ref-sheet-label">Reload sheet reference</span>
-        </button>
       </div>
     </div>
     <nav class="dash-tabs" aria-label="Dashboard sections">
@@ -163,13 +160,12 @@
                 <th class="num sortable" data-sort="current_reps">Current reps</th>
                 <th class="num sortable" data-sort="avg_pcid">Avg PCID</th>
                 <th class="num sortable" data-sort="ideal_pcid">Ideal PCID</th>
+                <th class="findings-narrative-col">Ideal book · why</th>
                 <th class="num sortable" data-sort="optimal_headcount">Optimal HC</th>
                 <th class="num sortable" data-sort="headcount_gap">HC gap</th>
                 <th class="sortable" data-sort="headcount_recommendation">HC recommendation</th>
                 <th class="sortable" data-sort="hc_curve_validated">Curve validated</th>
                 <th>Sheet</th>
-                <th class="num sortable" data-sort="growth_peak_accounts">Growth peak</th>
-                <th class="findings-narrative-col">Key finding</th>
               </tr>
             </thead>
             <tbody id="findings-body"></tbody>
@@ -351,6 +347,12 @@
 
         <div id="sources-snapshot" class="sources-snapshot" aria-live="polite"></div>
 
+        <p class="ref-sheet-actions">
+          <button type="button" id="ref-sheet-btn" class="btn btn-secondary" title="Re-fetch published Google Sheet CSV for country cross-check">
+            <span id="ref-sheet-label">Reload sheet reference</span>
+          </button>
+        </p>
+
         <div id="workbook-check-wrap" class="workbook-check-wrap" aria-live="polite"></div>
 
         <details class="methodology-details" open>
@@ -528,7 +530,7 @@
       });
     })();
   </script>
-  <script src="reference-live.js?v=20260902m"></script>
-  <script src="app.js?v=20260902m"></script>
+  <script src="reference-live.js?v=20260902n"></script>
+  <script src="app.js?v=20260902n"></script>
 </body>
 </html>
