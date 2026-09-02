@@ -8,6 +8,72 @@ Connect Looker Studio to the **Looker_Export** tab in the live Google Sheet. Tha
 
 ---
 
+## Quick start (10 min)
+
+### Before you open Looker Studio
+
+1. Open the [headcount sheet](https://docs.google.com/spreadsheets/d/1Hq64TSm77FVH4hLxME2wrs1bJbT8Qi9Puk4FWMdkGsw/edit).
+2. **Extensions → Apps Script** → paste the full contents of `docs/google-apps-script/ReferenceCheck.gs` (replace any old code) → **Save**.
+3. Back in the sheet: **HQ Dashboard → Refresh dashboards**.
+4. Open the **Looker_Export** tab — row 1 should be column headers; row 2+ should be one market per row.
+
+### Create the report
+
+1. Go to [lookerstudio.google.com](https://lookerstudio.google.com/) → **Create → Report**.
+2. **Add data** → **Google Sheets** → pick **Global Sales Rep Headcount (1)**.
+3. Select worksheet **Looker_Export** → **Header row: 1** → **Add**.
+4. Click **Add to report** when prompted.
+
+### Set field types (one time)
+
+**Resource → Manage added data sources** → pencil icon on your connector → for each field below, click the **ABC/123** icon and set the type:
+
+| Field | Set type to |
+|-------|-------------|
+| `updated_at` | Date & Time |
+| `heads_to_add`, `heads_over`, `hc_gap`, `current_reps`, `optimal_hc`, `ideal_pcid`, `median_book`, `avg_pcid`, `assigned_pcids` | Number |
+| Everything else | Text (default) |
+
+Click **Done** → back on the canvas.
+
+### Build the page (drag fields from the right panel)
+
+**Scorecards** — **Add a chart → Scorecard** (repeat 3×):
+
+| Title | Drag this field | Aggregation |
+|-------|-----------------|-------------|
+| Total heads to add | `heads_to_add` | **Sum** |
+| Markets to hire | `recommendation` | **Count** — add filter: `recommendation` **Equal to** `Hire` |
+| Last refreshed | `updated_at` | **Max** |
+
+**Bar chart** — **Add a chart → Bar**:
+
+- **Dimension:** `market`
+- **Metric:** `heads_to_add` (**Sum**)
+- **Sort:** `heads_to_add` descending
+- **Style → Bars shown:** 15 (optional)
+
+**Table** — **Add a chart → Table**:
+
+- **Dimension:** `market`, `recommendation`, `heads_to_add`, `current_reps`, `optimal_hc`, `ideal_pcid`, `action_short`
+- **Sort:** `heads_to_add` descending
+
+**Pie chart** — **Add a chart → Pie chart**:
+
+- **Dimension:** `recommendation`
+- **Metric:** `market` (**Count Distinct**)
+
+**Filters** — **Add a control → Drop-down list** (repeat 2×):
+
+- Control 1: `country`
+- Control 2: `recommendation`
+
+### Share
+
+**Share** (top right) → add viewers. After each sheet refresh, use **Resource → Manage added data sources → Refresh data**.
+
+---
+
 ## 1. Refresh the export tab (sheet)
 
 1. Open the [headcount sheet](https://docs.google.com/spreadsheets/d/1Hq64TSm77FVH4hLxME2wrs1bJbT8Qi9Puk4FWMdkGsw/edit).
