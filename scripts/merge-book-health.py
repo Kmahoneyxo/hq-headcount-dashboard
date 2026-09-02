@@ -3,6 +3,7 @@
 
 Usage:
   python3 scripts/merge-book-health.py docs/data/query17_results.json
+  python3 scripts/merge-book-health.py docs/data/query17_flagged.csv
 """
 
 import json
@@ -10,6 +11,10 @@ import sys
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from load_export_rows import load_export_rows
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "data" / "book_health.json"
@@ -20,9 +25,7 @@ def main() -> None:
         print(__doc__)
         sys.exit(1)
 
-    rows = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-    if isinstance(rows, dict) and "data" in rows:
-        rows = rows["data"]
+    rows = load_export_rows(Path(sys.argv[1]))
 
     by_market: dict[str, list] = defaultdict(list)
     for r in rows:

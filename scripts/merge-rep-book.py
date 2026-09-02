@@ -3,6 +3,7 @@
 
 Usage:
   python3 scripts/merge-rep-book.py docs/data/query17_all_results.json
+  python3 scripts/merge-rep-book.py docs/data/query17_all.csv
 """
 
 from __future__ import annotations
@@ -13,6 +14,9 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from load_export_rows import load_export_rows
+
 OUT = ROOT / "docs" / "data" / "rep_book.json"
 
 REP_FIELDS = (
@@ -67,9 +71,7 @@ def main() -> None:
         print(__doc__)
         sys.exit(1)
 
-    rows = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-    if isinstance(rows, dict) and "data" in rows:
-        rows = rows["data"]
+    rows = load_export_rows(Path(sys.argv[1]))
 
     reps = [rep_row(r) for r in rows]
     reps.sort(key=lambda r: (r.get("country") or "", r.get("segment") or "", r.get("sales_rep_id") or 0))

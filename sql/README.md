@@ -27,7 +27,11 @@ Run query **16** on Quest **prod** (interactive times out at 10m). Export → `s
 
 Run query **17** for rep-level flags → `scripts/merge-book-health.py`.
 
-Run query **17a** (`17_rep_book_profile_all.sql`) for all reps → `scripts/merge-rep-book.py`.
+Run query **17a** (`17_rep_book_profile_all.sql`) for all reps → `scripts/merge-rep-book.py` (JSON or CSV export).
+
+Merge scripts accept **JSON** (`query17_*_results.json`) or **CSV** (`query17_all.csv`, `query17_flagged.csv`).
+
+> **Rep count vs headcount:** `headcount.json` `current_reps` (sql/16) counts all reps with activity in the window. `rep_book.json` (sql/17a) filters to `revenue_prior >= $5,000` — expect `current_reps` to be slightly higher (e.g. US-M +6).
 
 Run **23** / **24** on prod → export JSON → `python3 scripts/merge-bucket-exports.py docs/data/product_mix_by_bucket.json` (and coverage file). Then `python3 scripts/build_market_summary.py docs/data/headcount.json` to refresh narratives.
 
