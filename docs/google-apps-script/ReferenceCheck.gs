@@ -829,7 +829,7 @@ function buildSegments_(repRows, marketsTab, modelEngine, warehouse, options) {
     segments.push({
       market: marketKey,
       country: rollupCountry_(parts.country),
-      segment: String(parts.segment).toUpperCase(),
+      segment: normalizeSegment_(parts.segment),
       ideal_pcid: idealPcid,
       ideal_band: band ? band.label : null,
       ideal_book_summary: options.skipNarratives ? '' : buildIdealSummary_(idealPcid, band, tab, rollup),
@@ -898,10 +898,14 @@ function fetchHeadcountJsonFromUrl_() {
         muteHttpExceptions: true,
         followRedirects: true,
         validateHttpsCertificates: true,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HQHeadcountDashboard/1.0; Google-Apps-Script)' },
       });
-      if (res.getResponseCode() >= 200 && res.getResponseCode() < 300) {
-        return JSON.parse(res.getContentText());
-      }
+      var code = res.getResponseCode();
+      if (code < 200 || code >= 300) continue;
+      var text = res.getContentText();
+      if (!text || text.charAt(0) !== '{') continue;
+      var json = JSON.parse(text);
+      if (json && json.markets && json.markets.length) return json;
     } catch (e) {
       // try next URL
     }
@@ -1041,11 +1045,26 @@ function hasWarehouseMetrics_(row) {
 
 function warehouseKeyAliases_(country, segment) {
   var keys = [];
-  var primary = segmentMarketKey_(country, segment);
+  var seg = normalizeSegment_(segment);
+  var primary = segmentMarketKey_(country, seg);
   if (primary) keys.push(primary);
   var c = rollupCountry_(String(country || '').trim().toUpperCase());
-  if (c === 'IRELAND') keys.push('IE-' + String(segment || '').trim().toUpperCase());
-  if (c === 'IE') keys.push('IRELAND-' + String(segment || '').trim().toUpperCase());
+  if (c === 'IRELAND') keys.push('IE-' + seg);
+  if (c === 'IE') keys.push('IRELAND-' + seg);
+  return keys;
+}
+
+function warehouseKeyAliasesForSegment_(country, segment, market) {
+  var keys = warehouseKeyAliases_(country, segment);
+  if (market) {
+    var mk = String(market).trim().toUpperCase().replace(/\s+/g, '');
+    if (mk && keys.indexOf(mk) < 0) keys.push(mk);
+    var parsed = parseMarketKey_(mk);
+    if (parsed) {
+      var alt = segmentMarketKey_(parsed.country, parsed.segment);
+      if (alt && keys.indexOf(alt) < 0) keys.push(alt);
+    }
+  }
   return keys;
 }
 
@@ -1060,8 +1079,7 @@ function buildWarehouseByKey_(markets) {
 }
 
 function lookupWarehouse_(byKey, country, segment, market) {
-  var keys = warehouseKeyAliases_(country, segment);
-  if (market) keys.push(String(market).trim().toUpperCase());
+  var keys = warehouseKeyAliasesForSegment_(country, segment, market);
   for (var i = 0; i < keys.length; i++) {
     if (byKey[keys[i]]) return byKey[keys[i]];
   }
@@ -1074,16 +1092,21 @@ function applyWarehouseMetric_(segment, field, value, roundInt) {
 }
 
 function mergeWarehouseMetricsIntoSegments_(segments, warehouse) {
-  if (!warehouse || !warehouse.markets || !warehouse.markets.length) {
-    segments.forEach(function (s) {
-      if (!s.warehouse_source) s.warehouse_source = 'none';
-    });
-    return;
-  }
-  var source = warehouse.source || 'json';
-  var byKey = buildWarehouseByKey_(warehouse.markets);
+  var embedded = expandEmbeddedWarehouse_();
+  var primaryByKey = buildWarehouseByKey_(warehouse && warehouse.markets ? warehouse.markets : []);
+  var embeddedByKey = buildWarehouseByKey_(embedded.markets);
+  var primarySource = warehouse && warehouse.source ? warehouse.source : 'none';
+
   segments.forEach(function (s) {
-    var w = lookupWarehouse_(byKey, s.country, s.segment, s.market);
+    var w = lookupWarehouse_(primaryByKey, s.country, s.segment, s.market);
+    var metricsSource = primarySource;
+    if (!w || !hasWarehouseMetrics_(w)) {
+      var embeddedRow = lookupWarehouse_(embeddedByKey, s.country, s.segment, s.market);
+      if (embeddedRow && hasWarehouseMetrics_(embeddedRow)) {
+        w = embeddedRow;
+        metricsSource = 'embedded';
+      }
+    }
     if (!w) {
       if (!s.warehouse_source) s.warehouse_source = 'none';
       return;
@@ -1104,7 +1127,7 @@ function mergeWarehouseMetricsIntoSegments_(segments, warehouse) {
     applyWarehouseMetric_(s, 'median_impact_calls_per_account', medCalls, false);
     applyWarehouseMetric_(s, 'coverage_at_inflection', w.coverage_at_inflection, false);
     if (s.warehouse_source !== 'markets_tab') {
-      s.warehouse_source = source;
+      s.warehouse_source = metricsSource;
     }
   });
 }
@@ -1204,7 +1227,7 @@ function rollupCountry_(c) {
 /** Canonical country×segment key — must match between Rep_Level rollups and headcount.json markets. */
 function segmentMarketKey_(country, segment) {
   var c = rollupCountry_(String(country || '').trim().toUpperCase());
-  var seg = String(segment || '').trim().toUpperCase();
+  var seg = normalizeSegment_(segment);
   if (!c || !seg) return null;
   return c + '-' + seg;
 }
