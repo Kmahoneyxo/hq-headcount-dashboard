@@ -14,21 +14,13 @@
  * 6. Paste URL into docs/data/config.json → reference_apps_script_url
  * 7. Ensure reference_sheet_live is true → Reload sheet reference in dashboard
  *
- * OUTPUT TABS (no Web app deploy required):
- * - Run refreshDashboardSummary → menu HQ Dashboard → Refresh dashboards
- * - HC_Model        — full formulas, inputs, and recommendation logic (analyst)
- * - Executive_View  — clean summary table + charts for presenting
- * - Looker_Export   — flat table for Looker Studio (one row per market, no charts)
+ * OUTPUT: HQ Dashboard → Refresh Looker export → Looker_Export tab only.
  *
- * Returns JSON: country rep cross-check (Capacity_Dashboard), Rep_Level rows,
- * Model_Engine regional stats, and per country×segment recommendations (segments[]).
+ * Web app doGet JSON: segments[], rep_level, capacity_by_country, model_engine.
  */
 
 var SHEET_LABEL = 'Global Sales Rep Headcount (1)';
-var MODEL_TAB_NAME = 'HC_Model';
-var EXECUTIVE_TAB_NAME = 'Executive_View';
 var LOOKER_EXPORT_TAB_NAME = 'Looker_Export';
-var MARKETS_TEMPLATE_TAB_NAME = 'Markets_Template';
 var WAREHOUSE_METRICS_TAB_NAME = 'Warehouse_Metrics';
 /** Public warehouse snapshot — fills revenue/coverage in Looker_Export when Markets tab is empty. */
 var HEADCOUNT_JSON_URLS = [
@@ -102,42 +94,22 @@ function doGet(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-/** Run from editor or HQ Dashboard menu — rebuilds output tabs. */
-function refreshDashboardSummary() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var payload = buildDashboardPayload_(ss, { includeCharts: false });
-  writeHcModelTab_(ss, payload);
-  writeExecutiveViewTab_(ss, payload, { includeCharts: false });
-  writeLookerExportTab_(ss, payload);
-  writeMarketsTemplateTab_(ss);
-  SpreadsheetApp.getActiveSpreadsheet().toast(
-    'Updated ' + MODEL_TAB_NAME + ', ' + EXECUTIVE_TAB_NAME + ', ' + LOOKER_EXPORT_TAB_NAME + ', ' + MARKETS_TEMPLATE_TAB_NAME,
-    'HQ Dashboard',
-    5
-  );
-}
-
-/** Fast path — only rebuilds Looker_Export (skips HC_Model, Executive_View, charts). */
-function refreshLookerExportOnly() {
+/** Rebuild Looker_Export only. */
+function refreshLookerExport() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var payload = buildDashboardPayload_(ss, { skipNarratives: true, skipUrlFetch: true });
   writeLookerExportTab_(ss, payload);
-  ss.toast('Updated ' + LOOKER_EXPORT_TAB_NAME + ' only', 'HQ Dashboard', 4);
+  ss.toast('Updated ' + LOOKER_EXPORT_TAB_NAME, 'HQ Dashboard', 4);
 }
+
+function refreshDashboardSummary() { refreshLookerExport(); }
+function refreshLookerExportOnly() { refreshLookerExport(); }
 
 function onOpen() {
   SpreadsheetApp.getActiveSpreadsheet()
     .addMenu('HQ Dashboard', [
-      { name: 'Refresh dashboards', functionName: 'refreshDashboardSummary' },
-      { name: 'Refresh Looker export (fast)', functionName: 'refreshLookerExportOnly' },
+      { name: 'Refresh Looker export', functionName: 'refreshLookerExport' },
     ]);
-}
-
-function removeCharts_(sheet) {
-  var charts = sheet.getCharts();
-  for (var i = 0; i < charts.length; i++) {
-    sheet.removeChart(charts[i]);
-  }
 }
 
 function prepareSheet_(ss, name) {
@@ -145,254 +117,10 @@ function prepareSheet_(ss, name) {
   if (!sheet) {
     sheet = ss.insertSheet(name);
   } else {
-    removeCharts_(sheet);
     sheet.clear();
     sheet.clearConditionalFormatRules();
   }
   return sheet;
-}
-
-/** Analyst tab — every formula and input visible. */
-function writeHcModelTab_(ss, payload) {
-  var sheet = prepareSheet_(ss, MODEL_TAB_NAME);
-  var segments = (payload.segments || []).slice();
-  segments.sort(function (a, b) {
-    return String(a.market).localeCompare(String(b.market));
-  });
-
-  var updated = payload.updated_at || new Date().toISOString();
-  var updatedDisplay = Utilities.formatDate(new Date(updated), Session.getScriptTimeZone(), 'MMM d, yyyy h:mm a');
-
-  var rows = [];
-  rows.push(['HC Model — formulas & calculations (analyst view)']);
-  rows.push(['Updated', updatedDisplay, 'Rep_Level rows', payload.rep_level_count || 0]);
-  rows.push([]);
-  rows.push(['FORMULAS (Layer 2 headcount)']);
-  rows.push(['Optimal HC', 'SUM(PCID Count) ÷ Ideal PCID  — assigned accounts per rep at ideal book size']);
-  rows.push(['HC gap', 'Current reps − Optimal HC  (negative = under-staffed)']);
-  rows.push(['Heads to add', 'MAX(0, Optimal HC − Current reps)']);
-  rows.push(['Reps above model', 'MAX(0, Current reps − Optimal HC)']);
-  rows.push(['Ideal PCID', 'Midpoint of PCID band containing segment median book (or Markets tab override)']);
-  rows.push(['Recommendation', 'Hire if current < 90% optimal · Optimize if current > 110% optimal · else Hold']);
-  rows.push([]);
-
-  var headerRow = rows.length + 1;
-  rows.push([
-    'Market', 'Source',
-    'Rep count', 'Sum PCIDs (assigned)',
-    'Median PCID', 'Avg PCID',
-    'Ideal PCID', 'Band',
-    'Optimal HC (calc)', 'Optimal HC formula',
-    'Current reps', 'Gap (calc)', 'Gap formula',
-    'Heads to add', 'Add formula',
-    'Reps over', 'Over formula',
-    'Rec rule', 'Recommendation',
-    'Ideal book — why', 'HC — why',
-  ]);
-
-  var dataStart = rows.length + 1;
-  segments.forEach(function (s) {
-    var assigned = s.assigned_accounts;
-    var ideal = s.ideal_pcid;
-    var cur = s.current_reps;
-    var opt = s.optimal_hc;
-    rows.push([
-      s.market || '',
-      s.source || '',
-      s.current_reps != null ? s.current_reps : '',
-      assigned != null ? assigned : '',
-      s.median_book != null ? s.median_book : '',
-      s.current_avg_book != null ? s.current_avg_book : '',
-      ideal != null ? ideal : '',
-      s.ideal_band || '',
-      opt != null ? opt : '',
-      optimalHcFormulaText_(assigned, ideal, opt),
-      cur != null ? cur : '',
-      s.hc_gap != null ? s.hc_gap : '',
-      gapFormulaText_(cur, opt, s.hc_gap),
-      s.heads_to_add != null && s.heads_to_add > 0 ? s.heads_to_add : 0,
-      addFormulaText_(opt, cur, s.heads_to_add),
-      s.heads_over != null && s.heads_over > 0 ? s.heads_over : 0,
-      overFormulaText_(cur, opt, s.heads_over),
-      recommendationRuleText_(cur, opt),
-      s.recommendation || '',
-      (s.ideal_why_detail || s.ideal_book_summary || '').replace(/\n/g, ' · '),
-      (s.hc_rec_why || '').replace(/\n/g, ' · '),
-    ]);
-  });
-
-  var numCols = 21;
-  var numRows = rows.length;
-  sheet.getRange(1, 1, numRows, numCols).setValues(padRows_(rows, numCols));
-
-  sheet.getRange(1, 1, 1, numCols).merge()
-    .setBackground('#3d4451').setFontColor('#ffffff').setFontWeight('bold').setFontSize(13);
-  sheet.getRange(4, 1, 4, numCols).merge().setFontWeight('bold').setBackground('#f5f5f6');
-  sheet.getRange(headerRow, 1, headerRow, numCols)
-    .setBackground('#f0f1f3').setFontWeight('bold').setFontSize(9);
-  sheet.setFrozenRows(headerRow);
-
-  if (segments.length > 0) {
-    sheet.getRange(dataStart, 1, numRows, numCols).setWrap(true).setVerticalAlignment('top');
-    sheet.getRange(dataStart, 10, numRows, 10).setFontFamily('Courier New').setFontSize(8);
-    sheet.getRange(dataStart, 13, numRows, 17).setFontFamily('Courier New').setFontSize(8);
-    applyRecColumnStyles_(sheet, dataStart, numRows, 19);
-  }
-
-  sheet.setColumnWidth(1, 80);
-  sheet.setColumnWidth(10, 200);
-  sheet.setColumnWidth(13, 160);
-  sheet.setColumnWidth(15, 160);
-  sheet.setColumnWidth(17, 160);
-  sheet.setColumnWidth(20, 280);
-  sheet.setColumnWidth(21, 280);
-}
-
-/** Presentation tab — short table + charts. */
-function writeExecutiveViewTab_(ss, payload, options) {
-  options = options || {};
-  var sheet = prepareSheet_(ss, EXECUTIVE_TAB_NAME);
-  var segments = (payload.segments || []).slice();
-
-  var totalAdd = 0;
-  var totalOver = 0;
-  var hire = 0;
-  var hold = 0;
-  var optimize = 0;
-  segments.forEach(function (s) {
-    if (s.heads_to_add) totalAdd += s.heads_to_add;
-    if (s.heads_over) totalOver += s.heads_over;
-    var r = String(s.recommendation || '').toLowerCase();
-    if (r.indexOf('hire') >= 0) hire += 1;
-    else if (r.indexOf('optimize') >= 0) optimize += 1;
-    else hold += 1;
-  });
-
-  segments.sort(function (a, b) {
-    var addB = b.heads_to_add || 0;
-    var addA = a.heads_to_add || 0;
-    if (addB !== addA) return addB - addA;
-    return recSortOrder_(a.recommendation) - recSortOrder_(b.recommendation);
-  });
-
-  var updated = payload.updated_at || new Date().toISOString();
-  var updatedDisplay = Utilities.formatDate(new Date(updated), Session.getScriptTimeZone(), 'MMM d, yyyy h:mm a');
-
-  var rows = [];
-  rows.push(['Executive headcount summary']);
-  rows.push(['Updated', updatedDisplay]);
-  rows.push([
-    'Total heads to add', totalAdd,
-    'Hire', hire,
-    'Hold', hold,
-    'Optimize', optimize,
-  ]);
-  rows.push([]);
-
-  var tableHeaderRow = rows.length + 1;
-  rows.push(['Market', 'Recommendation', 'Heads to add', 'Ideal PCID', 'Action']);
-
-  var tableStart = rows.length + 1;
-  segments.forEach(function (s) {
-    var action = s.action_note || '';
-    if (action.length > 90) action = action.slice(0, 87) + '…';
-    rows.push([
-      s.market || '',
-      s.recommendation || '',
-      s.heads_to_add > 0 ? s.heads_to_add : '',
-      s.ideal_pcid != null ? s.ideal_pcid : '',
-      action,
-    ]);
-  });
-  var tableEnd = rows.length;
-
-  var chartHeaderRow = tableEnd + 2;
-  rows.push([]);
-  rows.push(['', '', '', 'Chart — heads to add', '', 'Market', 'Heads']);
-  var chartDataStart = rows.length + 1;
-  var chartMarkets = segments.filter(function (s) { return (s.heads_to_add || 0) > 0; }).slice(0, 15);
-  if (!chartMarkets.length) {
-    chartMarkets = segments.slice(0, 10);
-  }
-  chartMarkets.forEach(function (s) {
-    rows.push(['', '', '', '', '', s.market, s.heads_to_add > 0 ? s.heads_to_add : 0]);
-  });
-  var chartDataEnd = rows.length;
-
-  var recChartStart = chartDataEnd + 2;
-  rows.push(['', '', '', 'Chart — recommendations', '', 'Type', 'Count']);
-  var recDataStart = rows.length + 1;
-  rows.push(['', '', '', '', '', 'Hire', hire]);
-  rows.push(['', '', '', '', '', 'Hold', hold]);
-  rows.push(['', '', '', '', '', 'Optimize', optimize]);
-  var recDataEnd = rows.length;
-
-  var numCols = 7;
-  var numRows = rows.length;
-  sheet.getRange(1, 1, numRows, numCols).setValues(padRows_(rows, numCols));
-
-  sheet.getRange(1, 1, 1, 5).merge()
-    .setBackground('#3d4451').setFontColor('#ffffff').setFontWeight('bold').setFontSize(15);
-  sheet.setRowHeight(1, 36);
-  sheet.getRange(3, 1, 3, numCols)
-    .setBackground('#f5f5f6').setFontWeight('normal').setFontSize(10);
-  sheet.getRange(3, 2).setFontSize(16).setHorizontalAlignment('center').setFontWeight('bold');
-  sheet.getRange(3, 4).setFontSize(13).setHorizontalAlignment('center');
-  sheet.getRange(3, 6).setFontSize(13).setHorizontalAlignment('center');
-
-  sheet.getRange(tableHeaderRow, 1, tableHeaderRow, 5)
-    .setBackground('#f0f1f3').setFontWeight('bold');
-  sheet.setFrozenRows(tableHeaderRow);
-
-  if (segments.length > 0) {
-    applyRecColumnStyles_(sheet, tableStart, tableEnd, 2);
-    applyAddColumnStyles_(sheet, tableStart, tableEnd, 3);
-  }
-
-  sheet.setColumnWidth(1, 90);
-  sheet.setColumnWidth(2, 110);
-  sheet.setColumnWidth(3, 100);
-  sheet.setColumnWidth(4, 80);
-  sheet.setColumnWidth(5, 360);
-  sheet.setColumnWidth(6, 80);
-  sheet.setColumnWidth(7, 60);
-
-  if (options.includeCharts !== false && chartDataEnd >= chartDataStart) {
-    var barChart = sheet.newChart()
-      .setChartType(Charts.ChartType.BAR)
-      .addRange(sheet.getRange(chartDataStart, 6, chartDataEnd, 7))
-      .setPosition(1, 5, 0, 0)
-      .setOption('title', 'Heads to add by market')
-      .setOption('legend', { position: 'none' })
-      .setOption('height', 340)
-      .setOption('width', 520)
-      .setOption('colors', ['#5c6b5e'])
-      .setOption('hAxis', { title: 'Heads to add' })
-      .build();
-    sheet.insertChart(barChart);
-  }
-
-  if (options.includeCharts !== false && recDataEnd >= recDataStart) {
-    var pieChart = sheet.newChart()
-      .setChartType(Charts.ChartType.PIE)
-      .addRange(sheet.getRange(recDataStart, 6, recDataEnd, 7))
-      .setPosition(10, 5, 0, 0)
-      .setOption('title', 'Hire / Hold / Optimize')
-      .setOption('height', 300)
-      .setOption('width', 420)
-      .setOption('colors', ['#5c6b5e', '#9aa0a6', '#a89888'])
-      .setOption('pieSliceText', 'value')
-      .build();
-    sheet.insertChart(pieChart);
-  }
-
-  sheet.hideColumns(6, 2);
-  if (chartHeaderRow > 0 && chartDataEnd >= chartHeaderRow) {
-    sheet.hideRows(chartHeaderRow, chartDataEnd - chartHeaderRow + 1);
-  }
-  if (recChartStart > 0 && recDataEnd >= recChartStart) {
-    sheet.hideRows(recChartStart, recDataEnd - recChartStart + 1);
-  }
 }
 
 /** Flat export for Looker Studio — one row per market, header row 1, no charts. */
@@ -450,7 +178,9 @@ function writeLookerExportTab_(ss, payload) {
   });
 
   if (rows.length > 0) {
-    sheet.getRange(1, 1, rows.length, headers.length).setValues(rows);
+    var numCols = headers.length;
+    var padded = padRows_(rows, numCols);
+    sheet.getRange(1, 1, padded.length, numCols).setValues(padded);
   }
 
   sheet.getRange(1, 1, 1, headers.length)
@@ -460,52 +190,6 @@ function writeLookerExportTab_(ss, payload) {
   sheet.setColumnWidth(1, 180);
   sheet.setColumnWidth(2, 90);
   sheet.setColumnWidth(headers.length, 320);
-}
-
-/** Optional paste target — row 1 headers match headcount-dashboard.csv / Markets tab aliases. */
-function writeMarketsTemplateTab_(ss) {
-  var sheet = ss.getSheetByName(MARKETS_TEMPLATE_TAB_NAME);
-  if (!sheet) {
-    sheet = ss.insertSheet(MARKETS_TEMPLATE_TAB_NAME);
-  } else {
-    sheet.clear();
-  }
-
-  var headers = [
-    'country', 'segment', 'market',
-    'ideal_pcid', 'optimal_hc', 'current_reps', 'current_avg_book', 'assigned_accounts',
-    'hc_gap', 'recommendation',
-    'revenue_90d', 'segment_avg_pcid', 'avg_pqr_per_rep', 'segment_avg_pqr',
-    'coverage_peak_accounts', 'median_impact_calls_per_account', 'coverage_at_inflection',
-    'growth_peak_accounts', 'growth_peak_pct', 'jv_plateau_book_max', 'jv_plateau_rev_per_job',
-  ];
-
-  var csvLabels = [
-    'Country', 'Segment', 'Market',
-    'Ideal PCID (accounts/rep)', 'Ideal headcount', 'Current reps', 'Avg PCID per rep', 'Assigned accounts',
-    'Headcount gap', 'HC recommendation',
-    'Revenue 90d ($)', 'Segment avg PCID', 'Avg PQR per rep ($)', 'Segment avg PQR ($)',
-    'Coverage inflection book max', 'Median impact calls/account', 'Coverage at inflection',
-    'Growth peak (accounts/rep)', 'Growth peak %', 'JV plateau book max', 'JV plateau $/job',
-  ];
-
-  var rows = [
-    ['Markets tab template — copy row 3+ from docs/data/headcount-dashboard.csv (or warehouse export) into a tab named Markets, then HQ Dashboard → Refresh dashboards.'],
-    headers,
-    csvLabels,
-  ];
-
-  sheet.getRange(1, 1, rows.length, headers.length).setValues(padRows_(rows, headers.length));
-  sheet.getRange(1, 1, 1, headers.length).merge()
-    .setBackground('#fff8e1').setFontSize(10).setWrap(true);
-  sheet.getRange(2, 1, 2, headers.length)
-    .setBackground('#e8f0fe').setFontWeight('bold').setFontSize(9);
-  sheet.getRange(3, 1, 3, headers.length)
-    .setBackground('#f5f5f6').setFontSize(8).setFontColor('#5f6368');
-  sheet.setFrozenRows(2);
-  sheet.setColumnWidth(1, 72);
-  sheet.setColumnWidth(3, 88);
-  sheet.setColumnWidth(11, 120);
 }
 
 function actionShort_(text) {
@@ -522,40 +206,6 @@ function padRows_(rows, numCols) {
     }
     return out;
   });
-}
-
-function optimalHcFormulaText_(assigned, ideal, result) {
-  if (assigned == null || ideal == null) return '—';
-  return 'ROUND(' + Math.round(assigned) + ' ÷ ' + ideal + ') = ' + (result != null ? result : '?');
-}
-
-function gapFormulaText_(current, optimal, result) {
-  if (current == null || optimal == null) return '—';
-  return current + ' − ' + optimal + ' = ' + (result != null ? result : '?');
-}
-
-function addFormulaText_(optimal, current, result) {
-  if (optimal == null || current == null) return '—';
-  return 'MAX(0, ' + optimal + ' − ' + current + ') = ' + (result != null ? result : 0);
-}
-
-function overFormulaText_(current, optimal, result) {
-  if (current == null || optimal == null) return '—';
-  return 'MAX(0, ' + current + ' − ' + optimal + ') = ' + (result != null ? result : 0);
-}
-
-function recommendationRuleText_(current, optimal) {
-  if (current == null || optimal == null) return '—';
-  if (current < optimal * 0.90) return 'current < 90% of optimal → Hire';
-  if (current > optimal * 1.10) return 'current > 110% of optimal → Optimize';
-  return 'within ±10% of optimal → Hold';
-}
-
-function recSortOrder_(rec) {
-  var r = String(rec || '').toLowerCase();
-  if (r.indexOf('hire') >= 0) return 0;
-  if (r.indexOf('optimize') >= 0) return 1;
-  return 2;
 }
 
 /** Multi-line explanation of why ideal PCID is the target. */
@@ -1560,51 +1210,3 @@ function parseNum_(raw) {
   return n === Math.floor(n) ? Math.trunc(n) : n;
 }
 
-/** Batch recommendation column styling (avoids per-cell getRange loops). */
-function applyRecColumnStyles_(sheet, startRow, endRow, col) {
-  if (endRow < startRow) return;
-  var n = endRow - startRow + 1;
-  var values = sheet.getRange(startRow, col, endRow, col).getValues();
-  var bgs = [];
-  var colors = [];
-  for (var i = 0; i < n; i++) {
-    var rec = String(values[i][0] || '').toLowerCase();
-    if (rec.indexOf('hire') >= 0) {
-      bgs.push(['#f4f7f5']);
-      colors.push(['#3d6b52']);
-    } else if (rec.indexOf('optimize') >= 0) {
-      bgs.push(['#f8f6f1']);
-      colors.push(['#8a6a2a']);
-    } else {
-      bgs.push([null]);
-      colors.push([null]);
-    }
-  }
-  var range = sheet.getRange(startRow, col, endRow, col);
-  range.setBackgrounds(bgs);
-  range.setFontColors(colors);
-  range.setFontWeight('normal');
-}
-
-function applyAddColumnStyles_(sheet, startRow, endRow, col) {
-  if (endRow < startRow) return;
-  var n = endRow - startRow + 1;
-  var values = sheet.getRange(startRow, col, endRow, col).getValues();
-  var bgs = [];
-  var weights = [];
-  for (var i = 0; i < n; i++) {
-    var v = values[i][0];
-    if (v !== '' && Number(v) > 0) {
-      bgs.push(['#f4f7f5']);
-      weights.push(['bold']);
-    } else {
-      bgs.push([null]);
-      weights.push(['normal']);
-    }
-  }
-  var range = sheet.getRange(startRow, col, endRow, col);
-  range.setBackgrounds(bgs);
-  range.setFontWeights(weights);
-  range.setFontSize(11);
-  range.setHorizontalAlignment('center');
-}
