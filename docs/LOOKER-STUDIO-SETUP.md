@@ -16,8 +16,8 @@ Connect Looker Studio to the **Looker_Export** tab in the live Google Sheet. Tha
 
 1. Open the [headcount sheet](https://docs.google.com/spreadsheets/d/1Hq64TSm77FVH4hLxME2wrs1bJbT8Qi9Puk4FWMdkGsw/edit).
 2. **Extensions → Apps Script** → paste the full contents of `docs/google-apps-script/ReferenceCheck.gs` (replace any old code) → **Save**.
-3. Back in the sheet: **HQ Dashboard → Refresh dashboards**.
-4. Open the **Looker_Export** tab — row 1 should be column headers; row 2+ should be one market per row.
+3. Back in the sheet: **HQ Dashboard → Refresh dashboards** (first run may prompt to authorize external URL fetch for warehouse metrics).
+4. Open the **Looker_Export** tab — row 1 should be column headers; row 2+ should be one market per row. Columns **R–W** (`revenue_90d` through `coverage_at_inflection`) populate from the public `headcount.json` snapshot unless you override via a **Markets** tab.
 
 ### Create the report
 

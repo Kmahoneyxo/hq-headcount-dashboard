@@ -29,6 +29,8 @@ var MODEL_TAB_NAME = 'HC_Model';
 var EXECUTIVE_TAB_NAME = 'Executive_View';
 var LOOKER_EXPORT_TAB_NAME = 'Looker_Export';
 var MARKETS_TEMPLATE_TAB_NAME = 'Markets_Template';
+/** Public warehouse snapshot — fills revenue/coverage in Looker_Export when Markets tab is empty. */
+var HEADCOUNT_JSON_URL = 'https://kmahoneyxo.github.io/hq-headcount-dashboard/data/headcount.json';
 var KNOWN_SEGMENTS = ['M', 'UMM', 'ACC', 'L', 'NAM', 'DCA', 'ISDCA', 'NAMDCA'];
 
 var PCID_BANDS = [
@@ -53,6 +55,7 @@ function buildDashboardPayload_(ss) {
   var capacity = readCapacityDashboard_(ss);
   var modelEngine = readModelEngine_(ss);
   var segments = buildSegments_(repRows, marketsTab, modelEngine);
+  mergeWarehouseMetricsIntoSegments_(segments, fetchHeadcountWarehouse_(ss));
 
   return {
     updated_at: new Date().toISOString(),
@@ -641,7 +644,7 @@ function sumSegmentRepsByCountry_(segments) {
 
 /** Optional Markets / Dashboard tab with warehouse-style segment fields. */
 function readMarketsTab_(ss) {
-  var names = ['Markets', 'Market', 'Dashboard', 'Dashboard_Export', 'Findings'];
+  var names = ['Markets', 'Market', 'Dashboard', 'Dashboard_Export', 'Findings', 'Warehouse_Export', 'headcount_dashboard'];
   for (var n = 0; n < names.length; n++) {
     var sheet = ss.getSheetByName(names[n]);
     if (!sheet) continue;
@@ -804,6 +807,80 @@ function buildSegments_(repRows, marketsTab, modelEngine) {
     });
   });
   return segments;
+}
+
+/** Fill revenue / PQR / coverage on segments from warehouse JSON or Markets-style sheet tab. */
+function fetchHeadcountWarehouse_(ss) {
+  var json = fetchHeadcountJsonFromUrl_();
+  if (json && json.markets && json.markets.length) return json;
+  return readWarehouseFromSheet_(ss);
+}
+
+function fetchHeadcountJsonFromUrl_() {
+  try {
+    var res = UrlFetchApp.fetch(HEADCOUNT_JSON_URL, {
+      muteHttpExceptions: true,
+      followRedirects: true,
+    });
+    if (res.getCode() >= 200 && res.getCode() < 300) {
+      return JSON.parse(res.getContentText());
+    }
+  } catch (e) {
+    // fall through to sheet tab
+  }
+  return null;
+}
+
+function readWarehouseFromSheet_(ss) {
+  var names = ['Markets', 'Warehouse_Export', 'headcount_dashboard', 'Dashboard_Export', 'Dashboard'];
+  for (var i = 0; i < names.length; i++) {
+    var sheet = ss.getSheetByName(names[i]);
+    if (!sheet) continue;
+    var rows = readMarketsSheet_(sheet);
+    if (!rows.length) continue;
+    return {
+      markets: rows.map(function (r) {
+        return {
+          country: r.country,
+          segment: r.segment,
+          revenue_90d: r.revenue_90d,
+          avg_pqr_per_rep: r.avg_pqr_per_rep,
+          segment_avg_pqr: r.segment_avg_pqr,
+          segment_avg_pcid: r.segment_avg_pcid,
+          coverage_inflection_book_max: r.coverage_peak_accounts,
+          median_impact_calls_per_account: r.median_impact_calls_per_account,
+          coverage_at_inflection: r.coverage_at_inflection,
+        };
+      }),
+    };
+  }
+  return null;
+}
+
+function mergeWarehouseMetricsIntoSegments_(segments, warehouse) {
+  if (!warehouse || !warehouse.markets) return;
+  var byKey = {};
+  warehouse.markets.forEach(function (m) {
+    var c = rollupCountry_(String(m.country || '').toUpperCase());
+    var seg = String(m.segment || '').toUpperCase();
+    if (!c || !seg) return;
+    byKey[c + '-' + seg] = m;
+  });
+  segments.forEach(function (s) {
+    var w = byKey[s.market];
+    if (!w) return;
+    if (w.revenue_90d != null) s.revenue_90d = Math.round(Number(w.revenue_90d));
+    if (w.avg_pqr_per_rep != null) s.avg_pqr_per_rep = Math.round(Number(w.avg_pqr_per_rep));
+    if (w.segment_avg_pqr != null) s.segment_avg_pqr = Math.round(Number(w.segment_avg_pqr));
+    if (w.segment_avg_pcid != null) s.segment_avg_pcid = Number(w.segment_avg_pcid);
+    var covPeak = w.coverage_peak_accounts != null ? w.coverage_peak_accounts : w.coverage_inflection_book_max;
+    if (covPeak != null) s.coverage_peak_accounts = Math.round(Number(covPeak));
+    var medCalls = w.median_impact_calls_per_account != null
+      ? w.median_impact_calls_per_account
+      : w.median_impact_calls;
+    if (medCalls != null) s.median_impact_calls_per_account = Number(medCalls);
+    if (w.coverage_at_inflection != null) s.coverage_at_inflection = Number(w.coverage_at_inflection);
+  });
 }
 
 function rollupRepLevel_(repRows) {

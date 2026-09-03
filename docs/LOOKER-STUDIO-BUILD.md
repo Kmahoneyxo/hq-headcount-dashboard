@@ -61,7 +61,7 @@ Step-by-step instructions to connect Looker Studio to the **Looker_Export** tab 
 | `recommendation` | Hire / Hold / Optimize |
 | `country`, `segment` | Filter dimensions |
 
-> **Note:** `revenue_90d`, PQR, and coverage columns are blank until the **Markets** tab has warehouse data (Part A5) or you paste from `docs/data/headcount-dashboard.csv`. Rep_Level alone still populates PCID and headcount fields.
+> **Note:** `revenue_90d`, PQR, and coverage columns (R–W) auto-fill from the public warehouse snapshot at `headcount.json` on GitHub Pages when you refresh dashboards. You can also paste **Markets** tab data from `docs/data/headcount-dashboard.csv` if you want sheet-only sourcing.
 
 ### A5. Optional — populate Markets tab (revenue & coverage)
 
