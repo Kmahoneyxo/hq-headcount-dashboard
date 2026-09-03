@@ -864,9 +864,20 @@ function buildSegments_(repRows, marketsTab, modelEngine, warehouse, options) {
   return segments;
 }
 
-/** Fill revenue / PQR / coverage on segments from warehouse JSON or Markets-style sheet tab. */
+/** Fill revenue / PQR / coverage on segments — sheet tab, embedded snapshot, then optional URL fetch. */
 function fetchHeadcountWarehouse_(ss, options) {
   options = options || {};
+  var fromTab = readWarehouseMetricsTab_(ss);
+  if (fromTab && fromTab.markets.length) return fromTab;
+  var fromSheet = readWarehouseFromSheet_(ss);
+  if (fromSheet && fromSheet.markets.length) return fromSheet;
+
+  // Embedded snapshot is instant (same data as headcount.json) — use unless forcing a live fetch.
+  if (!options.fetchFreshWarehouse) {
+    var embeddedFast = expandEmbeddedWarehouse_();
+    if (embeddedFast.markets.length) return embeddedFast;
+  }
+
   if (!options.skipUrlFetch) {
     var fromUrl = fetchHeadcountJsonFromUrl_();
     if (fromUrl && fromUrl.markets && fromUrl.markets.length) {
@@ -876,11 +887,8 @@ function fetchHeadcountWarehouse_(ss, options) {
     var cached = loadWarehouseCompactCache_();
     if (cached) return { markets: cached, source: 'json' };
   }
-  var embedded = expandEmbeddedWarehouse_();
-  if (embedded.markets.length) return embedded;
-  var fromTab = readWarehouseMetricsTab_(ss);
-  if (fromTab && fromTab.markets.length) return fromTab;
-  return readWarehouseFromSheet_(ss) || { markets: [], source: 'none' };
+
+  return expandEmbeddedWarehouse_();
 }
 
 function fetchHeadcountJsonFromUrl_() {
@@ -1175,6 +1183,12 @@ function parseTeamName_(team) {
     return { country: country, segment: seg };
   }
   return null;
+}
+
+function normalizeSegment_(seg) {
+  var s = String(seg || '').trim().toUpperCase();
+  if (SEGMENT_ALIASES[s]) return SEGMENT_ALIASES[s];
+  return s;
 }
 
 function rollupCountry_(c) {
