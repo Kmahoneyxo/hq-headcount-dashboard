@@ -703,8 +703,10 @@ function readMarketsSheet_(sheet) {
     if (!country || !segment) continue;
     country = rollupCountry_(String(country).trim().toUpperCase());
     segment = String(segment).trim().toUpperCase();
+    var marketKey = segmentMarketKey_(country, segment);
+    if (!marketKey) continue;
     out.push({
-      market: country + '-' + segment,
+      market: marketKey,
       country: country,
       segment: segment,
       ideal_pcid: parseNum_(cell_(row, col.ideal_pcid)),
@@ -745,10 +747,12 @@ function buildSegments_(repRows, marketsTab, modelEngine) {
 
   var segments = [];
   Object.keys(keys).sort().forEach(function (key) {
-    var rollup = rollups[key] || {};
-    var tab = marketsByKey[key] || {};
     var parts = parseMarketKey_(key);
     if (!parts) return;
+    var marketKey = segmentMarketKey_(parts.country, parts.segment);
+    if (!marketKey) return;
+    var rollup = rollups[key] || rollups[marketKey] || {};
+    var tab = marketsByKey[key] || marketsByKey[marketKey] || {};
 
     var idealPcid = tab.ideal_pcid != null ? tab.ideal_pcid : rollup.ideal_pcid;
     var band = idealPcid != null ? pcidBand_(idealPcid) : null;
@@ -773,9 +777,9 @@ function buildSegments_(repRows, marketsTab, modelEngine) {
     var actionNote = buildActionNote_(rec, hcAction, currentReps, optimalHc);
 
     segments.push({
-      market: key,
-      country: parts.country,
-      segment: parts.segment,
+      market: marketKey,
+      country: rollupCountry_(parts.country),
+      segment: String(parts.segment).toUpperCase(),
       ideal_pcid: idealPcid,
       ideal_band: band ? band.label : null,
       ideal_book_summary: buildIdealSummary_(idealPcid, band, tab, rollup),
@@ -861,25 +865,40 @@ function mergeWarehouseMetricsIntoSegments_(segments, warehouse) {
   if (!warehouse || !warehouse.markets) return;
   var byKey = {};
   warehouse.markets.forEach(function (m) {
-    var c = rollupCountry_(String(m.country || '').toUpperCase());
-    var seg = String(m.segment || '').toUpperCase();
-    if (!c || !seg) return;
-    byKey[c + '-' + seg] = m;
+    var key = segmentMarketKey_(m.country, m.segment);
+    if (!key) return;
+    byKey[key] = m;
   });
   segments.forEach(function (s) {
-    var w = byKey[s.market];
+    var key = segmentMarketKey_(s.country, s.segment) || s.market;
+    var w = byKey[key];
     if (!w) return;
-    if (w.revenue_90d != null) s.revenue_90d = Math.round(Number(w.revenue_90d));
-    if (w.avg_pqr_per_rep != null) s.avg_pqr_per_rep = Math.round(Number(w.avg_pqr_per_rep));
-    if (w.segment_avg_pqr != null) s.segment_avg_pqr = Math.round(Number(w.segment_avg_pqr));
-    if (w.segment_avg_pcid != null) s.segment_avg_pcid = Number(w.segment_avg_pcid);
+    // Markets tab values from buildSegments_ take precedence; JSON/sheet fills gaps only.
+    if (s.revenue_90d == null && w.revenue_90d != null) {
+      s.revenue_90d = Math.round(Number(w.revenue_90d));
+    }
+    if (s.avg_pqr_per_rep == null && w.avg_pqr_per_rep != null) {
+      s.avg_pqr_per_rep = Math.round(Number(w.avg_pqr_per_rep));
+    }
+    if (s.segment_avg_pqr == null && w.segment_avg_pqr != null) {
+      s.segment_avg_pqr = Math.round(Number(w.segment_avg_pqr));
+    }
+    if (s.segment_avg_pcid == null && w.segment_avg_pcid != null) {
+      s.segment_avg_pcid = Number(w.segment_avg_pcid);
+    }
     var covPeak = w.coverage_peak_accounts != null ? w.coverage_peak_accounts : w.coverage_inflection_book_max;
-    if (covPeak != null) s.coverage_peak_accounts = Math.round(Number(covPeak));
+    if (s.coverage_peak_accounts == null && covPeak != null) {
+      s.coverage_peak_accounts = Math.round(Number(covPeak));
+    }
     var medCalls = w.median_impact_calls_per_account != null
       ? w.median_impact_calls_per_account
       : w.median_impact_calls;
-    if (medCalls != null) s.median_impact_calls_per_account = Number(medCalls);
-    if (w.coverage_at_inflection != null) s.coverage_at_inflection = Number(w.coverage_at_inflection);
+    if (s.median_impact_calls_per_account == null && medCalls != null) {
+      s.median_impact_calls_per_account = Number(medCalls);
+    }
+    if (s.coverage_at_inflection == null && w.coverage_at_inflection != null) {
+      s.coverage_at_inflection = Number(w.coverage_at_inflection);
+    }
   });
 }
 
@@ -887,8 +906,9 @@ function rollupRepLevel_(repRows) {
   var groups = {};
   repRows.forEach(function (r) {
     var parsed = parseRepMarketSegment_(r);
-    if (!parsed) return;
-    var key = parsed.country + '-' + parsed.segment;
+    if (!parsed || !parsed.segment) return;
+    var key = segmentMarketKey_(parsed.country, parsed.segment);
+    if (!key) return;
     if (!groups[key]) {
       groups[key] = { country: parsed.country, segment: parsed.segment, pcids: [], rep_count: 0, total_pcid: 0 };
     }
@@ -925,7 +945,9 @@ function parseRepMarketSegment_(r) {
   }
   if (r.market) {
     var mk = parseMarketKey_(String(r.market).toUpperCase());
-    if (mk) return mk;
+    if (mk) {
+      return { country: rollupCountry_(mk.country), segment: mk.segment };
+    }
     return { country: rollupCountry_(String(r.market).toUpperCase()), segment: null };
   }
   return null;
@@ -958,6 +980,14 @@ function rollupCountry_(c) {
   if (c === 'BE' || c === 'NL' || c === 'LU') return 'BNL';
   if (c === 'ES' || c === 'PT') return 'IBE';
   return c;
+}
+
+/** Canonical country×segment key — must match between Rep_Level rollups and headcount.json markets. */
+function segmentMarketKey_(country, segment) {
+  var c = rollupCountry_(String(country || '').trim().toUpperCase());
+  var seg = String(segment || '').trim().toUpperCase();
+  if (!c || !seg) return null;
+  return c + '-' + seg;
 }
 
 function parseMarketKey_(key) {

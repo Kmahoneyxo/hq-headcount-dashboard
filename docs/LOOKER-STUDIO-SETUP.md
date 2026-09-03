@@ -116,9 +116,9 @@ Run this after Rep_Level or Markets tab updates so Looker sees current recommend
 | `median_book` | **Number** | Median assigned PCIDs from Rep_Level |
 | `avg_pcid` | **Number** | Average PCIDs per rep |
 | `assigned_pcids` | **Number** | Total assigned PCIDs in segment |
-| `revenue_90d` | **Number** | Market 90d revenue ($); Markets tab |
-| `avg_pqr_per_rep` | **Number** | Avg PQR per rep ($); Markets tab |
-| `segment_avg_pqr` | **Number** | Segment avg PQR ($); Markets tab |
+| `revenue_90d` | **Number** | Market 90d revenue ($); Markets tab or auto from `headcount.json` |
+| `avg_pqr_per_rep` | **Number** | Avg PQR per rep ($); Markets tab or auto from `headcount.json` |
+| `segment_avg_pqr` | **Number** | Segment avg PQR ($); Markets tab or auto from `headcount.json` |
 | `segment_avg_pcid` | **Number** | Segment average PCID |
 | `coverage_peak_accounts` | **Number** | PCIDs/rep at coverage peak |
 | `median_impact_calls` | **Number** | Median impact calls/account |
@@ -209,9 +209,9 @@ See [LOOKER-STUDIO-BUILD.md](./LOOKER-STUDIO-BUILD.md#looker_export-column-refer
 | `avg_pcid` | Average PCIDs per rep |
 | `segment_avg_pcid` | Segment average PCID |
 | `assigned_pcids` | Total assigned PCIDs |
-| `revenue_90d` | Market 90d revenue ($) — from Markets tab |
-| `avg_pqr_per_rep` | Avg PQR per rep — from Markets tab |
-| `segment_avg_pqr` | Segment avg PQR — from Markets tab |
+| `revenue_90d` | Market 90d revenue ($) — Markets tab or auto from `headcount.json` |
+| `avg_pqr_per_rep` | Avg PQR per rep — Markets tab or auto from `headcount.json` |
+| `segment_avg_pqr` | Segment avg PQR — Markets tab or auto from `headcount.json` |
 | `coverage_peak_accounts` | PCIDs/rep at coverage peak |
 | `median_impact_calls` | Median impact calls/account |
 | `coverage_at_inflection` | Calls/account at inflection |
@@ -227,6 +227,6 @@ See [LOOKER-STUDIO-BUILD.md](./LOOKER-STUDIO-BUILD.md#looker_export-column-refer
 | Wrong field types | Edit data source → set numbers vs text per table above |
 | Stale data | Refresh dashboards in sheet, then refresh data source in Looker |
 | Empty `heads_to_add` | Normal for markets at or above optimal; use filters or show zeros in chart settings |
-| Blank revenue/coverage | Populate **Markets** tab from `headcount-dashboard.csv` — see [LOOKER-STUDIO-BUILD.md](./LOOKER-STUDIO-BUILD.md#a5-optional--populate-markets-tab-revenue--coverage) |
+| Blank revenue/coverage (cols R–W) | Re-run **HQ Dashboard → Refresh dashboards** — script auto-fetches `headcount.json` from GitHub Pages. Or paste **Markets** tab from `headcount-dashboard.csv` (sheet values override JSON) — see [LOOKER-STUDIO-BUILD.md](./LOOKER-STUDIO-BUILD.md#a5-optional--populate-markets-tab-revenue--coverage) |
 
 For Apps Script deployment, see [APPS-SCRIPT-DEPLOY.md](./APPS-SCRIPT-DEPLOY.md).
