@@ -29,9 +29,34 @@ var MODEL_TAB_NAME = 'HC_Model';
 var EXECUTIVE_TAB_NAME = 'Executive_View';
 var LOOKER_EXPORT_TAB_NAME = 'Looker_Export';
 var MARKETS_TEMPLATE_TAB_NAME = 'Markets_Template';
+var WAREHOUSE_METRICS_TAB_NAME = 'Warehouse_Metrics';
 /** Public warehouse snapshot — fills revenue/coverage in Looker_Export when Markets tab is empty. */
-var HEADCOUNT_JSON_URL = 'https://kmahoneyxo.github.io/hq-headcount-dashboard/data/headcount.json';
+var HEADCOUNT_JSON_URLS = [
+  'https://kmahoneyxo.github.io/hq-headcount-dashboard/data/headcount.json',
+  'https://raw.githubusercontent.com/kmahoneyxo/hq-headcount-dashboard/cursor/optimal-book-base-dataset-v1/docs/data/headcount.json',
+  'https://raw.githubusercontent.com/kmahoneyxo/hq-headcount-dashboard/main/docs/data/headcount.json',
+];
+var WAREHOUSE_CACHE_KEY = 'warehouse_metrics_compact';
+var WAREHOUSE_CACHE_TS_KEY = 'warehouse_metrics_compact_ts';
+var WAREHOUSE_CACHE_TTL_SEC = 86400;
 var KNOWN_SEGMENTS = ['M', 'UMM', 'ACC', 'L', 'NAM', 'DCA', 'ISDCA', 'NAMDCA'];
+var SEGMENT_ALIASES = {
+  MEDIUM: 'M',
+  MID: 'M',
+  MED: 'M',
+  MICRO: 'M',
+  LARGE: 'L',
+  SMALL: 'NAM',
+  ENTERPRISE: 'ACC',
+  ACCOUNT: 'ACC',
+  ACCOUNTS: 'ACC',
+};
+var WAREHOUSE_METRIC_FIELDS = [
+  'revenue_90d', 'avg_pqr_per_rep', 'segment_avg_pqr', 'segment_avg_pcid',
+  'coverage_peak_accounts', 'median_impact_calls_per_account', 'coverage_at_inflection',
+];
+// Generated from docs/data/headcount.json (52 markets, 2465 chars)
+var EMBEDDED_WAREHOUSE_METRICS = {"US-M":[121939405,447720,459596,98.4,100,1,1],"US-L":[105705390,410601,414474,39.7,65,1,2],"US-NAM":[73841747,243142,249518,16.4,50,0,1],"US-UMM":[61338798,387849,390787,61.4,65,1,1],"US-DCA":[49274022,369691,406660,107.2,40,0,1],"UK-M":[21525491,325595,331515,96.8,150,1,1],"CA-M":[12136472,213251,213251,113.5,125,1,1],"DACH-M":[9975528,265792,274652,100.4,100,1,2],"UK-NAM":[7382035,122897,122897,15.6,20,1,1],"BNL-M":[7195911,302615,302615,98.7,100,2,2],"UK-L":[6060779,118747,121775,38.8,50,2,2],"DACH-NAM":[4524491,70970,75541,15.0,10,4,9],"FR-M":[4470278,189904,189904,108.2,125,1,1],"IT-ACC":[3323792,97357,106033,101.2,150,1,1],"CA-NAM":[3318318,123811,123811,14.3,15,0,null],"DACH-L":[3059040,140819,140819,52.2,50,2,2],"UK-ISDCA":[2774057,255746,255746,91.2,null,0,null],"BNL-NAM":[2707866,44914,48934,16.8,15,0,null],"UK-NAMDCA":[2459304,186044,186044,67.5,null,0,null],"IRELAND-ACC":[2306706,167044,167044,83.7,125,1,1],"CA-L":[2139756,142522,142522,38.5,40,2,2],"MX-M":[1954046,87626,87626,185.8,138,0,null],"CA-UMM":[1847685,140339,140339,46.7,50,1,1],"UK-ACC":[1561682,51124,51124,156.4,175,0,null],"US-ACC":[1555875,16231,17667,331.6,175,0,null],"BNL-ACC":[1534695,43521,43521,105.1,175,1,null],"DACH-ACC":[1439316,14474,17390,115.2,58,1,null],"BNL-L":[1287278,102131,102131,46.0,50,2,2],"FR-NAM":[1282808,40610,43726,11.1,10,2,5],"FR-L":[933792,57927,57927,45.0,40,2,2],"AU-ACC":[771137,51372,59419,133.3,175,0,null],"FR-ISDCA":[671909,129277,129277,116.5,null,0,null],"IBE-ACC":[0,0,null,null,null,null,null],"BR-NAM":[609230,34129,41568,39.5,null,0,null],"FR-ACC":[595819,29105,31344,190.2,175,0,null],"DACH-NAMDCA":[584762,92951,116188,19.8,null,5,null],"CA-ACC":[544343,111837,111837,43.8,null,0,null],"IN-ACC":[476058,16580,20417,147.4,175,0,null],"IT-NAMDCA":[448035,73432,73432,41.8,null,0,null],"MX-NAM":[382117,28383,28383,28.8,25,null,null],"IT-NAM":[348209,31478,31478,29.3,25,null,null],"BR-M":[312948,31769,37064,128.0,null,0,null],"IT-ISDCA":[304627,129585,129585,71.0,null,2,null],"SG-ACC":[299416,29002,32371,127.9,null,0,null],"IBE-NAM":[231896,6427,12694,27.0,null,null,null],"BNL-ISDCA":[223224,136016,136016,53.0,null,2,null],"IRELAND-NAM":[186319,72334,72334,27.0,null,1,null],"BNL-NAMDCA":[148782,89532,89532,21.0,null,1,null],"FR-NAMDCA":[136994,36224,36224,17.8,null,1,null],"DACH-ISDCA":[129427,119533,119533,28.0,null,4,null],"AU-NAM":[64496,12648,12648,52.8,null,0,null],"IN-NAM":[46716,6218,17669,44.5,null,null,null]};
 
 var PCID_BANDS = [
   { low: 1, high: 10, label: '1-10', mid: 5 },
@@ -49,13 +74,15 @@ var PCID_BANDS = [
 ];
 
 /** Build full payload from current sheet data. */
-function buildDashboardPayload_(ss) {
+function buildDashboardPayload_(ss, options) {
+  options = options || {};
   var marketsTab = readMarketsTab_(ss);
   var repRows = readRepLevel_(ss);
   var capacity = readCapacityDashboard_(ss);
   var modelEngine = readModelEngine_(ss);
-  var segments = buildSegments_(repRows, marketsTab, modelEngine);
-  mergeWarehouseMetricsIntoSegments_(segments, fetchHeadcountWarehouse_(ss));
+  var warehouse = fetchHeadcountWarehouse_(ss, options);
+  var segments = buildSegments_(repRows, marketsTab, modelEngine, warehouse, options);
+  mergeWarehouseMetricsIntoSegments_(segments, warehouse);
 
   return {
     updated_at: new Date().toISOString(),
@@ -78,9 +105,9 @@ function doGet(e) {
 /** Run from editor or HQ Dashboard menu — rebuilds output tabs. */
 function refreshDashboardSummary() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var payload = buildDashboardPayload_(ss);
+  var payload = buildDashboardPayload_(ss, { includeCharts: false });
   writeHcModelTab_(ss, payload);
-  writeExecutiveViewTab_(ss, payload);
+  writeExecutiveViewTab_(ss, payload, { includeCharts: false });
   writeLookerExportTab_(ss, payload);
   writeMarketsTemplateTab_(ss);
   SpreadsheetApp.getActiveSpreadsheet().toast(
@@ -90,10 +117,19 @@ function refreshDashboardSummary() {
   );
 }
 
+/** Fast path — only rebuilds Looker_Export (skips HC_Model, Executive_View, charts). */
+function refreshLookerExportOnly() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var payload = buildDashboardPayload_(ss, { skipNarratives: true, skipUrlFetch: true });
+  writeLookerExportTab_(ss, payload);
+  ss.toast('Updated ' + LOOKER_EXPORT_TAB_NAME + ' only', 'HQ Dashboard', 4);
+}
+
 function onOpen() {
   SpreadsheetApp.getActiveSpreadsheet()
     .addMenu('HQ Dashboard', [
       { name: 'Refresh dashboards', functionName: 'refreshDashboardSummary' },
+      { name: 'Refresh Looker export (fast)', functionName: 'refreshLookerExportOnly' },
     ]);
 }
 
@@ -200,15 +236,7 @@ function writeHcModelTab_(ss, payload) {
     sheet.getRange(dataStart, 1, numRows, numCols).setWrap(true).setVerticalAlignment('top');
     sheet.getRange(dataStart, 10, numRows, 10).setFontFamily('Courier New').setFontSize(8);
     sheet.getRange(dataStart, 13, numRows, 17).setFontFamily('Courier New').setFontSize(8);
-    for (var r = dataStart; r <= numRows; r++) {
-      var rec = String(sheet.getRange(r, 19).getValue() || '').toLowerCase();
-      var recCell = sheet.getRange(r, 19);
-      if (rec.indexOf('hire') >= 0) {
-        recCell.setBackground('#f4f7f5').setFontColor('#3d6b52').setFontWeight('normal');
-      } else if (rec.indexOf('optimize') >= 0) {
-        recCell.setBackground('#f8f6f1').setFontColor('#8a6a2a').setFontWeight('normal');
-      }
-    }
+    applyRecColumnStyles_(sheet, dataStart, numRows, 19);
   }
 
   sheet.setColumnWidth(1, 80);
@@ -221,7 +249,8 @@ function writeHcModelTab_(ss, payload) {
 }
 
 /** Presentation tab — short table + charts. */
-function writeExecutiveViewTab_(ss, payload) {
+function writeExecutiveViewTab_(ss, payload, options) {
+  options = options || {};
   var sheet = prepareSheet_(ss, EXECUTIVE_TAB_NAME);
   var segments = (payload.segments || []).slice();
 
@@ -316,19 +345,8 @@ function writeExecutiveViewTab_(ss, payload) {
   sheet.setFrozenRows(tableHeaderRow);
 
   if (segments.length > 0) {
-    for (var r = tableStart; r <= tableEnd; r++) {
-      var rec = String(sheet.getRange(r, 2).getValue() || '').toLowerCase();
-      var recCell = sheet.getRange(r, 2);
-      if (rec.indexOf('hire') >= 0) {
-        recCell.setBackground('#f4f7f5').setFontColor('#3d6b52').setFontWeight('normal');
-      } else if (rec.indexOf('optimize') >= 0) {
-        recCell.setBackground('#f8f6f1').setFontColor('#8a6a2a').setFontWeight('normal');
-      }
-      var addCell = sheet.getRange(r, 3);
-      if (addCell.getValue() !== '' && Number(addCell.getValue()) > 0) {
-        addCell.setBackground('#f4f7f5').setFontWeight('bold').setFontSize(11).setHorizontalAlignment('center');
-      }
-    }
+    applyRecColumnStyles_(sheet, tableStart, tableEnd, 2);
+    applyAddColumnStyles_(sheet, tableStart, tableEnd, 3);
   }
 
   sheet.setColumnWidth(1, 90);
@@ -339,7 +357,7 @@ function writeExecutiveViewTab_(ss, payload) {
   sheet.setColumnWidth(6, 80);
   sheet.setColumnWidth(7, 60);
 
-  if (chartDataEnd >= chartDataStart) {
+  if (options.includeCharts !== false && chartDataEnd >= chartDataStart) {
     var barChart = sheet.newChart()
       .setChartType(Charts.ChartType.BAR)
       .addRange(sheet.getRange(chartDataStart, 6, chartDataEnd, 7))
@@ -354,7 +372,7 @@ function writeExecutiveViewTab_(ss, payload) {
     sheet.insertChart(barChart);
   }
 
-  if (recDataEnd >= recDataStart) {
+  if (options.includeCharts !== false && recDataEnd >= recDataStart) {
     var pieChart = sheet.newChart()
       .setChartType(Charts.ChartType.PIE)
       .addRange(sheet.getRange(recDataStart, 6, recDataEnd, 7))
@@ -397,7 +415,7 @@ function writeLookerExportTab_(ss, payload) {
     'avg_pcid', 'segment_avg_pcid', 'median_book', 'assigned_pcids',
     'revenue_90d', 'avg_pqr_per_rep', 'segment_avg_pqr',
     'coverage_peak_accounts', 'median_impact_calls', 'coverage_at_inflection',
-    'action_short',
+    'action_short', 'warehouse_source',
   ];
 
   var rows = [headers];
@@ -427,6 +445,7 @@ function writeLookerExportTab_(ss, payload) {
       s.median_impact_calls_per_account != null ? s.median_impact_calls_per_account : '',
       s.coverage_at_inflection != null ? s.coverage_at_inflection : '',
       actionShort_(s.action_note),
+      s.warehouse_source || 'none',
     ]);
   });
 
@@ -654,11 +673,8 @@ function readMarketsTab_(ss) {
   return [];
 }
 
-function readMarketsSheet_(sheet) {
-  var data = sheet.getDataRange().getValues();
-  if (!data || data.length < 2) return [];
-  var headers = data[0].map(function (h) { return normHeader_(h); });
-  var col = buildColMap_(headers, {
+function marketsColAliases_() {
+  return {
     country: ['country', 'market country'],
     segment: ['segment', 'sales segment'],
     market: ['market'],
@@ -684,10 +700,32 @@ function readMarketsSheet_(sheet) {
     avg_pqr_per_rep: ['avg_pqr_per_rep', 'avg pqr per rep', 'avg pqr per rep ($)'],
     segment_avg_pqr: ['segment_avg_pqr', 'segment avg pqr', 'segment avg pqr ($)'],
     optimal_book_primary: ['optimal_book_primary', 'optimal book primary'],
-  });
+  };
+}
+
+/** Scan first rows for a header line with country + segment (Markets template has row 1 notes). */
+function findMarketsHeaderRow_(data, colAliases) {
+  for (var r = 0; r < Math.min(6, data.length); r++) {
+    var headers = data[r].map(normHeader_);
+    var col = buildColMap_(headers, colAliases);
+    if (col.country >= 0 && col.segment >= 0) {
+      return { row: r, col: col };
+    }
+  }
+  return null;
+}
+
+function readMarketsSheet_(sheet) {
+  var data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return [];
+  var colAliases = marketsColAliases_();
+  var headerInfo = findMarketsHeaderRow_(data, colAliases);
+  if (!headerInfo) return [];
+  var col = headerInfo.col;
+  var startRow = headerInfo.row + 1;
 
   var out = [];
-  for (var i = 1; i < data.length; i++) {
+  for (var i = startRow; i < data.length; i++) {
     var row = data[i];
     if (!row || row.every(function (c) { return c === '' || c === null; })) continue;
     var country = cell_(row, col.country);
@@ -702,7 +740,7 @@ function readMarketsSheet_(sheet) {
     }
     if (!country || !segment) continue;
     country = rollupCountry_(String(country).trim().toUpperCase());
-    segment = String(segment).trim().toUpperCase();
+    segment = normalizeSegment_(String(segment).trim().toUpperCase());
     var marketKey = segmentMarketKey_(country, segment);
     if (!marketKey) continue;
     out.push({
@@ -734,7 +772,8 @@ function readMarketsSheet_(sheet) {
   return out;
 }
 
-function buildSegments_(repRows, marketsTab, modelEngine) {
+function buildSegments_(repRows, marketsTab, modelEngine, warehouse, options) {
+  options = options || {};
   var marketsByKey = {};
   marketsTab.forEach(function (m) {
     marketsByKey[m.market] = m;
@@ -744,6 +783,12 @@ function buildSegments_(repRows, marketsTab, modelEngine) {
   var keys = {};
   Object.keys(rollups).forEach(function (k) { keys[k] = true; });
   marketsTab.forEach(function (m) { keys[m.market] = true; });
+  if (warehouse && warehouse.markets) {
+    warehouse.markets.forEach(function (m) {
+      var wk = segmentMarketKey_(m.country, m.segment);
+      if (wk) keys[wk] = true;
+    });
+  }
 
   var segments = [];
   Object.keys(keys).sort().forEach(function (key) {
@@ -770,11 +815,16 @@ function buildSegments_(repRows, marketsTab, modelEngine) {
     var rec = tab.recommendation || recommendFromHeadcount_(currentReps, optimalHc, tab, parts.country, modelEngine);
     var hcAction = computeHeadcountAction_(currentReps, optimalHc);
     var medianBook = rollup.median_pcid != null ? Math.round(rollup.median_pcid * 10) / 10 : null;
-    var idealWhyLines = buildIdealBookWhyDetail_(
-      idealPcid, band, avgBook, medianBook, currentReps, assigned, tab, rollup, parts.country, modelEngine
-    );
-    var hcRecWhy = buildHcRecWhy_(rec, currentReps, optimalHc, hcGap, assigned, idealPcid);
+    var idealWhyLines = options.skipNarratives
+      ? []
+      : buildIdealBookWhyDetail_(
+        idealPcid, band, avgBook, medianBook, currentReps, assigned, tab, rollup, parts.country, modelEngine
+      );
+    var hcRecWhy = options.skipNarratives
+      ? ''
+      : buildHcRecWhy_(rec, currentReps, optimalHc, hcGap, assigned, idealPcid);
     var actionNote = buildActionNote_(rec, hcAction, currentReps, optimalHc);
+    var tabHasWarehouse = hasWarehouseMetrics_(tab);
 
     segments.push({
       market: marketKey,
@@ -782,9 +832,9 @@ function buildSegments_(repRows, marketsTab, modelEngine) {
       segment: String(parts.segment).toUpperCase(),
       ideal_pcid: idealPcid,
       ideal_band: band ? band.label : null,
-      ideal_book_summary: buildIdealSummary_(idealPcid, band, tab, rollup),
+      ideal_book_summary: options.skipNarratives ? '' : buildIdealSummary_(idealPcid, band, tab, rollup),
       ideal_why_detail: idealWhyLines.join('\n'),
-      why_trends: buildWhyTrends_(idealPcid, band, avgBook, currentReps, tab, rollup, modelEngine, parts.country),
+      why_trends: options.skipNarratives ? [] : buildWhyTrends_(idealPcid, band, avgBook, currentReps, tab, rollup, modelEngine, parts.country),
       median_book: medianBook,
       assigned_accounts: assigned != null ? Math.round(assigned) : null,
       current_avg_book: avgBook != null ? Math.round(avgBook * 10) / 10 : null,
@@ -801,6 +851,7 @@ function buildSegments_(repRows, marketsTab, modelEngine) {
       hc_rec_why: hcRecWhy,
       action_note: actionNote,
       source: tab.ideal_pcid != null ? 'markets_tab' : 'rep_level_rollup',
+      warehouse_source: tabHasWarehouse ? 'markets_tab' : 'none',
       revenue_90d: tab.revenue_90d != null ? tab.revenue_90d : null,
       segment_avg_pcid: tab.segment_avg_pcid != null ? tab.segment_avg_pcid : (avgBook != null ? Math.round(avgBook * 10) / 10 : null),
       avg_pqr_per_rep: tab.avg_pqr_per_rep != null ? tab.avg_pqr_per_rep : null,
@@ -814,25 +865,132 @@ function buildSegments_(repRows, marketsTab, modelEngine) {
 }
 
 /** Fill revenue / PQR / coverage on segments from warehouse JSON or Markets-style sheet tab. */
-function fetchHeadcountWarehouse_(ss) {
-  var json = fetchHeadcountJsonFromUrl_();
-  if (json && json.markets && json.markets.length) return json;
-  return readWarehouseFromSheet_(ss);
+function fetchHeadcountWarehouse_(ss, options) {
+  options = options || {};
+  if (!options.skipUrlFetch) {
+    var fromUrl = fetchHeadcountJsonFromUrl_();
+    if (fromUrl && fromUrl.markets && fromUrl.markets.length) {
+      cacheWarehouseCompact_(fromUrl.markets);
+      return { markets: fromUrl.markets, source: 'json' };
+    }
+    var cached = loadWarehouseCompactCache_();
+    if (cached) return { markets: cached, source: 'json' };
+  }
+  var embedded = expandEmbeddedWarehouse_();
+  if (embedded.markets.length) return embedded;
+  var fromTab = readWarehouseMetricsTab_(ss);
+  if (fromTab && fromTab.markets.length) return fromTab;
+  return readWarehouseFromSheet_(ss) || { markets: [], source: 'none' };
 }
 
 function fetchHeadcountJsonFromUrl_() {
-  try {
-    var res = UrlFetchApp.fetch(HEADCOUNT_JSON_URL, {
-      muteHttpExceptions: true,
-      followRedirects: true,
-    });
-    if (res.getCode() >= 200 && res.getCode() < 300) {
-      return JSON.parse(res.getContentText());
+  for (var u = 0; u < HEADCOUNT_JSON_URLS.length; u++) {
+    try {
+      var res = UrlFetchApp.fetch(HEADCOUNT_JSON_URLS[u], {
+        muteHttpExceptions: true,
+        followRedirects: true,
+        validateHttpsCertificates: true,
+      });
+      if (res.getResponseCode() >= 200 && res.getResponseCode() < 300) {
+        return JSON.parse(res.getContentText());
+      }
+    } catch (e) {
+      // try next URL
     }
-  } catch (e) {
-    // fall through to sheet tab
   }
   return null;
+}
+
+function compactWarehouseMarkets_(markets) {
+  var compact = {};
+  markets.forEach(function (m) {
+    var key = segmentMarketKey_(m.country, m.segment);
+    if (!key) return;
+    var cov = m.coverage_peak_accounts != null ? m.coverage_peak_accounts : m.coverage_inflection_book_max;
+    compact[key] = [
+      m.revenue_90d != null ? Math.round(Number(m.revenue_90d)) : null,
+      m.avg_pqr_per_rep != null ? Math.round(Number(m.avg_pqr_per_rep)) : null,
+      m.segment_avg_pqr != null ? Math.round(Number(m.segment_avg_pqr)) : null,
+      m.segment_avg_pcid != null ? Number(m.segment_avg_pcid) : null,
+      cov != null ? Math.round(Number(cov)) : null,
+      m.median_impact_calls_per_account != null ? Number(m.median_impact_calls_per_account) : null,
+      m.coverage_at_inflection != null ? Number(m.coverage_at_inflection) : null,
+    ];
+  });
+  return compact;
+}
+
+function expandCompactWarehouse_(compact) {
+  var markets = [];
+  Object.keys(compact).forEach(function (key) {
+    var parts = parseMarketKey_(key);
+    if (!parts) return;
+    var arr = compact[key];
+    var m = { country: parts.country, segment: parts.segment };
+    WAREHOUSE_METRIC_FIELDS.forEach(function (field, i) {
+      if (arr[i] != null) m[field] = arr[i];
+    });
+    markets.push(m);
+  });
+  return markets;
+}
+
+function expandEmbeddedWarehouse_() {
+  return { markets: expandCompactWarehouse_(EMBEDDED_WAREHOUSE_METRICS), source: 'embedded' };
+}
+
+function cacheWarehouseCompact_(markets) {
+  try {
+    var text = JSON.stringify(compactWarehouseMarkets_(markets));
+    CacheService.getScriptCache().put(WAREHOUSE_CACHE_KEY, text, WAREHOUSE_CACHE_TTL_SEC);
+    if (text.length < 9000) {
+      var props = PropertiesService.getScriptProperties();
+      props.setProperty(WAREHOUSE_CACHE_KEY, text);
+      props.setProperty(WAREHOUSE_CACHE_TS_KEY, String(Date.now()));
+    }
+  } catch (e) {
+    // cache is best-effort
+  }
+}
+
+function loadWarehouseCompactCache_() {
+  var text = CacheService.getScriptCache().get(WAREHOUSE_CACHE_KEY);
+  if (!text) {
+    var props = PropertiesService.getScriptProperties();
+    var ts = Number(props.getProperty(WAREHOUSE_CACHE_TS_KEY) || 0);
+    if (Date.now() - ts < WAREHOUSE_CACHE_TTL_SEC * 1000) {
+      text = props.getProperty(WAREHOUSE_CACHE_KEY);
+    }
+  }
+  if (!text) return null;
+  try {
+    return expandCompactWarehouse_(JSON.parse(text));
+  } catch (e) {
+    return null;
+  }
+}
+
+function readWarehouseMetricsTab_(ss) {
+  var sheet = ss.getSheetByName(WAREHOUSE_METRICS_TAB_NAME);
+  if (!sheet) return null;
+  var rows = readMarketsSheet_(sheet);
+  if (!rows.length) return null;
+  return {
+    markets: rows.map(function (r) {
+      return {
+        country: r.country,
+        segment: r.segment,
+        revenue_90d: r.revenue_90d,
+        avg_pqr_per_rep: r.avg_pqr_per_rep,
+        segment_avg_pqr: r.segment_avg_pqr,
+        segment_avg_pcid: r.segment_avg_pcid,
+        coverage_peak_accounts: r.coverage_peak_accounts,
+        median_impact_calls_per_account: r.median_impact_calls_per_account,
+        coverage_at_inflection: r.coverage_at_inflection,
+      };
+    }),
+    source: 'markets_tab',
+  };
 }
 
 function readWarehouseFromSheet_(ss) {
@@ -843,6 +1001,7 @@ function readWarehouseFromSheet_(ss) {
     var rows = readMarketsSheet_(sheet);
     if (!rows.length) continue;
     return {
+      source: 'markets_tab',
       markets: rows.map(function (r) {
         return {
           country: r.country,
@@ -851,7 +1010,7 @@ function readWarehouseFromSheet_(ss) {
           avg_pqr_per_rep: r.avg_pqr_per_rep,
           segment_avg_pqr: r.segment_avg_pqr,
           segment_avg_pcid: r.segment_avg_pcid,
-          coverage_inflection_book_max: r.coverage_peak_accounts,
+          coverage_peak_accounts: r.coverage_peak_accounts,
           median_impact_calls_per_account: r.median_impact_calls_per_account,
           coverage_at_inflection: r.coverage_at_inflection,
         };
@@ -861,43 +1020,83 @@ function readWarehouseFromSheet_(ss) {
   return null;
 }
 
-function mergeWarehouseMetricsIntoSegments_(segments, warehouse) {
-  if (!warehouse || !warehouse.markets) return;
+function isEmptyMetric_(v) {
+  return v == null || v === '';
+}
+
+function hasWarehouseMetrics_(row) {
+  return !isEmptyMetric_(row.revenue_90d)
+    || !isEmptyMetric_(row.avg_pqr_per_rep)
+    || !isEmptyMetric_(row.segment_avg_pqr)
+    || !isEmptyMetric_(row.coverage_peak_accounts);
+}
+
+function warehouseKeyAliases_(country, segment) {
+  var keys = [];
+  var primary = segmentMarketKey_(country, segment);
+  if (primary) keys.push(primary);
+  var c = rollupCountry_(String(country || '').trim().toUpperCase());
+  if (c === 'IRELAND') keys.push('IE-' + String(segment || '').trim().toUpperCase());
+  if (c === 'IE') keys.push('IRELAND-' + String(segment || '').trim().toUpperCase());
+  return keys;
+}
+
+function buildWarehouseByKey_(markets) {
   var byKey = {};
-  warehouse.markets.forEach(function (m) {
-    var key = segmentMarketKey_(m.country, m.segment);
-    if (!key) return;
-    byKey[key] = m;
+  markets.forEach(function (m) {
+    warehouseKeyAliases_(m.country, m.segment).forEach(function (key) {
+      if (key && !byKey[key]) byKey[key] = m;
+    });
   });
+  return byKey;
+}
+
+function lookupWarehouse_(byKey, country, segment, market) {
+  var keys = warehouseKeyAliases_(country, segment);
+  if (market) keys.push(String(market).trim().toUpperCase());
+  for (var i = 0; i < keys.length; i++) {
+    if (byKey[keys[i]]) return byKey[keys[i]];
+  }
+  return null;
+}
+
+function applyWarehouseMetric_(segment, field, value, roundInt) {
+  if (isEmptyMetric_(value) || !isEmptyMetric_(segment[field])) return;
+  segment[field] = roundInt ? Math.round(Number(value)) : Number(value);
+}
+
+function mergeWarehouseMetricsIntoSegments_(segments, warehouse) {
+  if (!warehouse || !warehouse.markets || !warehouse.markets.length) {
+    segments.forEach(function (s) {
+      if (!s.warehouse_source) s.warehouse_source = 'none';
+    });
+    return;
+  }
+  var source = warehouse.source || 'json';
+  var byKey = buildWarehouseByKey_(warehouse.markets);
   segments.forEach(function (s) {
-    var key = segmentMarketKey_(s.country, s.segment) || s.market;
-    var w = byKey[key];
-    if (!w) return;
-    // Markets tab values from buildSegments_ take precedence; JSON/sheet fills gaps only.
-    if (s.revenue_90d == null && w.revenue_90d != null) {
-      s.revenue_90d = Math.round(Number(w.revenue_90d));
+    var w = lookupWarehouse_(byKey, s.country, s.segment, s.market);
+    if (!w) {
+      if (!s.warehouse_source) s.warehouse_source = 'none';
+      return;
     }
-    if (s.avg_pqr_per_rep == null && w.avg_pqr_per_rep != null) {
-      s.avg_pqr_per_rep = Math.round(Number(w.avg_pqr_per_rep));
-    }
-    if (s.segment_avg_pqr == null && w.segment_avg_pqr != null) {
-      s.segment_avg_pqr = Math.round(Number(w.segment_avg_pqr));
-    }
-    if (s.segment_avg_pcid == null && w.segment_avg_pcid != null) {
+    applyWarehouseMetric_(s, 'revenue_90d', w.revenue_90d, true);
+    applyWarehouseMetric_(s, 'avg_pqr_per_rep', w.avg_pqr_per_rep, true);
+    applyWarehouseMetric_(s, 'segment_avg_pqr', w.segment_avg_pqr, true);
+    if (isEmptyMetric_(s.segment_avg_pcid) && !isEmptyMetric_(w.segment_avg_pcid)) {
       s.segment_avg_pcid = Number(w.segment_avg_pcid);
     }
-    var covPeak = w.coverage_peak_accounts != null ? w.coverage_peak_accounts : w.coverage_inflection_book_max;
-    if (s.coverage_peak_accounts == null && covPeak != null) {
-      s.coverage_peak_accounts = Math.round(Number(covPeak));
-    }
-    var medCalls = w.median_impact_calls_per_account != null
+    var covPeak = !isEmptyMetric_(w.coverage_peak_accounts)
+      ? w.coverage_peak_accounts
+      : w.coverage_inflection_book_max;
+    applyWarehouseMetric_(s, 'coverage_peak_accounts', covPeak, true);
+    var medCalls = !isEmptyMetric_(w.median_impact_calls_per_account)
       ? w.median_impact_calls_per_account
       : w.median_impact_calls;
-    if (s.median_impact_calls_per_account == null && medCalls != null) {
-      s.median_impact_calls_per_account = Number(medCalls);
-    }
-    if (s.coverage_at_inflection == null && w.coverage_at_inflection != null) {
-      s.coverage_at_inflection = Number(w.coverage_at_inflection);
+    applyWarehouseMetric_(s, 'median_impact_calls_per_account', medCalls, false);
+    applyWarehouseMetric_(s, 'coverage_at_inflection', w.coverage_at_inflection, false);
+    if (s.warehouse_source !== 'markets_tab') {
+      s.warehouse_source = source;
     }
   });
 }
@@ -966,8 +1165,12 @@ function parseTeamName_(team) {
   if (parts.length >= 3 && String(parts[2]).trim().toUpperCase() === 'ACCDE') {
     return { country: country, segment: 'ACC' };
   }
+  if (segRaw.toUpperCase() === 'ACCDE') {
+    return { country: country, segment: 'ACC' };
+  }
 
   var seg = segRaw.toUpperCase();
+  if (SEGMENT_ALIASES[seg]) seg = SEGMENT_ALIASES[seg];
   if (KNOWN_SEGMENTS.indexOf(seg) >= 0) {
     return { country: country, segment: seg };
   }
@@ -975,7 +1178,9 @@ function parseTeamName_(team) {
 }
 
 function rollupCountry_(c) {
+  c = String(c || '').trim().toUpperCase();
   if (c === 'GB') return 'UK';
+  if (c === 'IE' || c === 'IRELAND') return 'IRELAND';
   if (c === 'DE' || c === 'AT' || c === 'CH') return 'DACH';
   if (c === 'BE' || c === 'NL' || c === 'LU') return 'BNL';
   if (c === 'ES' || c === 'PT') return 'IBE';
@@ -991,9 +1196,9 @@ function segmentMarketKey_(country, segment) {
 }
 
 function parseMarketKey_(key) {
-  var m = String(key || '').trim().toUpperCase().match(/^([A-Z]{2,5})-([A-Z]+)$/);
+  var m = String(key || '').trim().toUpperCase().match(/^([A-Z]{2,8})-([A-Z]+)$/);
   if (!m) return null;
-  return { country: m[1], segment: m[2] };
+  return { country: rollupCountry_(m[1]), segment: m[2] };
 }
 
 function buildIdealSummary_(idealPcid, band, tab, rollup) {
@@ -1143,7 +1348,7 @@ var COUNTRY_TO_REGION = {
   US: 'The Americas', CA: 'The Americas', BR: 'The Americas', MX: 'The Americas',
   UK: 'EMEA', DE: 'EMEA', FR: 'EMEA', NL: 'EMEA', BE: 'EMEA', IE: 'EMEA',
   IT: 'EMEA', ES: 'EMEA', CH: 'EMEA', AT: 'EMEA', PL: 'EMEA',
-  DACH: 'EMEA', BNL: 'EMEA', IBE: 'EMEA', EM: 'EMEA',
+  DACH: 'EMEA', BNL: 'EMEA', IBE: 'EMEA', EM: 'EMEA', IRELAND: 'EMEA',
 };
 
 function countryToRegion_(country) {
@@ -1316,4 +1521,53 @@ function parseNum_(raw) {
   var n = Number(s);
   if (!isFinite(n)) return null;
   return n === Math.floor(n) ? Math.trunc(n) : n;
+}
+
+/** Batch recommendation column styling (avoids per-cell getRange loops). */
+function applyRecColumnStyles_(sheet, startRow, endRow, col) {
+  if (endRow < startRow) return;
+  var n = endRow - startRow + 1;
+  var values = sheet.getRange(startRow, col, endRow, col).getValues();
+  var bgs = [];
+  var colors = [];
+  for (var i = 0; i < n; i++) {
+    var rec = String(values[i][0] || '').toLowerCase();
+    if (rec.indexOf('hire') >= 0) {
+      bgs.push(['#f4f7f5']);
+      colors.push(['#3d6b52']);
+    } else if (rec.indexOf('optimize') >= 0) {
+      bgs.push(['#f8f6f1']);
+      colors.push(['#8a6a2a']);
+    } else {
+      bgs.push([null]);
+      colors.push([null]);
+    }
+  }
+  var range = sheet.getRange(startRow, col, endRow, col);
+  range.setBackgrounds(bgs);
+  range.setFontColors(colors);
+  range.setFontWeight('normal');
+}
+
+function applyAddColumnStyles_(sheet, startRow, endRow, col) {
+  if (endRow < startRow) return;
+  var n = endRow - startRow + 1;
+  var values = sheet.getRange(startRow, col, endRow, col).getValues();
+  var bgs = [];
+  var weights = [];
+  for (var i = 0; i < n; i++) {
+    var v = values[i][0];
+    if (v !== '' && Number(v) > 0) {
+      bgs.push(['#f4f7f5']);
+      weights.push(['bold']);
+    } else {
+      bgs.push([null]);
+      weights.push(['normal']);
+    }
+  }
+  var range = sheet.getRange(startRow, col, endRow, col);
+  range.setBackgrounds(bgs);
+  range.setFontWeights(weights);
+  range.setFontSize(11);
+  range.setHorizontalAlignment('center');
 }
